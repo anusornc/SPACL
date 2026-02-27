@@ -1,12 +1,13 @@
 # Source Architecture (`src/`)
 
-This document describes the current Rust module layout for SPACL.
+This document describes the current Rust module layout for SPACL in this public repository snapshot.
 
 ## High-level module tree
 
 ```text
 src/
 ├── lib.rs
+├── lib_original.rs            # Legacy library facade kept for reference
 ├── app/           # App/domain helpers (including EPCIS demo support)
 ├── bin/           # CLI binaries (owl2-reasoner, owl2_validation, epcis-reasoner)
 ├── core/          # Fundamental data structures and error types
@@ -19,6 +20,14 @@ src/
 └── util/          # Shared utilities (config/cache/loader/helpers)
 ```
 
+## Notable submodules
+
+- `src/logic/axioms/` and `src/logic/datatypes/`
+- `src/parser/json_ld/`, `src/parser/manchester/`, `src/parser/owl_functional/`
+- `src/reasoner/tableaux/` and `src/reasoner/query/`
+- `src/strategy/profiles/`
+- `src/util/profiling/`
+
 ## Responsibilities
 
 - `core/`
@@ -28,12 +37,13 @@ src/
   - logical model used by parsers and reasoners
 
 - `parser/`
-  - RDF/XML, OWL/XML, OWL Functional, Turtle, N-Triples, JSON-LD, Manchester support
+  - RDF/XML, OWL/XML, OWL Functional, Turtle, N-Triples, JSON-LD, Manchester support (via `ParserFactory`)
   - parser factory and shared parser configuration
+  - note: `src/parser/streaming/` exists, but `pub mod streaming` is currently disabled in `src/parser/mod.rs`
 
 - `reasoner/`
   - reasoning implementations and execution paths
-  - profile-aware selection hooks used by CLIs
+  - includes `simple`, `speculative` (SPACL), `tableaux`, classification/hierarchy variants, and query helpers
 
 - `strategy/`
   - profile detection and strategy routing logic
@@ -53,8 +63,8 @@ src/
 
 ## Maintenance guidance
 
-When adding new modules:
+When module layout changes:
 
 1. place code in the correct domain folder
-2. expose stable public API from `lib.rs` only when intended
-3. update this document if top-level module responsibilities change
+2. expose stable public API from `src/lib.rs` only when intended
+3. update this document (tree + responsibilities + WIP notes) in the same change
