@@ -130,4 +130,4 @@ The algorithm draws inspiration from:
 
 ---
 
-*This is a novel contribution to the SPACL reasoner. The implementation is in `src/reasoning/speculative_tableaux.rs`.*
+*This is a novel contribution to the SPACL reasoner. The implementation is in `src/reasoner/speculative.rs`.*

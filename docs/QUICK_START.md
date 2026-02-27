@@ -45,43 +45,26 @@ Example:
 
 ```bash
 OWL2_REASONER_LARGE_PARSE=1 OWL2_REASONER_AUTO_CACHE=1 \
-cargo run --bin owl2-reasoner -- check benchmarks/ontologies/other/go-basic.owl
+cargo run --bin owl2-reasoner -- check tests/data/hierarchy_10000.owl
 ```
 
 ## 5. Run benchmark harness
 
-### Core competitor harness
+The public package includes benchmark harness scripts under:
+
+- `benchmarks/competitors/scripts/run_benchmarks.sh`
+- `benchmarks/competitors/scripts/run_stage_benchmark.sh`
+- `benchmarks/competitors/scripts/run_stage_suite.sh`
+
+These scripts require additional benchmark assets (for example competitor Dockerfiles and external ontology sets) that are not bundled in this public repository.
+
+Minimal example:
 
 ```bash
-# Small suite example
-RUN_ID=small_workload_suite_real_YYYYMMDD \
+RUN_ID=public_smoke_YYYYMMDD \
 ONTOLOGY_SUITE=standard \
 REASONERS_OVERRIDE=tableauxx,hermit,konclude,openllet,elk,jfact,pellet \
 TIMEOUT_SECONDS=180 \
 SKIP_BUILD=0 \
 benchmarks/competitors/scripts/run_benchmarks.sh all
-```
-
-### OWL2Bench wrapper
-
-```bash
-OWL2BENCH_SOURCE_DIR=/tmp/owl2bench/OWL2Bench \
-benchmarks/external/owl2bench/prepare.sh
-
-RUN_ID=owl2bench_univ_core_example \
-TIMEOUT_SECONDS=300 \
-SKIP_BUILD=1 \
-REASONERS_OVERRIDE=tableauxx,hermit,konclude,openllet,elk,jfact,pellet \
-benchmarks/external/owl2bench/run.sh all
-```
-
-For authoritative benchmark commands and run IDs, use:
-
-- `docs/benchmarking/BENCHMARK_RUNBOOK.md`
-
-## 6. Build paper PDF
-
-```bash
-cd paper/submission
-./compile.sh
 ```
