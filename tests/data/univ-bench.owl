@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<rdf:RDF
+  xmlns="http://swat.cse.lehigh.edu/onto/univ-bench.owl#"
+  xml:base="http://swat.cse.lehigh.edu/onto/univ-bench.owl"
+  xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+  xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+  xmlns:owl="http://www.w3.org/2002/07/owl#"
+>
+
+  <owl:Ontology rdf:about="">
+    <rdfs:comment>A compact University benchmark ontology used in tests.</rdfs:comment>
+    <rdfs:label>Univ-bench Ontology</rdfs:label>
+    <owl:versionInfo>univ-bench-ontology-owl, repaired RDF/XML</owl:versionInfo>
+  </owl:Ontology>
+
+  <owl:ObjectProperty rdf:ID="headOf">
+    <rdfs:domain rdf:resource="#Person"/>
+    <rdfs:range rdf:resource="#Department"/>
+  </owl:ObjectProperty>
+
+  <owl:Class rdf:ID="Person"/>
+  <owl:Class rdf:ID="Employee">
+    <rdfs:subClassOf rdf:resource="#Person"/>
+  </owl:Class>
+  <owl:Class rdf:ID="Professor">
+    <rdfs:subClassOf rdf:resource="#Employee"/>
+  </owl:Class>
+  <owl:Class rdf:ID="AssistantProfessor">
+    <rdfs:subClassOf rdf:resource="#Professor"/>
+  </owl:Class>
+  <owl:Class rdf:ID="AssociateProfessor">
+    <rdfs:subClassOf rdf:resource="#Professor"/>
+  </owl:Class>
+  <owl:Class rdf:ID="AdministrativeStaff">
+    <rdfs:subClassOf rdf:resource="#Employee"/>
+  </owl:Class>
+
+  <owl:Class rdf:ID="Publication"/>
+  <owl:Class rdf:ID="Article">
+    <rdfs:subClassOf rdf:resource="#Publication"/>
+  </owl:Class>
+  <owl:Class rdf:ID="Book">
+    <rdfs:subClassOf rdf:resource="#Publication"/>
+  </owl:Class>
+
+  <owl:Class rdf:ID="Department"/>
+  <owl:Class rdf:ID="Chair">
+    <rdfs:subClassOf rdf:resource="#Person"/>
+    <owl:equivalentClass>
+      <owl:Class>
+        <owl:intersectionOf rdf:parseType="Collection">
+          <owl:Class rdf:about="#Person"/>
+          <owl:Restriction>
+            <owl:onProperty rdf:resource="#headOf"/>
+            <owl:someValuesFrom rdf:resource="#Department"/>
+          </owl:Restriction>
+        </owl:intersectionOf>
+      </owl:Class>
+    </owl:equivalentClass>
+  </owl:Class>
+
+</rdf:RDF>

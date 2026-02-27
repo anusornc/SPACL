@@ -1,0 +1,27 @@
+{
+  "tx_id": "tx-01JH3Y4Y8K7GQ2R0N1",
+  "network_id": "uht-th-consortium",
+  "participant_id": "retail-001",
+  "industry_domain": "uht",
+  "ontology_pack_id": "uht-core",
+  "ontology_version": "v1.2.0",
+  "ontology_hash": "sha256:ab12cd34ef56ab12cd34ef56ab12cd34ef56ab12cd34ef56ab12cd34ef56ab12",
+  "event_type": "ObjectEvent",
+  "event_schema_version": "epcis-2.0.0",
+  "timestamp_utc": "2026-02-17T08:11:25Z",
+  "prev_event_refs": [
+    "tx-01JH3Y4X9F2TQ0K8W3",
+    "tx-01JH3Y4WB6N6XR2H2P"
+  ],
+  "event_payload": {
+    "bizStep": "shipping",
+    "disposition": "in_transit",
+    "epcList": [
+      "urn:epc:id:sgtin:8851234.000001.20260001"
+    ],
+    "readPoint": "urn:epc:id:sgln:8851234.00010.0",
+    "bizLocation": "urn:epc:id:sgln:8851234.00020.0",
+    "eventTime": "2026-02-17T08:10:02Z"
+  },
+  "signature": "base64:MEQCIF6Q7f1Xo0X2g9JgqQ8kV0fS2P2CbL7Qk7D3QmTQdJQpAiA2aE4Kc6hQ6S3V6M8lY6Jr2YHfQv4tR2hQqWq2uQ9xQ=="
+}

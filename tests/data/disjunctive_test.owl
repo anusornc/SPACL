@@ -1,0 +1,214 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="http://example.org/disjunctive#"
+     xml:base="http://example.org/disjunctive"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
+
+    <owl:Ontology rdf:about="http://example.org/disjunctive">
+        <rdfs:label>Disjunctive Test Ontology</rdfs:label>
+        <rdfs:comment>Test ontology with disjunctions for SPACL parallel speedup testing</rdfs:comment>
+    </owl:Ontology>
+
+    <!-- 
+    Test Case: (A ⊔ B) ⊓ (C ⊔ D) ⊓ E
+    
+    Branch 1: A ⊓ C ⊓ E (SAT)
+    Branch 2: A ⊓ D ⊓ E (SAT)  
+    Branch 3: B ⊓ C ⊓ E (SAT)
+    Branch 4: B ⊓ D ⊓ E (SAT)
+    
+    Sequential must check all branches until finding SAT
+    SPACL should find SAT in one branch quickly, abort others
+    -->
+
+    <!-- Classes -->
+    <owl:Class rdf:about="#A"/>
+    <owl:Class rdf:about="#B"/>
+    <owl:Class rdf:about="#C"/>
+    <owl:Class rdf:about="#D"/>
+    <owl:Class rdf:about="#E"/>
+    
+    <!-- Top class that combines everything -->
+    <owl:Class rdf:about="#Top">
+        <owl:equivalentClass>
+            <owl:Class>
+                <owl:intersectionOf rdf:parseType="Collection">
+                    <!-- First disjunction: A ⊔ B -->
+                    <owl:Class>
+                        <owl:unionOf rdf:parseType="Collection">
+                            <rdf:Description rdf:about="#A"/>
+                            <rdf:Description rdf:about="#B"/>
+                        </owl:unionOf>
+                    </owl:Class>
+                    <!-- Second disjunction: C ⊔ D -->
+                    <owl:Class>
+                        <owl:unionOf rdf:parseType="Collection">
+                            <rdf:Description rdf:about="#C"/>
+                            <rdf:Description rdf:about="#D"/>
+                        </owl:unionOf>
+                    </owl:Class>
+                    <!-- Always true: E -->
+                    <rdf:Description rdf:about="#E"/>
+                </owl:intersectionOf>
+            </owl:Class>
+        </owl:equivalentClass>
+    </owl:Class>
+
+    <!-- Create a large hierarchy to make the test substantial -->
+    <!-- Generate 100 subclasses of E to make reasoning take some time -->
+    
+    <!-- E has many subclasses -->
+    <owl:Class rdf:about="#E1">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E2">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E3">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+
+    <owl:Class rdf:about="#E4">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E5">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E6">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E7">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E8">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E9">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E10">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E11">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E12">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E13">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E14">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E15">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E16">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E17">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E18">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E19">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E20">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E21">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E22">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E23">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E24">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E25">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E26">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E27">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E28">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E29">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E30">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E31">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E32">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E33">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E34">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E35">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E36">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E37">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E38">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E39">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E40">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E41">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E42">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E43">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E44">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E45">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E46">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E47">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E48">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E49">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+    <owl:Class rdf:about="#E50">
+        <rdfs:subClassOf rdf:resource="#E"/>
+    </owl:Class>
+
+</rdf:RDF>

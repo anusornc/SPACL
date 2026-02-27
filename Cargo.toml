@@ -1,0 +1,217 @@
+[package]
+name = "owl2-reasoner"
+version = "0.2.0"
+edition = "2021"
+
+[dependencies]
+# RDF and OWL parsing
+rio_api = "0.8"
+rio_turtle = "0.8"
+rio_xml = "0.8"
+oxiri = "0.2"
+
+# Data structures and algorithms
+petgraph = "0.6"
+indexmap = "2.0"
+hashbrown = "0.14"
+bit-set = "0.5"
+rustc-hash = "1.1"
+
+# Serialization
+serde = { version = "1.0", features = ["derive", "rc"] }
+serde_json = "1.0"
+serde-xml-rs = "0.6"
+xmltree = "0.10"
+quick-xml = "0.31"
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Logging and debugging
+log = "0.4"
+env_logger = "0.10"
+
+# Validation and benchmarking
+chrono = { version = "0.4", features = ["serde"] }
+time = { version = "0.3", features = ["serde"] }
+num_cpus = "1.13"
+
+# Utilities
+itertools = "0.12"
+once_cell = "1.19"
+regex = "1.10"
+
+# Performance
+rayon = "1.8"
+lazy_static = "1.4"
+crossbeam = "0.8"
+dashmap = "5.5"
+libc = "0.2"
+bumpalo = "3.14"
+smallvec = { version = "1.13", features = ["serde"] }
+parking_lot = "0.12"
+lru = "0.12"
+futures = "0.3"
+
+# Testing
+proptest = "1.4"
+criterion = { version = "0.5", features = ["html_reports"] }
+
+# Random generation
+rand = "0.8"
+
+# Test suite integration
+glob = "0.3"
+
+# HTTP support for import resolution
+reqwest = { version = "0.12", features = ["json", "blocking"], optional = true }
+
+# Full JSON-LD 1.1 support
+json-ld = "0.21"
+iri-string = "0.7"
+url = "2.5"
+
+# Web service framework
+warp = { version = "0.3", optional = true }
+uuid = { version = "1.0", features = ["v4", "serde"], optional = true }
+tokio = { version = "1.0", features = ["rt", "macros", "rt-multi-thread", "sync"], optional = true }
+async-trait = { version = "0.1", optional = true }
+bincode = { version = "2.0.1", features = ["serde"] }
+dyn-clone = "1.0"
+erased-serde = "0.3"
+typetag = "0.2"
+
+[dev-dependencies]
+tempfile = "3.8"
+# owl2-reasoner-test-suite = { path = "../owl2-reasoner-test-suite" }
+clap = { version = "4", features = ["derive"] }
+chrono = { version = "0.4", features = ["serde"] }
+tokio = { version = "1.0", features = ["rt", "macros", "rt-multi-thread"] }
+reqwest = { version = "0.12", features = ["json"] }
+
+# Benchmarking and performance testing
+criterion = { version = "0.5", features = ["html_reports", "cargo_bench_support"] }
+
+# Memory profiling
+memmap2 = "0.9"
+sysinfo = "0.30"
+
+# Test data generation
+rand = "0.8"
+fake = { version = "2.9", features = ["derive"] }
+ 
+[features]
+# Default to streaming RDF/XML backend in non-strict mode
+default = ["rio-xml", "http", "tokio", "uuid", "async-trait"]
+rio-xml = []
+http = ["reqwest"]
+web-service = ["warp", "uuid", "tokio", "async-trait"]
+experimental-xml-parser = []
+
+
+[lib]
+name = "owl2_reasoner"
+path = "src/lib.rs"
+
+[[bin]]
+name = "analyze_tableaux_performance"
+path = "scripts/analyze_tableaux_performance.rs"
+
+
+[[example]]
+name = "benchmark_100k"
+path = "examples/benchmark_100k.rs"
+
+[[example]]
+name = "benchmark_disjunctive"
+path = "examples/benchmark_disjunctive.rs"
+
+[[example]]
+name = "benchmark_disjunctive_simple"
+path = "examples/benchmark_disjunctive_simple.rs"
+
+[[example]]
+name = "benchmark_large"
+path = "examples/benchmark_large.rs"
+
+[[example]]
+name = "check_disjunctions"
+path = "examples/check_disjunctions.rs"
+
+[[example]]
+name = "inspect_axioms"
+path = "examples/inspect_axioms.rs"
+
+[[example]]
+name = "overnight_test"
+path = "examples/overnight_test.rs"
+
+[[example]]
+name = "quick_speedup_test"
+path = "examples/quick_speedup_test.rs"
+
+[[example]]
+name = "test_branch_splitting"
+path = "examples/test_branch_splitting.rs"
+
+[[example]]
+name = "test_spacl"
+path = "examples/test_spacl.rs"
+
+[[example]]
+name = "test_spacl_large"
+path = "examples/test_spacl_large.rs"
+
+[[example]]
+name = "test_tuning"
+path = "examples/test_tuning.rs"
+
+[[example]]
+name = "verify_spacl"
+path = "examples/verify_spacl.rs"
+
+[[bin]]
+name = "benchmark_adaptive"
+path = "scripts/benchmark_adaptive.rs"
+
+[[bin]]
+name = "benchmark_edge_cases"
+path = "scripts/benchmark_edge_cases.rs"
+
+[[bin]]
+name = "owl2-reasoner"
+path = "src/bin/owl2-reasoner.rs"
+
+[[bin]]
+name = "epcis-reasoner"
+path = "src/bin/epcis-reasoner.rs"
+
+[[bin]]
+name = "owl2_validation"
+path = "src/bin/owl2_validation.rs"
+
+[[bench]]
+name = "adaptive_threshold"
+harness = false
+
+[[bench]]
+name = "adaptive_with_unions"
+harness = false
+
+[[bench]]
+name = "spacl_vs_sequential"
+harness = false
+
+[[bench]]
+name = "real_world_benchmark"
+harness = false
+
+[[bench]]
+name = "real_world_ontologies"
+harness = false
+
+# Build OpenSSL from source to avoid system dependency
+[dependencies.openssl-sys]
+version = "0.9"
+features = ["vendored"]

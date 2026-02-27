@@ -1,0 +1,101 @@
+
+# IDE-specific rules
+.clinerules/byterover-rules.md
+.kilocode/rules/byterover-rules.md
+.roo/rules/byterover-rules.md
+.windsurf/rules/byterover-rules.md
+.cursor/rules/byterover-rules.mdc
+.kiro/steering/byterover-rules.md
+.qoder/rules/byterover-rules.md
+.augment/rules/byterover-rules.md
+
+# Rust
+/target/
+/Cargo.lock
+**/*.rs.bk
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+*.log
+.env
+.env.*
+!.env.example
+CLAUDE.md
+
+# Docker
+.dockerignore.bak
+
+# Sensitive local files
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.crt
+*.der
+*_secret.*
+*secrets*.json
+
+# Benchmark and profiling artifacts (generated)
+perf.data
+perf.data.*
+flamegraph.svg
+flamegraph*.svg
+results/*.pid
+results/*.json
+results/*.tmp
+results/history/*/criterion_report/
+results/history/*/benchmark_output.log
+benchmarks/competitors/results/history/
+benchmarks/competitors/results/latest
+benchmarks/competitors/results/**/*.csv
+benchmarks/competitors/results/**/*.json
+benchmarks/competitors/results/**/*.md
+benchmarks/competitors/results/**/*.tex
+benchmarks/competitors/results/**/*.log
+benchmarks/competitors/results/**/*.pdf
+!benchmarks/competitors/results/FINAL_BENCHMARK_REPORT.md
+
+# Test artifacts
+*.profraw
+
+# Paper build artifacts
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.out
+*.synctex.gz
+*.toc
+*.lot
+*.lof
+*.pdf
+paper/**/*.pdf
+
+# Large test data (keep small ones)
+tests/data/hierarchy_100000.owl
+tests/data/*.owlbin
+benchmarks/ontologies/**/*.owlbin
+benchmarks/competitors/ontologies/*.owlbin
