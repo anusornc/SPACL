@@ -1,6 +1,6 @@
 # Source Architecture (`src/`)
 
-This document describes the current Rust module layout for Tableauxx.
+This document describes the current Rust module layout for SPACL.
 
 ## High-level module tree
 

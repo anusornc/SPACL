@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Quick comparison: HermiT vs Tableauxx
+# Quick comparison: HermiT vs SPACL
 #
 
 set -e
@@ -33,17 +33,17 @@ fi
 
 echo ""
 
-# Test Tableauxx
-echo "--- Tableauxx ---"
+# Test SPACL
+echo "--- SPACL ---"
 if [ -f "$PROJECT_ROOT/target/release/owl2-reasoner" ]; then
     start_time=$(date +%s%N)
     "$PROJECT_ROOT/target/release/owl2-reasoner" check "$ONTOLOGY" 2>&1
     end_time=$(date +%s%N)
     tableauxx_ms=$(( (end_time - start_time) / 1000000 ))
     echo ""
-    echo "{\"reasoner\": \"Tableauxx\", \"duration_ms\": $tableauxx_ms, \"status\": \"completed\"}"
+    echo "{\"reasoner\": \"SPACL\", \"duration_ms\": $tableauxx_ms, \"status\": \"completed\"}"
 else
-    echo "Tableauxx binary not found. Run: cargo build --release --bin owl2-reasoner"
+    echo "SPACL binary not found. Run: cargo build --release --bin owl2-reasoner"
 fi
 
 echo ""

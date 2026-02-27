@@ -1,6 +1,6 @@
 # Documentation Hub
 
-This directory contains the active technical documentation for Tableauxx.
+This directory contains the active technical documentation for SPACL.
 
 ## Start here
 

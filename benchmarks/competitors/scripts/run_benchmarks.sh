@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # OWL reasoner head-to-head benchmark harness.
-# Includes: Tableauxx, HermiT, Konclude, Openllet, ELK, JFact, Pellet.
+# Includes: SPACL, HermiT, Konclude, Openllet, ELK, JFact, Pellet.
 #
 # Fairness policy:
 # - Every reasoner runs the same operation (`consistency` by default).

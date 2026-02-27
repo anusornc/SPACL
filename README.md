@@ -1,4 +1,4 @@
-# SPACL (Tableauxx)
+# SPACL
 
 SPACL is an OWL2 reasoner library and CLI toolkit implemented in Rust.
 This public repository focuses on runnable code, examples, tests, and lightweight docs for trying the system quickly.

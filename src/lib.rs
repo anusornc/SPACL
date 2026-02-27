@@ -1,4 +1,4 @@
-//! # OWL2 Reasoner (Tableauxx)
+//! # OWL2 Reasoner (SPACL)
 //!
 //! A high-performance, feature-complete OWL2 reasoning engine with novel
 //! speculative parallel reasoning (SPACL algorithm).
