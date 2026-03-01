@@ -65,6 +65,7 @@
 //! ```
 
 use std::io::{Read, Result as IoResult, Write};
+use std::time::Instant;
 
 use crate::core::entities::{
     Annotation, AnnotationProperty, AnonymousIndividual, Class, DataProperty, NamedIndividual,
@@ -220,6 +221,22 @@ impl OntologyPayload {
 pub struct BinaryOntologyFormat;
 
 impl BinaryOntologyFormat {
+    fn stage_timing_enabled() -> bool {
+        match std::env::var("OWL2_REASONER_STAGE_TIMING") {
+            Ok(value) => {
+                let value = value.trim().to_ascii_lowercase();
+                !(value.is_empty() || value == "0" || value == "false" || value == "no")
+            }
+            Err(_) => false,
+        }
+    }
+
+    fn stage_log(stage: &str, detail: &str) {
+        if Self::stage_timing_enabled() {
+            eprintln!("[stage] {} {}", stage, detail);
+        }
+    }
+
     /// Serialize an ontology to binary format
     pub fn serialize<W: Write>(ontology: &Ontology, writer: &mut W) -> IoResult<()> {
         let version = match std::env::var("OWL2_REASONER_BIN_FORMAT").ok().as_deref() {
@@ -320,22 +337,64 @@ impl BinaryOntologyFormat {
             VERSION_V1 => Self::deserialize_v1(reader, header),
             VERSION_V2 => {
                 let config = config::standard();
+                let decode_start = Instant::now();
                 let payload: OntologyPayload = bincode::serde::decode_from_std_read(reader, config)
                     .map_err(|err| {
                         std::io::Error::new(std::io::ErrorKind::InvalidData, err.to_string())
                     })?;
+                Self::stage_log(
+                    "binary_payload_decode_done",
+                    &format!(
+                        "ms={} version=2 classes={} axioms={}",
+                        decode_start.elapsed().as_millis(),
+                        payload.classes.len(),
+                        payload.axioms.len()
+                    ),
+                );
+                let materialize_start = Instant::now();
                 payload.into_ontology().map_err(|err| {
                     std::io::Error::new(std::io::ErrorKind::InvalidData, format!("{:?}", err))
+                }).inspect(|ontology| {
+                    Self::stage_log(
+                        "binary_payload_materialize_done",
+                        &format!(
+                            "ms={} version=2 classes={} axioms={}",
+                            materialize_start.elapsed().as_millis(),
+                            ontology.classes().len(),
+                            ontology.axioms().len()
+                        ),
+                    );
                 })
             }
             VERSION_V3 => {
                 let config = config::standard().with_fixed_int_encoding();
+                let decode_start = Instant::now();
                 let payload: OntologyPayload = bincode::serde::decode_from_std_read(reader, config)
                     .map_err(|err| {
                         std::io::Error::new(std::io::ErrorKind::InvalidData, err.to_string())
                     })?;
+                Self::stage_log(
+                    "binary_payload_decode_done",
+                    &format!(
+                        "ms={} version=3 classes={} axioms={}",
+                        decode_start.elapsed().as_millis(),
+                        payload.classes.len(),
+                        payload.axioms.len()
+                    ),
+                );
+                let materialize_start = Instant::now();
                 payload.into_ontology().map_err(|err| {
                     std::io::Error::new(std::io::ErrorKind::InvalidData, format!("{:?}", err))
+                }).inspect(|ontology| {
+                    Self::stage_log(
+                        "binary_payload_materialize_done",
+                        &format!(
+                            "ms={} version=3 classes={} axioms={}",
+                            materialize_start.elapsed().as_millis(),
+                            ontology.classes().len(),
+                            ontology.axioms().len()
+                        ),
+                    );
                 })
             }
             _ => Err(std::io::Error::new(

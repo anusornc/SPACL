@@ -1,4 +1,4 @@
-use std::io::Read;
+use std::io::{BufReader, BufWriter, Read, Write};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
@@ -117,8 +117,9 @@ fn bin_path_for(path: &Path) -> PathBuf {
 
 fn load_binary(path: &Path) -> OwlResult<Ontology> {
     let start = Instant::now();
-    let mut file = std::fs::File::open(path)
+    let file = std::fs::File::open(path)
         .map_err(|e| OwlError::StorageError(format!("Failed to open {}: {}", path.display(), e)))?;
+    let mut reader = BufReader::with_capacity(8 * 1024 * 1024, file);
     let open_ms = start.elapsed().as_millis();
     stage_log(
         "binary_open_done",
@@ -126,7 +127,7 @@ fn load_binary(path: &Path) -> OwlResult<Ontology> {
     );
 
     let deser_start = Instant::now();
-    let ontology = BinaryOntologyFormat::deserialize(&mut file).map_err(|e| {
+    let ontology = BinaryOntologyFormat::deserialize(&mut reader).map_err(|e| {
         OwlError::SerializationError(format!("Failed to deserialize {}: {}", path.display(), e))
     })?;
     let deser_ms = deser_start.elapsed().as_millis();
@@ -422,9 +423,12 @@ pub fn load_ontology_with_env(path: &Path) -> OwlResult<Ontology> {
 
     if auto_cache {
         let cache_start = Instant::now();
-        if let Ok(mut file) = std::fs::File::create(&bin_path) {
-            if let Err(err) = BinaryOntologyFormat::serialize(&ontology, &mut file) {
+        if let Ok(file) = std::fs::File::create(&bin_path) {
+            let mut writer = BufWriter::with_capacity(8 * 1024 * 1024, file);
+            if let Err(err) = BinaryOntologyFormat::serialize(&ontology, &mut writer) {
                 eprintln!("Failed to write {}: {}", bin_path.display(), err);
+            } else if let Err(err) = writer.flush() {
+                eprintln!("Failed to flush {}: {}", bin_path.display(), err);
             } else {
                 stage_log(
                     "auto_cache_done",

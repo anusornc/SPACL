@@ -18,7 +18,7 @@ cargo run --bin owl2-reasoner -- check tests/data/univ-bench.owl
 # Auto-select reasoner by ontology profile
 cargo run --bin owl2-reasoner -- check-auto tests/data/univ-bench.owl
 
-# Convert ontology to binary cache format
+# Convert ontology to binary cache format (optional cache/diagnostic path)
 cargo run --bin owl2-reasoner -- convert tests/data/univ-bench.owl /tmp/univ-bench.owlbin
 ```
 
@@ -39,6 +39,7 @@ cargo run --bin epcis-reasoner -- help
 ## Benchmarking
 
 This repository includes benchmark runner scripts only:
+- `benchmarks/competitors/scripts/profile_bin_cache.sh`
 - `benchmarks/competitors/scripts/run_benchmarks.sh`
 - `benchmarks/competitors/scripts/run_stage_benchmark.sh`
 - `benchmarks/competitors/scripts/run_stage_suite.sh`

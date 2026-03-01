@@ -16,7 +16,6 @@ else
 fi
 
 ONTOLOGY_SUITE="${ONTOLOGY_SUITE:-large}"
-REPEAT_WARM="${REPEAT_WARM:-3}"
 TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-900}"
 CHEBI_TIMEOUT_SECONDS="${CHEBI_TIMEOUT_SECONDS:-1800}"
 SKIP_BUILD="${SKIP_BUILD:-1}"
@@ -29,7 +28,7 @@ SUMMARY_CSV="$RESULT_ROOT/stage_suite_summary.csv"
 SUMMARY_MD="$RESULT_ROOT/stage_suite_summary.md"
 
 cat >"$SUMMARY_CSV" <<EOF
-ontology,status,e2e_cold_wall_ms,parse_only_ms,reason_only_warm_median_ms,parse_share_pct,stage_summary_csv
+ontology,status,e2e_cold_wall_ms,parse_only_ms,reason_only_stage_ms,parse_share_pct,stage_summary_csv
 EOF
 
 extract_metric() {
@@ -53,7 +52,6 @@ for ontology in "${ONTOLOGIES[@]}"; do
     cd "$ROOT_DIR"
     ONTOLOGY_SUITE="$ONTOLOGY_SUITE" \
     INCLUDE_CHEBI="$include_chebi" \
-    REPEAT_WARM="$REPEAT_WARM" \
     TIMEOUT_SECONDS="$local_timeout" \
     SKIP_BUILD="$SKIP_BUILD" \
     "$RUN_STAGE" "$ontology"
@@ -76,7 +74,7 @@ for ontology in "${ONTOLOGIES[@]}"; do
 
   wall_ms="$(extract_metric "$stage_summary_csv" "e2e_cold_wall")"
   parse_ms="$(extract_metric "$stage_summary_csv" "parse_only")"
-  reason_ms="$(extract_metric "$stage_summary_csv" "reason_only_warm_median")"
+  reason_ms="$(extract_metric "$stage_summary_csv" "reason_only_stage")"
   parse_share_pct="$(awk -v parse="$parse_ms" -v wall="$wall_ms" 'BEGIN { if (wall > 0) printf "%.2f", (parse * 100.0 / wall); else print "-1" }')"
 
   echo "$ontology,success,$wall_ms,$parse_ms,$reason_ms,$parse_share_pct,$stage_summary_csv" >>"$SUMMARY_CSV"
@@ -87,9 +85,8 @@ done
   echo
   echo "- Suite ID: \`$SUITE_ID\`"
   echo "- Ontology suite: \`$ONTOLOGY_SUITE\`"
-  echo "- Warm repeats per ontology: \`$REPEAT_WARM\`"
   echo
-  echo "| Ontology | Status | E2E cold wall (ms) | Parse-only (ms) | Reason-only warm median (ms) | Parse share (%) |"
+  echo "| Ontology | Status | E2E cold wall (ms) | Parse-only (ms) | Reason-only stage (ms) | Parse share (%) |"
   echo "|---|---|---:|---:|---:|---:|"
   tail -n +2 "$SUMMARY_CSV" | while IFS=, read -r ontology status wall parse reason share _; do
     echo "| $ontology | $status | $wall | $parse | $reason | $share |"

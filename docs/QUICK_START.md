@@ -19,7 +19,7 @@ cargo run --bin owl2-reasoner -- check-auto tests/data/univ-bench.owl
 # Stats
 cargo run --bin owl2-reasoner -- stats tests/data/univ-bench.owl
 
-# Convert to binary format
+# Convert to binary format (optional cache/diagnostic path)
 cargo run --bin owl2-reasoner -- convert tests/data/univ-bench.owl /tmp/univ-bench.owlbin
 ```
 
@@ -52,11 +52,12 @@ cargo run --bin owl2-reasoner -- check tests/data/hierarchy_10000.owl
 
 The public package includes benchmark harness scripts under:
 
+- `benchmarks/competitors/scripts/profile_bin_cache.sh`
 - `benchmarks/competitors/scripts/run_benchmarks.sh`
 - `benchmarks/competitors/scripts/run_stage_benchmark.sh`
 - `benchmarks/competitors/scripts/run_stage_suite.sh`
 
-These scripts require additional benchmark assets (for example competitor Dockerfiles and external ontology sets) that are not bundled in this public repository.
+Primary stage metrics now come from the cold text path via `run_stage_benchmark.sh` and `run_stage_suite.sh`. Use `profile_bin_cache.sh` only for optional `.owlbin` diagnostics. These scripts require additional benchmark assets (for example competitor Dockerfiles and external ontology sets) that are not bundled in this public repository.
 
 Minimal example:
 
