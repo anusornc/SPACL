@@ -123,20 +123,6 @@ Domain and deployment docs:
 
 - `docs/BLOCKCHAIN_TRANSACTION_PROFILE_GUIDE.md`
 
-## Paper
-
-Submission workspace:
-
-- `paper/submission/manuscript.tex`
-- `paper/submission/compile.sh`
-
-Build PDF:
-
-```bash
-cd paper/submission
-./compile.sh
-```
-
 ## License
 
 - Code: MIT (`LICENSE`)
