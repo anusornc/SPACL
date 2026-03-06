@@ -1,5 +1,23 @@
 # Quick Start
 
+## 0. Prerequisites
+
+Required tools:
+
+- Rust toolchain (stable; tested with Rust `1.84+`)
+- Docker Engine (`docker` CLI usable by your account)
+- `jq`
+- GNU `timeout` (from `coreutils`)
+
+Quick check:
+
+```bash
+cargo --version
+docker --version
+jq --version
+timeout --version | head -n 1
+```
+
 ## 1. Build and test
 
 ```bash
@@ -19,7 +37,7 @@ cargo run --bin owl2-reasoner -- check-auto tests/data/univ-bench.owl
 # Stats
 cargo run --bin owl2-reasoner -- stats tests/data/univ-bench.owl
 
-# Convert to binary format (optional cache/diagnostic path)
+# Convert to binary format
 cargo run --bin owl2-reasoner -- convert tests/data/univ-bench.owl /tmp/univ-bench.owlbin
 ```
 
@@ -45,27 +63,70 @@ Example:
 
 ```bash
 OWL2_REASONER_LARGE_PARSE=1 OWL2_REASONER_AUTO_CACHE=1 \
-cargo run --bin owl2-reasoner -- check tests/data/hierarchy_10000.owl
+cargo run --bin owl2-reasoner -- check benchmarks/ontologies/other/go-basic.owl
 ```
 
 ## 5. Run benchmark harness
 
-The public package includes benchmark harness scripts under:
-
-- `benchmarks/competitors/scripts/profile_bin_cache.sh`
-- `benchmarks/competitors/scripts/run_benchmarks.sh`
-- `benchmarks/competitors/scripts/run_stage_benchmark.sh`
-- `benchmarks/competitors/scripts/run_stage_suite.sh`
-
-Primary stage metrics now come from the cold text path via `run_stage_benchmark.sh` and `run_stage_suite.sh`. Use `profile_bin_cache.sh` only for optional `.owlbin` diagnostics. These scripts require additional benchmark assets (for example competitor Dockerfiles and external ontology sets) that are not bundled in this public repository.
-
-Minimal example:
+### 5.1 Minimal smoke benchmark (recommended first)
 
 ```bash
-RUN_ID=public_smoke_YYYYMMDD \
+RUN_ID=smoke_$(date +%Y%m%d_%H%M%S) \
+ONTOLOGY_SUITE=standard \
+ONTOLOGY_REGEX='^disjunctive_simple\.owl$' \
+REASONERS_OVERRIDE=tableauxx \
+TIMEOUT_SECONDS=60 \
+SKIP_BUILD=0 \
+benchmarks/competitors/scripts/run_benchmarks.sh all
+```
+
+### 5.2 Core competitor harness
+
+```bash
+# Small suite example
+RUN_ID=small_workload_suite_real_YYYYMMDD \
 ONTOLOGY_SUITE=standard \
 REASONERS_OVERRIDE=tableauxx,hermit,konclude,openllet,elk,jfact,pellet \
 TIMEOUT_SECONDS=180 \
 SKIP_BUILD=0 \
 benchmarks/competitors/scripts/run_benchmarks.sh all
+```
+
+### OWL2Bench wrapper
+
+```bash
+OWL2BENCH_SOURCE_DIR=/tmp/owl2bench/OWL2Bench \
+benchmarks/external/owl2bench/prepare.sh
+
+RUN_ID=owl2bench_univ_core_example \
+TIMEOUT_SECONDS=300 \
+SKIP_BUILD=1 \
+REASONERS_OVERRIDE=tableauxx,hermit,konclude,openllet,elk,jfact,pellet \
+benchmarks/external/owl2bench/run.sh all
+```
+
+For authoritative benchmark commands and run IDs, use:
+
+- `docs/benchmarking/BENCHMARK_RUNBOOK.md`
+
+## 6. Troubleshooting (common)
+
+Docker permission error:
+
+```text
+permission denied while trying to connect to the docker API socket
+```
+
+Fix:
+
+```bash
+sudo usermod -aG docker "$USER"
+# log out/login (or reboot), then retry
+```
+
+## 7. Build paper PDF
+
+```bash
+cd paper/submission
+./compile.sh
 ```

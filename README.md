@@ -1,7 +1,35 @@
-# SPACL
+# SPACL (Tableauxx Repository)
 
-SPACL is an OWL2 reasoner library and CLI toolkit implemented in Rust.
-This public repository focuses on runnable code, examples, tests, and lightweight docs for trying the system quickly.
+This repository contains the SPACL OWL reasoner implementation and benchmarking toolkit in Rust.
+Repository/package names still use `tableauxx` in some paths and scripts for historical compatibility.
+It supports multi-format ontology loading, profile-aware reasoning, and reproducible head-to-head benchmarking.
+
+## Prerequisites
+
+- Rust toolchain (stable; tested with Rust `1.84+`)
+- Docker Engine (`docker` CLI must be usable by your user)
+- `jq`
+- GNU `timeout` (usually from `coreutils`)
+
+Quick check:
+
+```bash
+cargo --version
+docker --version
+jq --version
+timeout --version | head -n 1
+```
+
+## Current benchmark position (latest)
+
+From the latest clean OWL2Bench core 3-run aggregate in this repository:
+
+- Run set: `owl2bench_univ_core_clean_20260223`, `_r2`, `_r3`
+- Aggregate: `benchmarks/competitors/results/history/owl2bench_univ_core_clean_aggregate_20260223`
+- SPACL/Tableauxx: `12/12` success, median wall time `2107.5 ms`, P95 `2707 ms`
+- In this harness, SPACL/Tableauxx is median winner on all 4 core profiles (`DL`, `EL`, `QL`, `RL`)
+
+See details in `docs/benchmarking/BENCHMARK_RUNBOOK.md`.
 
 ## Quick start
 
@@ -12,14 +40,35 @@ cargo build --release
 # Run tests
 cargo test
 
-# Check ontology consistency
+# Check consistency
 cargo run --bin owl2-reasoner -- check tests/data/univ-bench.owl
 
 # Auto-select reasoner by ontology profile
 cargo run --bin owl2-reasoner -- check-auto tests/data/univ-bench.owl
 
-# Convert ontology to binary cache format (optional cache/diagnostic path)
+# Convert ontology to binary cache format
 cargo run --bin owl2-reasoner -- convert tests/data/univ-bench.owl /tmp/univ-bench.owlbin
+```
+
+## Benchmark smoke test (recommended first)
+
+Before full competitor runs, verify your environment with a one-ontology smoke run:
+
+```bash
+RUN_ID=smoke_$(date +%Y%m%d_%H%M%S) \
+ONTOLOGY_SUITE=standard \
+ONTOLOGY_REGEX='^disjunctive_simple\.owl$' \
+REASONERS_OVERRIDE=tableauxx \
+TIMEOUT_SECONDS=60 \
+SKIP_BUILD=0 \
+benchmarks/competitors/scripts/run_benchmarks.sh all
+```
+
+If Docker permission fails (e.g., `permission denied while trying to connect to the docker API socket`), add your user to Docker group and re-login:
+
+```bash
+sudo usermod -aG docker "$USER"
+# then log out/login (or reboot) before retrying
 ```
 
 ## Main CLIs
@@ -38,13 +87,19 @@ cargo run --bin epcis-reasoner -- help
 
 ## Benchmarking
 
-This repository includes benchmark runner scripts only:
-- `benchmarks/competitors/scripts/profile_bin_cache.sh`
-- `benchmarks/competitors/scripts/run_benchmarks.sh`
-- `benchmarks/competitors/scripts/run_stage_benchmark.sh`
-- `benchmarks/competitors/scripts/run_stage_suite.sh`
+Primary benchmark harness:
 
-Large benchmark datasets/results are intentionally not bundled in this public package.
+- `benchmarks/competitors/scripts/run_benchmarks.sh`
+
+External OWL2Bench wrapper:
+
+- `benchmarks/external/owl2bench/prepare.sh`
+- `benchmarks/external/owl2bench/run.sh`
+- `benchmarks/external/owl2bench/report.sh`
+
+Operational benchmark guide:
+
+- `docs/benchmarking/BENCHMARK_RUNBOOK.md`
 
 ## Documentation map
 
@@ -53,7 +108,25 @@ Start here:
 - `docs/README.md`
 - `docs/QUICK_START.md`
 - `docs/PROJECT_STRUCTURE.md`
-- `docs/SPACL_ALGORITHM.md`
+- `docs/DIRECTORY_STRUCTURE.md`
+
+Domain and deployment docs:
+
+- `docs/BLOCKCHAIN_TRANSACTION_PROFILE_GUIDE.md`
+
+## Paper
+
+Submission workspace:
+
+- `paper/submission/manuscript.tex`
+- `paper/submission/compile.sh`
+
+Build PDF:
+
+```bash
+cd paper/submission
+./compile.sh
+```
 
 ## License
 
