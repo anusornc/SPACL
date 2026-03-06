@@ -185,3 +185,5 @@ Filtering note:
 - For paper claims, reference explicit run IDs and timeout policy.
 - If a reasoner is environment-dependent (e.g., legacy artifact repository), keep
   that caveat in method/limitations text.
+- Always validate run statuses from result JSONs; a completed harness run can still
+  contain only `not_available` rows when dependencies (e.g., Docker permissions/image build) fail.

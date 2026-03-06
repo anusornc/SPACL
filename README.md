@@ -64,6 +64,15 @@ SKIP_BUILD=0 \
 benchmarks/competitors/scripts/run_benchmarks.sh all
 ```
 
+Verify smoke status:
+
+```bash
+run_dir="$(readlink -f benchmarks/competitors/results/latest)"
+jq -r '.status' "$run_dir"/*.json | sort | uniq -c
+```
+
+Expected: at least one `success` row for `tableauxx`.
+
 If Docker permission fails (e.g., `permission denied while trying to connect to the docker API socket`), add your user to Docker group and re-login:
 
 ```bash

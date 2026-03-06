@@ -80,6 +80,15 @@ SKIP_BUILD=0 \
 benchmarks/competitors/scripts/run_benchmarks.sh all
 ```
 
+Verify smoke result:
+
+```bash
+run_dir="$(readlink -f benchmarks/competitors/results/latest)"
+jq -r '.status' "$run_dir"/*.json | sort | uniq -c
+```
+
+Expected: at least one `success` row.
+
 ### 5.2 Core competitor harness
 
 ```bash

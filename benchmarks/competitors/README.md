@@ -45,6 +45,10 @@ TIMEOUT_SECONDS=60 \
 SKIP_BUILD=0 \
 ./scripts/run_benchmarks.sh all
 
+# Verify statuses from latest run
+run_dir="$(readlink -f results/latest)"
+jq -r '.status' "$run_dir"/*.json | sort | uniq -c
+
 # Or step by step:
 ./scripts/run_benchmarks.sh prepare   # Stage suite ontologies into an isolated run dir
 ./scripts/run_benchmarks.sh build     # Build Docker images
