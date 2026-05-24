@@ -133,9 +133,11 @@ sudo usermod -aG docker "$USER"
 # log out/login (or reboot), then retry
 ```
 
-## 7. Build paper PDF
+## 7. Public release boundary
 
-```bash
-cd paper/submission
-./compile.sh
-```
+This quick start is intended for the public SPACL code and benchmark workflow.
+Private manuscript workspaces, submission checklists, provenance notes, and
+internal paper artifacts are intentionally excluded from public release branches.
+
+Before syncing private development changes to this public repo, use the public
+sync checklist and fileset docs from the private source-of-truth repository.
