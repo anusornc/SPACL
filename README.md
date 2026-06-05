@@ -126,3 +126,7 @@ Domain and deployment docs:
 ## License
 
 - Code: MIT (`LICENSE`)
+
+## Public reproducibility package
+
+A curated public benchmark-audit package is documented in `docs/PUBLIC_REPRODUCIBILITY_PACKAGE.md` and `benchmarks/competitors/results/reproducibility/PUBLIC_REPRODUCIBILITY_MANIFEST_20260605.md`.

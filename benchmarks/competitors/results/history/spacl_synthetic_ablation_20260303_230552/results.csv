@@ -1,0 +1,13 @@
+workload,mode,nogood_enabled,repeat,wall_time_ms,reasoning_time_ms,used_parallel,disjunctions_detected,estimated_branch_count,branches_created,work_items_expanded,branches_pruned,nogood_hits,local_cache_hits,global_cache_hits,steal_attempts,steal_successes
+reused_conflict_12,sequential,false,1,0.440,0,false,12,16,0,0,0,0,0,0,0,0
+reused_conflict_12,sequential,false,2,0.505,0,false,12,16,0,0,0,0,0,0,0,0
+reused_conflict_12,sequential,false,3,0.452,0,false,12,16,0,0,0,0,0,0,0,0
+reused_conflict_12,adaptive_no_nogood,false,1,12238.004,12237,true,12,16,59413,19804,0,0,0,0,1218,106
+reused_conflict_12,adaptive_no_nogood,false,2,626.525,625,true,12,16,53122,17707,0,0,0,0,1627,494
+reused_conflict_12,adaptive_no_nogood,false,3,6821.705,6820,true,12,16,60466,20155,0,0,0,0,2159,571
+reused_conflict_12,adaptive,true,1,1037.632,1036,true,12,16,30865,10288,418,418,418,0,1850,22
+reused_conflict_12,adaptive,true,2,1579.594,1578,true,12,16,71113,23704,4159,4159,4159,0,1458,199
+reused_conflict_12,adaptive,true,3,274.749,274,true,12,16,25456,8485,13,13,13,0,2401,555
+reused_conflict_12,always_parallel,false,1,1988.105,1986,true,12,16,18319,6106,0,0,0,0,6867,414
+reused_conflict_12,always_parallel,false,2,14424.697,14423,true,12,16,48334,16111,0,0,0,0,3591,1307
+reused_conflict_12,always_parallel,false,3,30862.860,30861,true,12,16,41836,13945,0,0,0,0,4220,1043

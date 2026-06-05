@@ -1,0 +1,15 @@
+{
+  "run_id": "large_r3_real_20260225",
+  "ontology_suite": "large",
+  "reasoner": "openllet",
+  "ontology": "doid.owl",
+  "operation": "consistency",
+  "wall_time_ms": 14336,
+  "reported_time_ms": 334,
+  "parse_time_ms": -1,
+  "reason_time_ms": -1,
+  "status": "success",
+  "reasoning_result": "consistent",
+  "timestamp": "2026-02-26T09:02:09+07:00",
+  "output": "{\"reasoner\": \"Openllet\", \"version\": \"2.6.5\", \"operation\": \"consistency\", \"ontology\": \"/ontologies/doid.owl\"}\n[main] INFO org.semanticweb.owlapi.io.DocumentSources - URL connection input stream is compressed using gzip\n[main] INFO org.semanticweb.owlapi.io.DocumentSources - URL connection input stream is compressed using gzip\n[main] INFO org.semanticweb.owlapi.io.DocumentSources - URL connection input stream is compressed using gzip\n[main] INFO org.semanticweb.owlapi.io.DocumentSources - URL connection input stream is compressed using gzip\n[main] INFO org.semanticweb.owlapi.io.DocumentSources - URL connection input stream is compressed using gzip\n[main] INFO org.semanticweb.owlapi.io.DocumentSources - URL connection input stream is compressed using gzip\n[main] INFO org.semanticweb.owlapi.io.DocumentSources - URL connection input stream is compressed using gzip\n[main] INFO org.semanticweb.owlapi.io.DocumentSources - URL connection input stream is compressed using gzip\n[main] INFO org.semanticweb.owlapi.io.DocumentSources - URL connection input stream is compressed using gzip\n[main] INFO org.semanticweb.owlapi.io.DocumentSources - URL connection input stream is compressed using gzip\n[main] INFO org.semanticweb.owlapi.io.DocumentSources - URL connection input stream is compressed using gzip\n[main] INFO org.semanticweb.owlapi.io.DocumentSources - URL connection input stream is compressed using gzip\n[main] INFO org.semanticweb.owlapi.io.DocumentSources - URL connection input stream is compressed using gzip\n[main] INFO org.semanticweb.owlapi.io.DocumentSources - URL connection input stream is compressed using gzip\n[main] INFO org.semanticweb.owlapi.io.DocumentSources - URL connection input stream is compressed using gzip\n{\"duration_ms\": 334, \"status\": \"completed\", \"reasoning_result\": \"consistent\"}\n"
+}

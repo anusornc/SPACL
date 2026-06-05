@@ -1,0 +1,18 @@
+\begin{table}[t]
+\centering
+\caption{Head-to-head consistency benchmark (wall time, ms)}
+\label{tab:head_to_head_wall_ms}
+\begin{tabular}{lrrrrrrr}
+\toprule
+Ontology & tableauxx & hermit & konclude & openllet & elk & jfact & pellet \\
+\midrule
+disjunctive\_simple.owl & \textbf{2273} & 3275 & FAIL & 2811 & 2695 & 3466 & 3310 \\
+disjunctive\_test.owl & \textbf{2113} & 3323 & FAIL & 3020 & 2923 & 3189 & 2627 \\
+hierarchy\_100.owl & \textbf{2032} & 3391 & FAIL & 2849 & 2985 & 3178 & 2838 \\
+hierarchy\_1000.owl & \textbf{2083} & 3498 & FAIL & 3204 & 3025 & 4110 & 3222 \\
+hierarchy\_10000.owl & 7903 & 4275 & FAIL & 4383 & \textbf{3579} & FAIL & 3644 \\
+hierarchy\_100000.owl & 39494 & 7636 & FAIL & 8967 & \textbf{5687} & FAIL & 10648 \\
+univ-bench.owl & 3096 & 3345 & FAIL & 2908 & 2717 & 3196 & \textbf{2492} \\
+\bottomrule
+\end{tabular}
+\end{table}

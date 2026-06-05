@@ -1,0 +1,15 @@
+{
+  "run_id": "owl2bench_univ_core_clean_20260223_r3",
+  "ontology_suite": "standard",
+  "reasoner": "jfact",
+  "ontology": "0003_UNIV-BENCH-OWL2QL.owl",
+  "operation": "consistency",
+  "wall_time_ms": 3507,
+  "reported_time_ms": 203,
+  "parse_time_ms": -1,
+  "reason_time_ms": -1,
+  "status": "success",
+  "reasoning_result": "consistent",
+  "timestamp": "2026-02-23T15:16:46+07:00",
+  "output": "{\"reasoner\": \"JFact\", \"version\": \"5.0.3\", \"operation\": \"consistency\", \"ontology\": \"/ontologies/0003_UNIV-BENCH-OWL2QL.owl\"}\n{\"duration_ms\": 203, \"status\": \"completed\", \"reasoning_result\": \"consistent\"}\n"
+}

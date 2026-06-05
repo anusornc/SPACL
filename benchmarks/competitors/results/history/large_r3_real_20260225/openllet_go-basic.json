@@ -1,0 +1,15 @@
+{
+  "run_id": "large_r3_real_20260225",
+  "ontology_suite": "large",
+  "reasoner": "openllet",
+  "ontology": "go-basic.owl",
+  "operation": "consistency",
+  "wall_time_ms": 17747,
+  "reported_time_ms": 207,
+  "parse_time_ms": -1,
+  "reason_time_ms": -1,
+  "status": "success",
+  "reasoning_result": "consistent",
+  "timestamp": "2026-02-26T09:04:48+07:00",
+  "output": "{\"reasoner\": \"Openllet\", \"version\": \"2.6.5\", \"operation\": \"consistency\", \"ontology\": \"/ontologies/go-basic.owl\"}\n{\"duration_ms\": 207, \"status\": \"completed\", \"reasoning_result\": \"consistent\"}\n"
+}

@@ -1,0 +1,13 @@
+workload,mode,nogood_enabled,repeat,wall_time_ms,reasoning_time_ms,used_parallel,disjunctions_detected,estimated_branch_count,branches_created,work_items_expanded,branches_pruned,nogood_hits,local_cache_hits,global_cache_hits,steal_attempts,steal_successes
+union_4x10,sequential,false,1,0.147,0,false,4,8,0,0,0,0,0,0,0,0
+union_4x10,sequential,false,2,0.142,0,false,4,8,0,0,0,0,0,0,0,0
+union_4x10,sequential,false,3,0.146,0,false,4,8,0,0,0,0,0,0,0,0
+union_4x10,adaptive_no_nogood,false,1,84.560,84,true,4,8,6331,633,0,0,0,0,1797,40
+union_4x10,adaptive_no_nogood,false,2,94.815,94,true,4,8,8991,899,0,0,0,0,1494,20
+union_4x10,adaptive_no_nogood,false,3,34.032,33,true,4,8,7321,732,0,0,0,0,2164,117
+union_4x10,adaptive,true,1,21.276,21,true,4,8,2521,252,0,0,0,0,2021,23
+union_4x10,adaptive,true,2,53.149,52,true,4,8,7931,793,0,0,0,0,2468,76
+union_4x10,adaptive,true,3,59.086,58,true,4,8,8291,829,0,0,0,0,2216,33
+union_4x10,always_parallel,false,1,68.208,67,true,4,8,10221,1022,0,0,0,0,3571,72
+union_4x10,always_parallel,false,2,108.012,107,true,4,8,10871,1087,0,0,0,0,955,18
+union_4x10,always_parallel,false,3,326.849,326,true,4,8,11111,1111,0,0,0,0,791,0

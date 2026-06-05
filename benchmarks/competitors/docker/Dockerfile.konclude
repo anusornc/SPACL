@@ -1,0 +1,34 @@
+# Konclude Reasoner
+# https://github.com/konclude/Konclude
+
+FROM ubuntu:22.04
+
+WORKDIR /opt/reasoner
+
+# Install dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget \
+    unzip \
+    libglib2.0-0 \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Download and extract current Linux static package from official release assets.
+RUN wget --max-redirect=3 -O konclude.zip \
+    "https://github.com/konclude/Konclude/releases/download/v0.7.0-1138/Konclude-v0.7.0-1138-Linux-x64-GCC-Static-Qt5.12.10.zip" && \
+    unzip -q konclude.zip && \
+    rm konclude.zip && \
+    mv Konclude-v* konclude && \
+    find konclude -name Konclude -type f -exec chmod +x {} \; && \
+    KONCLUDE_BIN="$(find /opt/reasoner/konclude -name Konclude -type f | head -n 1)" && \
+    ln -s "$KONCLUDE_BIN" /usr/local/bin/Konclude && \
+    Konclude --help >/dev/null 2>&1 || true
+
+ENV PATH="/usr/local/bin:${PATH}"
+
+# Copy benchmark script
+COPY benchmarks/competitors/docker/benchmark-konclude.sh /opt/reasoner/benchmark.sh
+RUN chmod +x /opt/reasoner/benchmark.sh
+
+WORKDIR /ontologies
+ENTRYPOINT ["/opt/reasoner/benchmark.sh"]

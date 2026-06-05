@@ -1,7 +1,7 @@
 #!/bin/bash
 # Start overnight benchmark in background with logging
 
-REPO_DIR="/home/admindigit/tableauxx"
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LOG_DIR="$REPO_DIR/results"
 LOG_FILE="$LOG_DIR/overnight_benchmark_$(date +%Y%m%d_%H%M%S).log"
 PID_FILE="$LOG_DIR/overnight_benchmark.pid"

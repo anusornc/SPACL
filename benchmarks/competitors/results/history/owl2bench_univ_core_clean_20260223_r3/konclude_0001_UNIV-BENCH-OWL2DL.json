@@ -1,0 +1,15 @@
+{
+  "run_id": "owl2bench_univ_core_clean_20260223_r3",
+  "ontology_suite": "standard",
+  "reasoner": "konclude",
+  "ontology": "0001_UNIV-BENCH-OWL2DL.owl",
+  "operation": "consistency",
+  "wall_time_ms": 2143,
+  "reported_time_ms": 74,
+  "parse_time_ms": -1,
+  "reason_time_ms": -1,
+  "status": "failed",
+  "reasoning_result": "unknown",
+  "timestamp": "2026-02-23T15:05:57+07:00",
+  "output": "{\"reasoner\": \"Konclude\", \"version\": \"0.7.0\", \"operation\": \"consistency\", \"ontology\": \"/ontologies/0001_UNIV-BENCH-OWL2DL.owl\"}\n{info} 08:05:56:200 >> Starting Konclude ... \r\n{info} 08:05:56:200 >> Konclude - Uni Ulm Parallel Reasoner\r\n{info} 08:05:56:200 >> Reasoner for the SROIQV(D) Description Logic, 64-bit, Version v0.7.0-1138 - 500e11d9 (Jun 19 2021)\r\n\r\n{info} 08:05:56:202 >> Starting consistency checking for '/ontologies/0001_UNIV-BENCH-OWL2DL.owl'.\r\n{info} 08:05:56:203 >> Initializing reasoner. Creating calculation context.\r\n{info} 08:05:56:204 >> Reasoner initialized with 1 processing unit(s).\r\n{error} 08:05:56:207 >> OWL2/XML Ontology node not found.\r\n{error} 08:05:56:219 >> Couldn't extract minimal required 2 DataProperty-Expressions, extracted DataProperty-Expressions 1.\r\n{error} 08:05:56:219 >> Couldn't match parameters for 'SubDataPropertyOf'-Expression.\r\n{error} 08:05:56:219 >> Couldn't extract minimal required 2 DataProperty-Expressions, extracted DataProperty-Expressions 1.\r\n{error} 08:05:56:219 >> Couldn't match parameters for 'SubDataPropertyOf'-Expression.\r\n{error} 08:05:56:219 >> Couldn't extract minimal required 1 DataRange-Expressions, extracted DataRange-Expressions 0.\r\n{error} 08:05:56:219 >> Couldn't match parameters for 'DataPropertyRange'-Expression.\r\n{info} 08:05:56:221 >> Query 'UnnamedConsistencyQuery' processed in '0' ms.\r\n{info} 08:05:56:221 >> Preprocessing ontology 'http://konclude.com/test/kb'.\r\n{info} 08:05:56:229 >> Finished preprocessing in 8 ms for ontology 'http://konclude.com/test/kb'.\r\n{info} 08:05:56:229 >> Precomputing ontology 'http://konclude.com/test/kb', expressiveness 'SROIQ(D)'.\r\n{info} 08:05:56:258 >> Finished precomputing in 29 ms for ontology 'http://konclude.com/test/kb'.\r\n{info} 08:05:56:258 >> Query 'UnnamedConsistencyQuery' processed in '0' ms.\r\n{info} 08:05:56:258 >> Ontology '/ontologies/0001_UNIV-BENCH-OWL2DL.owl' is consistent.\r\n{\"duration_ms\": 74, \"status\": \"failed\", \"reasoning_result\": \"unknown\"}\n"
+}

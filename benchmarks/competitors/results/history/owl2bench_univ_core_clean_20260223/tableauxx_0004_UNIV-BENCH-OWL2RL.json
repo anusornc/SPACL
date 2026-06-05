@@ -1,0 +1,15 @@
+{
+  "run_id": "owl2bench_univ_core_clean_20260223",
+  "ontology_suite": "standard",
+  "reasoner": "tableauxx",
+  "ontology": "0004_UNIV-BENCH-OWL2RL.owl",
+  "operation": "consistency",
+  "wall_time_ms": 2070,
+  "reported_time_ms": 12,
+  "parse_time_ms": 6,
+  "reason_time_ms": 0,
+  "status": "success",
+  "reasoning_result": "consistent",
+  "timestamp": "2026-02-23T14:16:44+07:00",
+  "output": "{\"reasoner\": \"Tableauxx\", \"version\": \"0.2.0\", \"operation\": \"consistency\", \"ontology\": \"/ontologies/0004_UNIV-BENCH-OWL2RL.owl\", \"input_file\": \"/ontologies/0004_UNIV-BENCH-OWL2RL.owl\"}\n[bench] tableauxx input_file=/ontologies/0004_UNIV-BENCH-OWL2RL.owl\nLoading ontology: /ontologies/0004_UNIV-BENCH-OWL2RL.owl\n[phase] parse_start file=/ontologies/0004_UNIV-BENCH-OWL2RL.owl\n✓ Loaded in 6.454077ms\n[phase] parse_done ms=6\n\n╔══════════════════════════════════════════════════════════════╗\n║           ONTOLOGY ANALYSIS & REASONER SELECTION             ║\n╚══════════════════════════════════════════════════════════════╝\n\nStatistics:\n  Classes:          149\n  Properties:       85\n  Axioms:           823\n  Disjunctions:     0\n  Complexity:       Very Simple\n\nCharacteristics:\n  Hierarchy fast path: Yes\n  Detected profile: EL\n\n[phase] reason_start reasoner=SimpleReasoner\nSelected: SimpleReasoner (OWL2 profile permits fast deterministic path)\n\n✓ Consistency check complete in 40.127µs\n[phase] reason_done ms=0 result=consistent\n\nResult: ✅ CONSISTENT\n{\"duration_ms\": 12, \"status\": \"completed\", \"reasoning_result\": \"consistent\", \"parse_time_ms\": 6, \"reason_time_ms\": 0}\n"
+}

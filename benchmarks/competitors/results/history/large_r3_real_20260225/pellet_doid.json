@@ -1,0 +1,15 @@
+{
+  "run_id": "large_r3_real_20260225",
+  "ontology_suite": "large",
+  "reasoner": "pellet",
+  "ontology": "doid.owl",
+  "operation": "consistency",
+  "wall_time_ms": 28771,
+  "reported_time_ms": 235,
+  "parse_time_ms": -1,
+  "reason_time_ms": -1,
+  "status": "success",
+  "reasoning_result": "consistent",
+  "timestamp": "2026-02-26T09:03:51+07:00",
+  "output": "{\"reasoner\": \"Pellet\", \"version\": \"2.3.3\", \"operation\": \"consistency\", \"ontology\": \"/ontologies/doid.owl\"}\n{\"duration_ms\": 235, \"status\": \"completed\", \"reasoning_result\": \"consistent\"}\n"
+}

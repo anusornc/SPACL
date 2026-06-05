@@ -1,0 +1,15 @@
+{
+  "run_id": "stages_doid_20260219_130432_warm_1",
+  "ontology_suite": "large",
+  "reasoner": "tableauxx",
+  "ontology": "doid.owl",
+  "operation": "consistency",
+  "wall_time_ms": 26686,
+  "reported_time_ms": 24318,
+  "parse_time_ms": 23967,
+  "reason_time_ms": 9,
+  "status": "success",
+  "reasoning_result": "consistent",
+  "timestamp": "2026-02-19T13:07:02+07:00",
+  "output": "{\"reasoner\": \"Tableauxx\", \"version\": \"0.2.0\", \"operation\": \"consistency\", \"ontology\": \"/ontologies/doid.owl\", \"input_file\": \"/ontologies/doid.owlbin\"}\n[bench] tableauxx input_file=/ontologies/doid.owlbin\nLoading ontology: /ontologies/doid.owlbin\n[phase] parse_start file=/ontologies/doid.owlbin\n[stage] load_start file=/ontologies/doid.owlbin\n[stage] load_mode bin_only=1 force_text=0 auto_cache=0 path_is_bin=1 bin_path=/ontologies/doid.owlbin\n[stage] binary_open_done ms=0 file=/ontologies/doid.owlbin\n[stage] binary_deserialize_done ms=23967 classes=15660 axioms=207054\n✓ Loaded in 23.967834894s\n[phase] parse_done ms=23967\n\n╔══════════════════════════════════════════════════════════════╗\n║           ONTOLOGY ANALYSIS & REASONER SELECTION             ║\n╚══════════════════════════════════════════════════════════════╝\n\nStatistics:\n  Classes:          15660\n  Properties:       2\n  Axioms:           207054\n  Disjunctions:     0\n  Complexity:       Simple\n\nCharacteristics:\n  Hierarchy fast path: Yes\n  Detected profile: EL\n\n[phase] reason_start reasoner=SimpleReasoner\nSelected: SimpleReasoner (OWL2 profile permits fast deterministic path)\n\n✓ Consistency check complete in 9.782077ms\n[phase] reason_done ms=9 result=consistent\n\nResult: ✅ CONSISTENT\n{\"duration_ms\": 24318, \"status\": \"completed\", \"reasoning_result\": \"consistent\", \"parse_time_ms\": 23967, \"reason_time_ms\": 9}\n"
+}

@@ -1,0 +1,10 @@
+{
+  "run_id": "reused_conflict_canonical_20260417_125500",
+  "benchmark_family": "reused_conflict",
+  "source_runner": "scripts/run_spacl_synthetic_ablation.rs",
+  "source_artifact": "benchmarks/competitors/results/history/spacl_synthetic_ablation_20260303_230552/results.csv",
+  "canonical_workload": "reused_conflict_12",
+  "canonical_modes": ["sequential", "adaptive", "adaptive_no_nogood", "always_parallel"],
+  "summary_file": "reused_conflict_summary.csv",
+  "notes": "Canonicalized from existing high-signal artifact; no fresh rerun in this step."
+}

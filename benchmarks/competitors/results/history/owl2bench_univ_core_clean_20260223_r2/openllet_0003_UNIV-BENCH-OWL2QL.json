@@ -1,0 +1,15 @@
+{
+  "run_id": "owl2bench_univ_core_clean_20260223_r2",
+  "ontology_suite": "standard",
+  "reasoner": "openllet",
+  "ontology": "0003_UNIV-BENCH-OWL2QL.owl",
+  "operation": "consistency",
+  "wall_time_ms": 3071,
+  "reported_time_ms": 63,
+  "parse_time_ms": -1,
+  "reason_time_ms": -1,
+  "status": "success",
+  "reasoning_result": "consistent",
+  "timestamp": "2026-02-23T14:59:49+07:00",
+  "output": "{\"reasoner\": \"Openllet\", \"version\": \"2.6.5\", \"operation\": \"consistency\", \"ontology\": \"/ontologies/0003_UNIV-BENCH-OWL2QL.owl\"}\n{\"duration_ms\": 63, \"status\": \"completed\", \"reasoning_result\": \"consistent\"}\n"
+}

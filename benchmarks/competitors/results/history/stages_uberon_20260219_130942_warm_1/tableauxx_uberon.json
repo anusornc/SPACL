@@ -1,0 +1,15 @@
+{
+  "run_id": "stages_uberon_20260219_130942_warm_1",
+  "ontology_suite": "large",
+  "reasoner": "tableauxx",
+  "ontology": "uberon.owl",
+  "operation": "consistency",
+  "wall_time_ms": 114513,
+  "reported_time_ms": 112295,
+  "parse_time_ms": 111201,
+  "reason_time_ms": 23,
+  "status": "success",
+  "reasoning_result": "consistent",
+  "timestamp": "2026-02-19T13:11:51+07:00",
+  "output": "{\"reasoner\": \"Tableauxx\", \"version\": \"0.2.0\", \"operation\": \"consistency\", \"ontology\": \"/ontologies/uberon.owl\", \"input_file\": \"/ontologies/uberon.owlbin\"}\n[bench] tableauxx input_file=/ontologies/uberon.owlbin\nLoading ontology: /ontologies/uberon.owlbin\n[phase] parse_start file=/ontologies/uberon.owlbin\n[stage] load_start file=/ontologies/uberon.owlbin\n[stage] load_mode bin_only=1 force_text=0 auto_cache=0 path_is_bin=1 bin_path=/ontologies/uberon.owlbin\n[stage] binary_open_done ms=0 file=/ontologies/uberon.owlbin\n[stage] binary_deserialize_done ms=111201 classes=45104 axioms=647434\n✓ Loaded in 111.201665909s\n[phase] parse_done ms=111201\n\n╔══════════════════════════════════════════════════════════════╗\n║           ONTOLOGY ANALYSIS & REASONER SELECTION             ║\n╚══════════════════════════════════════════════════════════════╝\n\nStatistics:\n  Classes:          45104\n  Properties:       295\n  Axioms:           647434\n  Disjunctions:     0\n  Complexity:       Simple\n\nCharacteristics:\n  Hierarchy fast path: Yes\n  Detected profile: EL\n\n[phase] reason_start reasoner=SimpleReasoner\nSelected: SimpleReasoner (OWL2 profile permits fast deterministic path)\n\n✓ Consistency check complete in 23.036393ms\n[phase] reason_done ms=23 result=consistent\n\nResult: ✅ CONSISTENT\n{\"duration_ms\": 112295, \"status\": \"completed\", \"reasoning_result\": \"consistent\", \"parse_time_ms\": 111201, \"reason_time_ms\": 23}\n"
+}
