@@ -1,0 +1,15 @@
+{
+  "run_id": "owl2bench_univ_core_clean_20260223_r2",
+  "ontology_suite": "standard",
+  "reasoner": "hermit",
+  "ontology": "0001_UNIV-BENCH-OWL2DL.owl",
+  "operation": "consistency",
+  "wall_time_ms": 4505,
+  "reported_time_ms": 1559,
+  "parse_time_ms": -1,
+  "reason_time_ms": -1,
+  "status": "success",
+  "reasoning_result": "consistent",
+  "timestamp": "2026-02-23T14:49:02+07:00",
+  "output": "{\"reasoner\": \"HermiT\", \"version\": \"1.4.5.519\", \"operation\": \"consistency\", \"ontology\": \"/ontologies/0001_UNIV-BENCH-OWL2DL.owl\"}\nSLF4J: Failed to load class \"org.slf4j.impl.StaticLoggerBinder\".\nSLF4J: Defaulting to no-operation (NOP) logger implementation\nSLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.\nhttp://www.w3.org/2002/07/owl#Thing is satisfiable.\n{\"duration_ms\": 1559, \"status\": \"completed\", \"reasoning_result\": \"consistent\"}\n"
+}

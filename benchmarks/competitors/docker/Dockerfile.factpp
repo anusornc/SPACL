@@ -1,0 +1,42 @@
+# FaCT++ OWL 2 Reasoner
+# https://bitbucket.org/dtsarkov/factplusplus/src/master/
+
+FROM ubuntu:22.04
+
+WORKDIR /opt/reasoner
+
+# Install dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    git \
+    libraptor2-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Clone and build FaCT++
+# Note: Building from source as binaries may not be readily available
+RUN git clone --depth 1 https://bitbucket.org/dtsarkov/factplusplus.git . 2>/dev/null || \
+    (echo "Cloning FaCT++..." && \
+     # Alternative: Download release if available
+     apt-get update && apt-get install -y --no-install-recommends wget unzip ca-certificates && \
+     wget -q "https://bitbucket.org/dtsarkov/factplusplus/downloads/factplusplus-1.6.5-linux64.zip" -O factpp.zip 2>/dev/null && \
+     unzip factpp.zip && rm factpp.zip)
+
+# Try to build or use pre-built
+RUN if [ -f CMakeLists.txt ]; then \
+        mkdir build && cd build && cmake .. && make -j$(nproc) 2>/dev/null; \
+    fi
+
+# Create a simple OWL tools script if FaCT++ CLI isn't available
+RUN echo '#!/bin/bash\n\
+ONTOLOGY_FILE="$1"\n\
+OPERATION="${2:-consistency}"\n\
+\n\
+echo "{\"reasoner\": \"FaCT++\", \"version\": \"1.6.5\", \"operation\": \"$OPERATION\", \"ontology\": \"$ONTOLOGY_FILE\", \"note\": \"FaCT++ primarily used via OWL API, CLI limited\"}"\n\
+\n\
+# FaCT++ is mainly used through OWL API, not standalone CLI\n\
+# For benchmark purposes, we note this limitation\n\
+echo "{\"duration_ms\": -1, \"status\": \"not_available\", \"message\": \"FaCT++ requires OWL API integration\"}"\n' > /opt/reasoner/benchmark.sh && chmod +x /opt/reasoner/benchmark.sh
+
+WORKDIR /ontologies
+ENTRYPOINT ["/opt/reasoner/benchmark.sh"]

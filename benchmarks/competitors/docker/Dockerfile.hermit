@@ -1,0 +1,23 @@
+# HermiT OWL 2 Reasoner
+# http://www.hermit-reasoner.com/
+
+FROM maven:3.9-eclipse-temurin-11-alpine
+
+WORKDIR /opt/reasoner
+
+# Copy Maven project file
+COPY benchmarks/competitors/docker/hermit-pom.xml /opt/reasoner/pom.xml
+
+# Download HermiT and all dependencies
+RUN mkdir -p src/main/java && \
+    mvn package -DskipTests -q
+
+# Create benchmark script
+COPY benchmarks/competitors/docker/benchmark-hermit.sh /opt/reasoner/benchmark.sh
+RUN chmod +x /opt/reasoner/benchmark.sh
+
+# Update classpath in script
+RUN sed -i 's|/opt/reasoner/.*:*/opt/reasoner/.*|target/dependency/*|' /opt/reasoner/benchmark.sh
+
+WORKDIR /ontologies
+ENTRYPOINT ["/opt/reasoner/benchmark.sh"]

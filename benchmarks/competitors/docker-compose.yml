@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  hermit:
+    build:
+      context: ../..
+      dockerfile: benchmarks/competitors/docker/Dockerfile.hermit
+    volumes:
+      - ./ontologies:/ontologies:ro
+      - ./results:/results
+    command: ["/ontologies/test.owl", "consistency"]
+
+  konclude:
+    build:
+      context: ../..
+      dockerfile: benchmarks/competitors/docker/Dockerfile.konclude
+    volumes:
+      - ./ontologies:/ontologies:ro
+      - ./results:/results
+    command: ["/ontologies/test.owl", "consistency"]
+
+  pellet:
+    build:
+      context: ../..
+      dockerfile: benchmarks/competitors/docker/Dockerfile.pellet
+    volumes:
+      - ./ontologies:/ontologies:ro
+      - ./results:/results
+    command: ["/ontologies/test.owl", "consistency"]
+
+  openllet:
+    build:
+      context: ../..
+      dockerfile: benchmarks/competitors/docker/Dockerfile.openllet
+    volumes:
+      - ./ontologies:/ontologies:ro
+      - ./results:/results
+    command: ["/ontologies/test.owl", "consistency"]
+
+  elk:
+    build:
+      context: ../..
+      dockerfile: benchmarks/competitors/docker/Dockerfile.elk
+    volumes:
+      - ./ontologies:/ontologies:ro
+      - ./results:/results
+    command: ["/ontologies/test.owl", "consistency"]
+
+  jfact:
+    build:
+      context: ../..
+      dockerfile: benchmarks/competitors/docker/Dockerfile.jfact
+    volumes:
+      - ./ontologies:/ontologies:ro
+      - ./results:/results
+    command: ["/ontologies/test.owl", "consistency"]
+
+  factpp:
+    build:
+      context: ../..
+      dockerfile: benchmarks/competitors/docker/Dockerfile.factpp
+    volumes:
+      - ./ontologies:/ontologies:ro
+      - ./results:/results
+    command: ["/ontologies/test.owl", "consistency"]
+
+  tableauxx:
+    build:
+      context: ../..
+      dockerfile: benchmarks/competitors/docker/Dockerfile.tableauxx
+    volumes:
+      - ./ontologies:/ontologies:ro
+      - ./results:/results
+    command: ["/ontologies/test.owl", "consistency"]

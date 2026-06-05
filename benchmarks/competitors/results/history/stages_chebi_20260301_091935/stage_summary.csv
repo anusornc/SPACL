@@ -1,0 +1,6 @@
+run_set_id,ontology,mode,metric_ms,notes
+stages_chebi_20260301_091935,chebi.owl,e2e_cold_wall,36472,full end-to-end wall clock
+stages_chebi_20260301_091935,chebi.owl,parse_only,23740,extracted parse stage from e2e cold run
+stages_chebi_20260301_091935,chebi.owl,reason_only_stage,243,reason stage extracted from the same e2e cold run
+stages_chebi_20260301_091935,chebi.owl,bin_cache_wall_median,-1,diagnostic wall median from optional bin-only runs (-1 when disabled)
+stages_chebi_20260301_091935,chebi.owl,bin_cache_load_median,-1,diagnostic load-stage median from optional bin-only runs (-1 when disabled)

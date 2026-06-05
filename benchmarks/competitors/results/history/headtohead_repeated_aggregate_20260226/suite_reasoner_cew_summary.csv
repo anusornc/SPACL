@@ -1,0 +1,15 @@
+suite,reasoner,cases,success_count,success_rate,cew_ms
+standard,elk,21,21,1.0,3578.1
+standard,openllet,21,21,1.0,4120.9
+standard,hermit,21,21,1.0,4159.8
+standard,pellet,21,21,1.0,4204.0
+standard,tableauxx,21,21,1.0,8516.8
+standard,jfact,21,15,0.7143,88239.5
+standard,konclude,21,0,NC,NC
+large,tableauxx,9,9,1.0,5948.4
+large,elk,9,9,1.0,15084.2
+large,hermit,9,9,1.0,50203.1
+large,openllet,9,6,0.6667,310732.4
+large,jfact,9,6,0.6667,334343.0
+large,pellet,9,6,0.6667,337355.7
+large,konclude,9,0,NC,NC

@@ -1,0 +1,15 @@
+{
+  "run_id": "owl2bench_univ_core_clean_20260223_r3",
+  "ontology_suite": "standard",
+  "reasoner": "jfact",
+  "ontology": "0002_UNIV-BENCH-OWL2EL.owl",
+  "operation": "consistency",
+  "wall_time_ms": 302409,
+  "reported_time_ms": 302409,
+  "parse_time_ms": -1,
+  "reason_time_ms": -1,
+  "status": "timeout",
+  "reasoning_result": "unknown",
+  "timestamp": "2026-02-23T15:16:25+07:00",
+  "output": "{\"reasoner\": \"JFact\", \"version\": \"5.0.3\", \"operation\": \"consistency\", \"ontology\": \"/ontologies/0002_UNIV-BENCH-OWL2EL.owl\"}\n[main] ERROR uk.ac.manchester.cs.jfact.AxiomTranslator - JFact Kernel: unsupported operation 'getDataPropertyKey' HasKey(<https://kracr.iiitd.edu.in/OWL2Bench#Student> () (<https://kracr.iiitd.edu.in/OWL2Bench#hasID> ))\n"
+}

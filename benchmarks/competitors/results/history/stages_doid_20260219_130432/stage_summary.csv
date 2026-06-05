@@ -1,0 +1,6 @@
+run_set_id,ontology,mode,metric_ms,notes
+stages_doid_20260219_130432,doid.owl,e2e_cold_wall,4073,full end-to-end wall clock
+stages_doid_20260219_130432,doid.owl,parse_only,830,extracted parse stage from e2e cold run
+stages_doid_20260219_130432,doid.owl,reason_only_warm_median,9,median reason stage with bin-only warm path
+stages_doid_20260219_130432,doid.owl,warm_wall_median,26686,median wall in warm bin-only runs
+stages_doid_20260219_130432,doid.owl,warm_parse_median,23967,median parse stage in warm bin-only runs

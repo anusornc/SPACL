@@ -1,0 +1,28 @@
+# Tableauxx OWL2 Reasoner
+# Build from source in-container to avoid host binary preconditions.
+
+FROM rust:bookworm AS builder
+
+WORKDIR /build
+
+COPY . /build
+RUN cargo build --release --bin owl2-reasoner --features experimental-xml-parser
+
+FROM debian:bookworm-slim
+
+WORKDIR /opt/reasoner
+
+# Install minimal dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy compiled binary from builder stage
+COPY --from=builder /build/target/release/owl2-reasoner /opt/reasoner/owl2-reasoner
+
+# Copy benchmark script
+COPY benchmarks/competitors/docker/benchmark-tableauxx.sh /opt/reasoner/benchmark.sh
+RUN chmod +x /opt/reasoner/benchmark.sh
+
+WORKDIR /ontologies
+ENTRYPOINT ["/opt/reasoner/benchmark.sh"]

@@ -1,0 +1,15 @@
+{
+  "run_id": "large_r3_real_20260225",
+  "ontology_suite": "large",
+  "reasoner": "openllet",
+  "ontology": "uberon.owl",
+  "operation": "consistency",
+  "wall_time_ms": 902670,
+  "reported_time_ms": 902670,
+  "parse_time_ms": -1,
+  "reason_time_ms": -1,
+  "status": "timeout",
+  "reasoning_result": "unknown",
+  "timestamp": "2026-02-26T09:24:28+07:00",
+  "output": "{\"reasoner\": \"Openllet\", \"version\": \"2.6.5\", \"operation\": \"consistency\", \"ontology\": \"/ontologies/uberon.owl\"}\n"
+}

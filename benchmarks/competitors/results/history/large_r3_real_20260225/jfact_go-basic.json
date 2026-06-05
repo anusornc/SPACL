@@ -1,0 +1,15 @@
+{
+  "run_id": "large_r3_real_20260225",
+  "ontology_suite": "large",
+  "reasoner": "jfact",
+  "ontology": "go-basic.owl",
+  "operation": "consistency",
+  "wall_time_ms": 41847,
+  "reported_time_ms": 21565,
+  "parse_time_ms": -1,
+  "reason_time_ms": -1,
+  "status": "success",
+  "reasoning_result": "consistent",
+  "timestamp": "2026-02-26T09:05:46+07:00",
+  "output": "{\"reasoner\": \"JFact\", \"version\": \"5.0.3\", \"operation\": \"consistency\", \"ontology\": \"/ontologies/go-basic.owl\"}\n{\"duration_ms\": 21565, \"status\": \"completed\", \"reasoning_result\": \"consistent\"}\n"
+}

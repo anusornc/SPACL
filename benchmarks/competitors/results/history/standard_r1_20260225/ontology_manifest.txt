@@ -1,0 +1,7 @@
+disjunctive_simple.owl
+disjunctive_test.owl
+hierarchy_100.owl
+hierarchy_1000.owl
+hierarchy_10000.owl
+hierarchy_100000.owl
+univ-bench.owl

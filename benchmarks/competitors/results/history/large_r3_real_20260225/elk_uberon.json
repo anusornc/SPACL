@@ -1,0 +1,15 @@
+{
+  "run_id": "large_r3_real_20260225",
+  "ontology_suite": "large",
+  "reasoner": "elk",
+  "ontology": "uberon.owl",
+  "operation": "consistency",
+  "wall_time_ms": 15594,
+  "reported_time_ms": 889,
+  "parse_time_ms": -1,
+  "reason_time_ms": -1,
+  "status": "success",
+  "reasoning_result": "consistent",
+  "timestamp": "2026-02-26T09:24:43+07:00",
+  "output": "{\"reasoner\": \"ELK\", \"version\": \"0.4.3\", \"operation\": \"consistency\", \"ontology\": \"/ontologies/uberon.owl\"}\nlog4j:WARN No appenders could be found for logger (org.semanticweb.elk.config.ConfigurationFactory).\nlog4j:WARN Please initialize the log4j system properly.\n{\"duration_ms\": 889, \"status\": \"completed\", \"reasoning_result\": \"consistent\"}\n"
+}

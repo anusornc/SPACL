@@ -1,0 +1,29 @@
+# Rust build artifacts
+target/
+Cargo.lock
+
+# Git
+target/.git/
+.git/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Documentation
+*.md
+docs/
+paper/
+
+# Test data (will be mounted separately)
+tests/data/hierarchy_100000.owl
+
+# Archives
+archive/
+backup_*/
+
+# Results
+results/
+benchmarks/competitors/results/

@@ -1,0 +1,17 @@
+{
+  "run_id": "stages_doid_20260219_130432_warm_1",
+  "started_at": "2026-02-19T13:06:33+07:00",
+  "ontology_suite": "large",
+  "operation": "consistency",
+  "timeout_seconds": 300,
+  "include_chebi": false,
+  "reasoners": [
+    "tableauxx"
+  ],
+  "run_dir": "<repo>/benchmarks/competitors/results/history/stages_doid_20260219_130432_warm_1",
+  "fairness_policy": {
+    "primary_metric": "wall_time_ms",
+    "operation": "single_operation_per_run",
+    "isolation": "run_scoped_results_directory"
+  }
+}

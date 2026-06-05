@@ -1,0 +1,15 @@
+{
+  "run_id": "owl2bench_univ_core_clean_20260223",
+  "ontology_suite": "standard",
+  "reasoner": "elk",
+  "ontology": "0003_UNIV-BENCH-OWL2QL.owl",
+  "operation": "consistency",
+  "wall_time_ms": 2820,
+  "reported_time_ms": 101,
+  "parse_time_ms": -1,
+  "reason_time_ms": -1,
+  "status": "success",
+  "reasoning_result": "consistent",
+  "timestamp": "2026-02-23T14:16:36+07:00",
+  "output": "{\"reasoner\": \"ELK\", \"version\": \"0.4.3\", \"operation\": \"consistency\", \"ontology\": \"/ontologies/0003_UNIV-BENCH-OWL2QL.owl\"}\nlog4j:WARN No appenders could be found for logger (org.semanticweb.elk.config.ConfigurationFactory).\nlog4j:WARN Please initialize the log4j system properly.\n{\"duration_ms\": 101, \"status\": \"completed\", \"reasoning_result\": \"consistent\"}\n"
+}

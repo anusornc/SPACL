@@ -1,0 +1,15 @@
+{
+  "run_id": "standard_r3_20260225",
+  "ontology_suite": "standard",
+  "reasoner": "openllet",
+  "ontology": "hierarchy_100.owl",
+  "operation": "consistency",
+  "wall_time_ms": 2849,
+  "reported_time_ms": 25,
+  "parse_time_ms": -1,
+  "reason_time_ms": -1,
+  "status": "success",
+  "reasoning_result": "consistent",
+  "timestamp": "2026-02-25T14:39:02+07:00",
+  "output": "{\"reasoner\": \"Openllet\", \"version\": \"2.6.5\", \"operation\": \"consistency\", \"ontology\": \"/ontologies/hierarchy_100.owl\"}\n{\"duration_ms\": 25, \"status\": \"completed\", \"reasoning_result\": \"consistent\"}\n"
+}

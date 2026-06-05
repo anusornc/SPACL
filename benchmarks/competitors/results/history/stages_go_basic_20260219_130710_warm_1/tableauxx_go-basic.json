@@ -1,0 +1,15 @@
+{
+  "run_id": "stages_go_basic_20260219_130710_warm_1",
+  "ontology_suite": "large",
+  "reasoner": "tableauxx",
+  "ontology": "go-basic.owl",
+  "operation": "consistency",
+  "wall_time_ms": 130287,
+  "reported_time_ms": 128209,
+  "parse_time_ms": 126854,
+  "reason_time_ms": 40,
+  "status": "success",
+  "reasoning_result": "consistent",
+  "timestamp": "2026-02-19T13:09:37+07:00",
+  "output": "{\"reasoner\": \"Tableauxx\", \"version\": \"0.2.0\", \"operation\": \"consistency\", \"ontology\": \"/ontologies/go-basic.owl\", \"input_file\": \"/ontologies/go-basic.owlbin\"}\n[bench] tableauxx input_file=/ontologies/go-basic.owlbin\nLoading ontology: /ontologies/go-basic.owlbin\n[phase] parse_start file=/ontologies/go-basic.owlbin\n[stage] load_start file=/ontologies/go-basic.owlbin\n[stage] load_mode bin_only=1 force_text=0 auto_cache=0 path_is_bin=1 bin_path=/ontologies/go-basic.owlbin\n[stage] binary_open_done ms=0 file=/ontologies/go-basic.owlbin\n[stage] binary_deserialize_done ms=126854 classes=51897 axioms=773161\n✓ Loaded in 126.854437711s\n[phase] parse_done ms=126854\n\n╔══════════════════════════════════════════════════════════════╗\n║           ONTOLOGY ANALYSIS & REASONER SELECTION             ║\n╚══════════════════════════════════════════════════════════════╝\n\nStatistics:\n  Classes:          51897\n  Properties:       4\n  Axioms:           773161\n  Disjunctions:     0\n  Complexity:       Simple\n\nCharacteristics:\n  Hierarchy fast path: Yes\n  Detected profile: EL\n\n[phase] reason_start reasoner=SimpleReasoner\nSelected: SimpleReasoner (OWL2 profile permits fast deterministic path)\n\n✓ Consistency check complete in 40.545536ms\n[phase] reason_done ms=40 result=consistent\n\nResult: ✅ CONSISTENT\n{\"duration_ms\": 128209, \"status\": \"completed\", \"reasoning_result\": \"consistent\", \"parse_time_ms\": 126854, \"reason_time_ms\": 40}\n"
+}

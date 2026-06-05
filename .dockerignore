@@ -1,0 +1,27 @@
+# Keep public benchmark images from sending local/private workflow state.
+.git/
+target/
+.omx/
+paper/
+outputs/
+archive/
+backup_*/
+
+# Benchmark payloads are mounted or fetched, not baked into images.
+benchmarks/competitors/ontologies/
+benchmarks/ontologies/
+benchmarks/competitors/results/
+results/
+*.owl
+*.owlbin
+*.bin
+*.zip
+*.pdf
+*.docx
+
+# Editor/runtime noise.
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store

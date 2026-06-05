@@ -1,0 +1,14 @@
+\begin{table}[t]
+\centering
+\caption{Head-to-head consistency benchmark (wall time, ms)}
+\label{tab:head_to_head_wall_ms}
+\begin{tabular}{lrrrrrrr}
+\toprule
+Ontology & tableauxx & hermit & konclude & openllet & elk & jfact & pellet \\
+\midrule
+doid.owl & \textbf{3701} & 19180 & FAIL & 14336 & 13406 & 60112 & 28771 \\
+go-basic.owl & \textbf{7059} & 18039 & FAIL & 17747 & 15976 & 41847 & 82906 \\
+uberon.owl & \textbf{6548} & 110560 & FAIL & TO & 15594 & FAIL & TO \\
+\bottomrule
+\end{tabular}
+\end{table}

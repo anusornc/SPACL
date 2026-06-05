@@ -4,7 +4,7 @@
 
 set -e
 
-REPO_DIR="/home/admindigit/tableauxx"
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RESULTS_DIR="$REPO_DIR/results/overnight"
 LOG_FILE="$RESULTS_DIR/benchmark.log"
 RESULTS_FILE="$RESULTS_DIR/results.json"

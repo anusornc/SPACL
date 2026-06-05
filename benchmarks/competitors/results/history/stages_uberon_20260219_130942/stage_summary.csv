@@ -1,0 +1,6 @@
+run_set_id,ontology,mode,metric_ms,notes
+stages_uberon_20260219_130942,uberon.owl,e2e_cold_wall,6632,full end-to-end wall clock
+stages_uberon_20260219_130942,uberon.owl,parse_only,2952,extracted parse stage from e2e cold run
+stages_uberon_20260219_130942,uberon.owl,reason_only_warm_median,23,median reason stage with bin-only warm path
+stages_uberon_20260219_130942,uberon.owl,warm_wall_median,114513,median wall in warm bin-only runs
+stages_uberon_20260219_130942,uberon.owl,warm_parse_median,111201,median parse stage in warm bin-only runs
