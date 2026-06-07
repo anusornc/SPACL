@@ -59,7 +59,7 @@ fn bench_sequential(c: &mut Criterion) {
             name, class_count, disjunctions
         );
 
-        group.bench_with_input(BenchmarkId::new(name, class_count), &ont, |b, ont| {
+        group.bench_with_input(BenchmarkId::new(*name, class_count), &ont, |b, ont| {
             b.iter(|| {
                 let reasoner = SimpleReasoner::new(ont.clone());
                 let _ = reasoner.is_consistent();
@@ -83,7 +83,7 @@ fn bench_spacl(c: &mut Criterion) {
 
         let class_count = ont.classes().len();
 
-        group.bench_with_input(BenchmarkId::new(name, class_count), &ont, |b, ont| {
+        group.bench_with_input(BenchmarkId::new(*name, class_count), &ont, |b, ont| {
             b.iter(|| {
                 let mut reasoner = SpeculativeTableauxReasoner::new(ont.clone());
                 let _ = reasoner.is_consistent();
