@@ -8,8 +8,7 @@
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use owl2_reasoner::{
-    Class, ClassExpression, DisjointClassesAxiom, Ontology, SpeculativeConfig,
-    SpeculativeTableauxReasoner, SubClassOfAxiom,
+    Class, DisjointClassesAxiom, Ontology, SpeculativeConfig, SpeculativeTableauxReasoner,
 };
 use std::time::Duration;
 
@@ -32,8 +31,8 @@ fn create_disjunctive_ontology(size: usize) -> Ontology {
 
             ontology
                 .add_disjoint_classes_axiom(DisjointClassesAxiom::new(vec![
-                    ClassExpression::Class(c1),
-                    ClassExpression::Class(c2),
+                    c1.iri().clone(),
+                    c2.iri().clone(),
                 ]))
                 .unwrap();
         }
