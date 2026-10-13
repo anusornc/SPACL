@@ -2,9 +2,12 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RUN_BENCH="$ROOT_DIR/benchmarks/competitors/scripts/run_benchmarks.sh"
 
 STAGED_DIR="${OWL2BENCH_STAGED_DIR:-$ROOT_DIR/benchmarks/ontologies/external/owl2bench/staged}"
+MANIFEST_FILE="$STAGED_DIR/manifest.tsv"
+RESULTS_HISTORY="$ROOT_DIR/benchmarks/competitors/results/history"
 ACTION="${1:-all}" # prepare|build|run|report|all (forwarded)
 
 if [[ ! -x "$RUN_BENCH" ]]; then
@@ -39,3 +42,11 @@ echo "[owl2bench-run] ONTOLOGIES_DIR_OVERRIDE=$ONTOLOGIES_DIR_OVERRIDE"
 echo "[owl2bench-run] reasoners=$REASONERS_OVERRIDE timeout=${TIMEOUT_SECONDS}s regex=$ONTOLOGY_REGEX"
 
 "$RUN_BENCH" "$ACTION"
+
+RUN_DIR="$RESULTS_HISTORY/$RUN_ID"
+if [[ "$ACTION" != "report" && -d "$RUN_DIR" && -f "$MANIFEST_FILE" ]]; then
+  cp -f "$MANIFEST_FILE" "$RUN_DIR/owl2bench_manifest.tsv"
+fi
+if [[ -d "$RUN_DIR" && -f "$RUN_DIR/results.csv" && -f "$RUN_DIR/owl2bench_manifest.tsv" ]]; then
+  "$SCRIPT_DIR/stage_report.sh" "$RUN_DIR" "$RUN_DIR/owl2bench_manifest.tsv"
+fi

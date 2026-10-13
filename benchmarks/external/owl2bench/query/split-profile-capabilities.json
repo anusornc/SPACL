@@ -1,0 +1,24 @@
+{
+  "supports_query": true,
+  "profiles": ["DL", "EL", "QL", "RL"],
+  "data_mode": "directory",
+  "adapter": "split-profile",
+  "provenance_adapters": {
+    "DL": "hermit-dl",
+    "EL": "elk-el",
+    "QL": "ql-ruleset",
+    "RL": "rl-ruleset"
+  },
+  "provenance_relative_paths": {
+    "DL": ".hermit-dl/provenance.json",
+    "EL": ".elk-el/provenance.json",
+    "QL": ".ql-ruleset/provenance.json",
+    "RL": ".rl-ruleset/provenance.json"
+  },
+  "query_result_format": "sparql-results-xml-or-tsv",
+  "component_manifest_required": true,
+  "materialization_manifest_required": true,
+  "no_profile_fallback": true,
+  "not_available_exit_code": 125,
+  "unsupported_exit_code": 123
+}

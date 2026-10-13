@@ -305,13 +305,19 @@ impl FunctionalSyntaxValidator {
     }
 
     /// Validate that an entity reference is valid
+    ///
+    /// Undeclared entities and entities used in a different role than
+    /// declared (punning) are only rejected in strict mode: OWL 2
+    /// permits punning between the class and individual roles, and
+    /// real-world corpora (the ORE 2015 corpus in particular) exercise
+    /// it heavily, so the default non-strict mode accepts it.
     fn validate_entity_reference(
         &self,
         iri: &Arc<IRI>,
         expected_type: EntityType,
     ) -> FunctionalSyntaxResult<()> {
         if let Some(actual_type) = self.entities.get(iri) {
-            if *actual_type != expected_type {
+            if *actual_type != expected_type && self.strict_mode {
                 return Err(validation_error(format!(
                     "Entity {} is declared as {:?} but used as {:?}",
                     iri, actual_type, expected_type

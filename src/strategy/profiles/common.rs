@@ -4,6 +4,7 @@
 
 use crate::core::error::OwlResult;
 use crate::core::ontology::Ontology;
+use crate::logic::axioms::{Axiom, ClassExpression, ObjectPropertyExpression};
 use std::sync::Arc;
 
 /// OWL2 Profile enumeration
@@ -183,6 +184,243 @@ pub trait ProfileValidator {
     fn is_valid(&self, ontology: &Ontology) -> OwlResult<bool> {
         let result = self.validate(ontology)?;
         Ok(result.is_valid)
+    }
+}
+
+/// A profile violation cap: routing only needs the verdict, so large
+/// ontologies report the first offenders and stop. The statistics
+/// therefore count up to the cap, not the whole ontology.
+pub(super) const MAX_REPORTED_VIOLATIONS: usize = 50;
+
+/// A profile's rule table: which axioms and class expressions sit
+/// outside the profile. `forbidden_super_expression` applies only on
+/// the superclass side of a SubClassOf (and equivalent positions),
+/// where profiles like QL and RL allow Boolean/existential constructs
+/// on the subclass side only. The tables are deliberately conservative:
+/// anything uncertain stays unflagged, so a rejection can only demote
+/// an ontology to a less restrictive profile (a routing opportunity
+/// lost), never promote it into a profile it does not fit (#167).
+pub(super) struct ProfileRuleTable {
+    pub profile: Owl2Profile,
+    pub forbidden_axiom: fn(&Axiom) -> Option<&'static str>,
+    pub forbidden_anywhere_expression: fn(&ClassExpression) -> Option<&'static str>,
+    pub forbidden_super_expression: fn(&ClassExpression) -> Option<&'static str>,
+    pub forbidden_property_expression: fn(&ObjectPropertyExpression) -> Option<&'static str>,
+}
+
+/// One shared scanner behind the EL/QL/RL validators: walks every axiom
+/// once, applies the rule table, and reports up to
+/// [`MAX_REPORTED_VIOLATIONS`] errors with the offending axiom as
+/// location context.
+pub(super) fn validate_with_rules(
+    ontology: &Ontology,
+    table: &ProfileRuleTable,
+) -> ProfileValidationResult {
+    let mut violations: Vec<ProfileViolation> = Vec::new();
+    let mut statistics = ValidationStatistics::default();
+
+    for axiom in ontology.axioms() {
+        statistics.axioms_checked += 1;
+        let location = axiom.axiom_type().name().to_string();
+        if let Some(construct) = (table.forbidden_axiom)(axiom) {
+            push_violation(
+                &mut violations,
+                ProfileViolationType::DisallowedAxiomType(construct.to_string()),
+                format!(
+                    "{} axiom is outside the OWL 2 {} profile",
+                    construct,
+                    table.profile.name()
+                ),
+                &location,
+            );
+        }
+        match axiom.as_ref() {
+            Axiom::SubClassOf(sub) => {
+                let subject = expression_location(sub.sub_class());
+                let keep_going = walk_expression(
+                    sub.sub_class(),
+                    false,
+                    table,
+                    subject.clone(),
+                    &mut violations,
+                    &mut statistics,
+                ) && walk_expression(
+                    sub.super_class(),
+                    true,
+                    table,
+                    subject,
+                    &mut violations,
+                    &mut statistics,
+                );
+                if !keep_going {
+                    break;
+                }
+            }
+            Axiom::ClassAssertion(assertion) => {
+                let subject = expression_location(assertion.class_expr());
+                if !walk_expression(
+                    assertion.class_expr(),
+                    false,
+                    table,
+                    subject,
+                    &mut violations,
+                    &mut statistics,
+                ) {
+                    break;
+                }
+            }
+            _ => {}
+        }
+        if violations.len() >= MAX_REPORTED_VIOLATIONS {
+            break;
+        }
+    }
+    ProfileValidationResult {
+        profile: table.profile,
+        is_valid: violations.is_empty(),
+        violations,
+        statistics,
+    }
+}
+
+/// A short location label for violation reports: the named class (or
+/// individual-facing class expression) the offending axiom is about.
+fn expression_location(expression: &ClassExpression) -> String {
+    match expression {
+        ClassExpression::Class(class) => class.iri().as_str().to_string(),
+        _ => "anonymous expression".to_string(),
+    }
+}
+
+fn push_violation(
+    violations: &mut Vec<ProfileViolation>,
+    violation_type: ProfileViolationType,
+    message: String,
+    location: &str,
+) -> bool {
+    // Returns false once the reporting cap is reached.
+    if violations.len() < MAX_REPORTED_VIOLATIONS {
+        violations.push(
+            ProfileViolation::new(violation_type, ViolationSeverity::Error, message)
+                .with_location(location),
+        );
+    }
+    violations.len() < MAX_REPORTED_VIOLATIONS
+}
+
+fn walk_property_expression(
+    property: &ObjectPropertyExpression,
+    table: &ProfileRuleTable,
+    location: &str,
+    violations: &mut Vec<ProfileViolation>,
+) -> bool {
+    let mut current = property;
+    loop {
+        if let Some(construct) = (table.forbidden_property_expression)(current) {
+            return push_violation(
+                violations,
+                ProfileViolationType::DisallowedPropertyExpression(construct.to_string()),
+                format!(
+                    "{} is outside the OWL 2 {} profile",
+                    construct,
+                    table.profile.name()
+                ),
+                location,
+            );
+        }
+        match current {
+            ObjectPropertyExpression::ObjectInverseOf(inner) => current = inner,
+            ObjectPropertyExpression::ObjectProperty(_) => return true,
+        }
+    }
+}
+
+/// Walk a class expression, reporting constructs the rule table
+/// forbids. `super_side` marks the superclass/equivalent position,
+/// where the QL/RL tables additionally restrict expressiveness.
+fn walk_expression(
+    expression: &ClassExpression,
+    super_side: bool,
+    table: &ProfileRuleTable,
+    location: String,
+    violations: &mut Vec<ProfileViolation>,
+    statistics: &mut ValidationStatistics,
+) -> bool {
+    statistics.class_expressions_checked += 1;
+    let construct = if super_side {
+        (table.forbidden_super_expression)(expression)
+            .or_else(|| (table.forbidden_anywhere_expression)(expression))
+    } else {
+        (table.forbidden_anywhere_expression)(expression)
+    };
+    if let Some(construct) = construct {
+        return push_violation(
+            violations,
+            ProfileViolationType::DisallowedClassExpression(construct.to_string()),
+            format!(
+                "{} is outside the OWL 2 {} profile{}",
+                construct,
+                table.profile.name(),
+                if super_side { " (superclass side)" } else { "" }
+            ),
+            &location,
+        );
+    }
+    match expression {
+        ClassExpression::Class(_)
+        | ClassExpression::ObjectOneOf(_)
+        | ClassExpression::DataHasValue(_, _) => true,
+        ClassExpression::ObjectIntersectionOf(operands)
+        | ClassExpression::ObjectUnionOf(operands) => operands.iter().all(|operand| {
+            walk_expression(operand, super_side, table, location.clone(), violations, statistics)
+        }),
+        ClassExpression::ObjectComplementOf(inner) => walk_expression(
+            inner,
+            super_side,
+            table,
+            location,
+            violations,
+            statistics,
+        ),
+        ClassExpression::ObjectSomeValuesFrom(property, filler)
+        | ClassExpression::ObjectAllValuesFrom(property, filler) => {
+            walk_property_expression(property, table, &location, violations)
+                && walk_expression(
+                    filler,
+                    // A filler is itself an anonymous superclass-shaped
+                    // position for nested restrictions.
+                    true,
+                    table,
+                    location,
+                    violations,
+                    statistics,
+                )
+        }
+        ClassExpression::ObjectHasValue(property, _) => {
+            walk_property_expression(property, table, &location, violations)
+        }
+        ClassExpression::ObjectHasSelf(property) => {
+            walk_property_expression(property, table, &location, violations)
+        }
+        ClassExpression::ObjectMinCardinality(_, property, qualifier)
+        | ClassExpression::ObjectMaxCardinality(_, property, qualifier)
+        | ClassExpression::ObjectExactCardinality(_, property, qualifier) => {
+            let mut keep_going = walk_property_expression(property, table, &location, violations);
+            if let Some(filler) = qualifier {
+                keep_going &= walk_expression(
+                    filler, true, table, location, violations, statistics,
+                );
+            }
+            keep_going
+        }
+        // Data-side wrappers carry no object property expression and no
+        // class-expression filler; the DataRange interior is out of the
+        // conservative scan's scope.
+        ClassExpression::DataSomeValuesFrom(_, _)
+        | ClassExpression::DataAllValuesFrom(_, _)
+        | ClassExpression::DataMinCardinality(_, _, _)
+        | ClassExpression::DataMaxCardinality(_, _, _)
+        | ClassExpression::DataExactCardinality(_, _, _) => true,
     }
 }
 

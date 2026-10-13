@@ -1,5 +1,5 @@
 fn main() {
-    println!("SPACL demo binaries:");
+    println!("Tableauxx demo binaries:");
     println!("  - owl2-reasoner");
     println!("  - epcis-reasoner");
     println!("  - owl2_validation");

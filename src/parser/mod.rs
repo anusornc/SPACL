@@ -138,7 +138,10 @@ impl ParserFactory {
             Some(Box::new(JsonLdParser::with_config(config.clone())))
         }
         // Check for XML-based formats first (RDF/XML, OWL/XML) to avoid false positives
-        else if content_trimmed.starts_with("<?xml") || content_trimmed.starts_with("<rdf:RDF") {
+        else if content_trimmed.starts_with("<?xml")
+            || content_trimmed.starts_with("<rdf:RDF")
+            || (content_trimmed.starts_with("<!DOCTYPE") && content.contains("<rdf:RDF"))
+        {
             // RDF/XML has rdf:RDF root and uses XML namespaces
             if content.contains("<rdf:RDF") || content.contains("<rdf:Description") {
                 Some(Box::new(RdfXmlParser::with_config(config.clone())))

@@ -1,0 +1,6 @@
+<urn:tableauxx:wayfinder:67:ql-diagnostic#SeedClass> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
+<urn:tableauxx:wayfinder:67:ql-diagnostic#SeedClass> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://benchmark/OWL2Bench#EmployeeEvaluationCommittee> .
+<urn:tableauxx:wayfinder:67:ql-diagnostic#seedEnrollFor> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#ObjectProperty> .
+<urn:tableauxx:wayfinder:67:ql-diagnostic#seedEnrollFor> <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> <http://benchmark/OWL2Bench#enrollFor> .
+<urn:tableauxx:wayfinder:67:ql-diagnostic#subject> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <urn:tableauxx:wayfinder:67:ql-diagnostic#SeedClass> .
+<urn:tableauxx:wayfinder:67:ql-diagnostic#subject> <urn:tableauxx:wayfinder:67:ql-diagnostic#seedEnrollFor> <urn:tableauxx:wayfinder:67:ql-diagnostic#object> .

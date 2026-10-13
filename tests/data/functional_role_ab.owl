@@ -1,0 +1,20 @@
+<rdf:RDF
+     xml:base="http://example.org/gate"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:g="http://example.org/gate#">
+
+    <owl:Ontology rdf:about=""/>
+    <owl:ObjectProperty rdf:about="#p">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+    </owl:ObjectProperty>
+
+    <rdf:Description rdf:about="#a">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+        <g:p rdf:resource="#b"/>
+    </rdf:Description>
+    <rdf:Description rdf:about="#b">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+        <g:p rdf:resource="#a"/>
+    </rdf:Description>
+</rdf:RDF>

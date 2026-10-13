@@ -65,6 +65,7 @@ pub fn extract_tbox_module(ontology: &Ontology) -> OwlResult<Ontology> {
             | Axiom::ObjectPropertyRange(_)
             | Axiom::DataPropertyDomain(_)
             | Axiom::DataPropertyRange(_)
+            | Axiom::DataPropertyEnumeratedRange(_)
             | Axiom::FunctionalProperty(_)
             | Axiom::FunctionalDataProperty(_)
             | Axiom::InverseFunctionalProperty(_)

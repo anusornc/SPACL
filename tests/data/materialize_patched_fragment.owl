@@ -1,0 +1,125 @@
+<?xml version="1.0"?>
+<rdf:RDF xml:base="http://example.org/p" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" xmlns:owl="http://www.w3.org/2002/07/owl#">
+    <owl:ObjectProperty rdf:about="#knows">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ReflexiveProperty"/>
+    </owl:ObjectProperty>
+    <owl:ObjectProperty rdf:about="#isCrazyAbout"/>
+    <owl:ObjectProperty rdf:about="#enrollFor">
+        <rdfs:domain rdf:resource="#Student"/>
+    </owl:ObjectProperty>
+    <owl:ObjectProperty rdf:about="#likes"/>
+    <owl:ObjectProperty rdf:about="#enrollIn"/>
+    <owl:ObjectProperty rdf:about="#isPartOf">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#TransitiveProperty"/>
+        <owl:equivalentProperty rdf:resource="#locatedIn"/>
+    </owl:ObjectProperty>
+    <owl:ObjectProperty rdf:about="#locatedIn"/>
+    <owl:ObjectProperty rdf:about="#isMemberOf">
+        <owl:propertyChainAxiom rdf:parseType="Collection">
+            <owl:ObjectProperty rdf:about="#enrollIn"/>
+            <owl:ObjectProperty rdf:about="#isPartOf"/>
+        </owl:propertyChainAxiom>
+    </owl:ObjectProperty>
+    <owl:Class rdf:about="#Fan">
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="#isCrazyAbout"/>
+                <owl:hasValue rdf:resource="#T20"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+    </owl:Class>
+    <owl:Class rdf:about="#SelfAwarePerson">
+        <owl:equivalentClass>
+            <owl:Class>
+                <owl:intersectionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="#Person"/>
+                    <owl:Restriction>
+                        <owl:onProperty rdf:resource="#knows"/>
+                        <owl:hasSelf rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</owl:hasSelf>
+                    </owl:Restriction>
+                </owl:intersectionOf>
+            </owl:Class>
+        </owl:equivalentClass>
+    </owl:Class>
+    <owl:Class rdf:about="#UGStudent">
+        <owl:equivalentClass>
+            <owl:Class>
+                <owl:intersectionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="#Student"/>
+                    <owl:Restriction>
+                        <owl:onProperty rdf:resource="#enrollFor"/>
+                        <owl:qualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:qualifiedCardinality>
+                        <owl:onClass rdf:resource="#UGProgram"/>
+                    </owl:Restriction>
+                </owl:intersectionOf>
+            </owl:Class>
+        </owl:equivalentClass>
+    </owl:Class>
+    <owl:Class rdf:about="#PeopleWithManyHobbies">
+        <owl:equivalentClass>
+            <owl:Class>
+                <owl:intersectionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="#Person"/>
+                    <owl:Restriction>
+                        <owl:onProperty rdf:resource="#likes"/>
+                        <owl:minQualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">3</owl:minQualifiedCardinality>
+                        <owl:onClass rdf:resource="#Interest"/>
+                    </owl:Restriction>
+                </owl:intersectionOf>
+            </owl:Class>
+        </owl:equivalentClass>
+    </owl:Class>
+    <owl:NamedIndividual rdf:about="#T20"/>
+    <owl:NamedIndividual rdf:about="#hobbyA">
+        <rdf:type rdf:resource="#Interest"/>
+    </owl:NamedIndividual>
+    <owl:NamedIndividual rdf:about="#hobbyB">
+        <rdf:type rdf:resource="#Interest"/>
+    </owl:NamedIndividual>
+    <owl:NamedIndividual rdf:about="#hobbyC">
+        <rdf:type rdf:resource="#Interest"/>
+    </owl:NamedIndividual>
+    <owl:NamedIndividual rdf:about="#prog1">
+        <rdf:type rdf:resource="#UGProgram"/>
+    </owl:NamedIndividual>
+    <owl:NamedIndividual rdf:about="#alice">
+        <rdf:type rdf:resource="#Person"/>
+    </owl:NamedIndividual>
+    <owl:NamedIndividual rdf:about="#bob">
+        <rdf:type rdf:resource="#Person"/>
+        <p:isCrazyAbout xmlns:p="http://example.org/p#" rdf:resource="#T20"/>
+        <p:likes xmlns:p="http://example.org/p#" rdf:resource="#hobbyA"/>
+        <p:likes xmlns:p="http://example.org/p#" rdf:resource="#hobbyB"/>
+    </owl:NamedIndividual>
+    <owl:NamedIndividual rdf:about="#carol">
+        <rdf:type rdf:resource="#Person"/>
+        <p:likes xmlns:p="http://example.org/p#" rdf:resource="#hobbyA"/>
+        <p:likes xmlns:p="http://example.org/p#" rdf:resource="#hobbyB"/>
+        <p:likes xmlns:p="http://example.org/p#" rdf:resource="#hobbyC"/>
+    </owl:NamedIndividual>
+    <owl:NamedIndividual rdf:about="#dave">
+        <rdf:type rdf:resource="#Person"/>
+    </owl:NamedIndividual>
+    <owl:NamedIndividual rdf:about="#student1">
+        <p:enrollFor xmlns:p="http://example.org/p#" rdf:resource="#prog1"/>
+        <p:enrollIn xmlns:p="http://example.org/p#" rdf:resource="#deptA"/>
+    </owl:NamedIndividual>
+    <owl:NamedIndividual rdf:about="#deptA">
+        <p:isPartOf xmlns:p="http://example.org/p#" rdf:resource="#univ0"/>
+    </owl:NamedIndividual>
+    <owl:NamedIndividual rdf:about="#univ0"/>
+    <owl:NamedIndividual rdf:about="#soccer">
+        <rdf:type rdf:resource="#Interest"/>
+    </owl:NamedIndividual>
+    <owl:NamedIndividual rdf:about="#football">
+        <rdf:type rdf:resource="#Interest"/>
+        <owl:sameAs rdf:resource="#soccer"/>
+    </owl:NamedIndividual>
+    <owl:NamedIndividual rdf:about="#erin">
+        <rdf:type rdf:resource="#Person"/>
+        <p:likes xmlns:p="http://example.org/p#" rdf:resource="#football"/>
+        <p:likes xmlns:p="http://example.org/p#" rdf:resource="#hobbyA"/>
+        <p:likes xmlns:p="http://example.org/p#" rdf:resource="#hobbyB"/>
+    </owl:NamedIndividual>
+</rdf:RDF>

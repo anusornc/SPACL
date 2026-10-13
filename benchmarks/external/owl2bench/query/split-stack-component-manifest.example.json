@@ -1,0 +1,278 @@
+{
+  "schema_version": 1,
+  "manifest_id": "owl2bench-split-stack-runtime-input",
+  "matrix": {
+    "expansion": "query_profile",
+    "expected_query_count": 60,
+    "expected_profile_case_counts": {
+      "DL": 22,
+      "EL": 10,
+      "QL": 10,
+      "RL": 18
+    }
+  },
+  "profiles": {
+    "DL": {
+      "components": {
+        "engine": {
+          "name": "HermiT",
+          "version": "",
+          "revision": "",
+          "artifact_digest": ""
+        },
+        "materializer": {
+          "name": "DL-materializer",
+          "version": "",
+          "revision": "",
+          "artifact_digest": ""
+        },
+        "query": {
+          "name": "DL-query-layer",
+          "version": "",
+          "revision": "",
+          "artifact_digest": ""
+        }
+      },
+      "configuration": {
+        "id": "",
+        "digest": ""
+      },
+      "runtime": {
+        "id": "",
+        "dependencies": []
+      },
+      "credentials": {
+        "status": "not_required"
+      },
+      "license": {
+        "status": "not_required"
+      },
+      "capability": {
+        "status": "supported",
+        "supports_query": true
+      },
+      "resource_limits": {
+        "timeout_seconds": 600,
+        "memory": "",
+        "threads": 1
+      },
+      "dataset": {
+        "id": "",
+        "sha256": "",
+        "tbox_id": "",
+        "tbox_sha256": "",
+        "abox_id": "",
+        "abox_sha256": ""
+      },
+      "generator": {
+        "id": "",
+        "revision": "",
+        "seed": 1
+      },
+      "profile_context": {
+        "id": "",
+        "directory": ""
+      }
+    },
+    "EL": {
+      "components": {
+        "engine": {
+          "name": "ELK",
+          "version": "",
+          "revision": "",
+          "artifact_digest": ""
+        },
+        "materializer": {
+          "name": "EL-materializer",
+          "version": "",
+          "revision": "",
+          "artifact_digest": ""
+        },
+        "query": {
+          "name": "EL-query-layer",
+          "version": "",
+          "revision": "",
+          "artifact_digest": ""
+        }
+      },
+      "configuration": {
+        "id": "",
+        "digest": ""
+      },
+      "runtime": {
+        "id": "",
+        "dependencies": []
+      },
+      "credentials": {
+        "status": "not_required"
+      },
+      "license": {
+        "status": "not_required"
+      },
+      "capability": {
+        "status": "supported",
+        "supports_query": true
+      },
+      "resource_limits": {
+        "timeout_seconds": 600,
+        "memory": "",
+        "threads": 1
+      },
+      "dataset": {
+        "id": "",
+        "sha256": "",
+        "tbox_id": "",
+        "tbox_sha256": "",
+        "abox_id": "",
+        "abox_sha256": ""
+      },
+      "generator": {
+        "id": "",
+        "revision": "",
+        "seed": 1
+      },
+      "profile_context": {
+        "id": "",
+        "directory": ""
+      }
+    },
+    "QL": {
+      "components": {
+        "engine": {
+          "name": "QL-ruleset-engine",
+          "version": "",
+          "revision": "",
+          "artifact_digest": ""
+        },
+        "materializer": {
+          "name": "QL-materializer",
+          "version": "",
+          "revision": "",
+          "artifact_digest": ""
+        },
+        "query": {
+          "name": "QL-query-layer",
+          "version": "",
+          "revision": "",
+          "artifact_digest": ""
+        }
+      },
+      "ruleset": {
+        "id": "",
+        "version": "",
+        "revision": "",
+        "artifact_digest": "",
+        "conformance_boundary": ""
+      },
+      "configuration": {
+        "id": "",
+        "digest": ""
+      },
+      "runtime": {
+        "id": "",
+        "dependencies": []
+      },
+      "credentials": {
+        "status": "not_required"
+      },
+      "license": {
+        "status": "not_required"
+      },
+      "capability": {
+        "status": "supported",
+        "supports_query": true
+      },
+      "resource_limits": {
+        "timeout_seconds": 600,
+        "memory": "",
+        "threads": 1
+      },
+      "dataset": {
+        "id": "",
+        "sha256": "",
+        "tbox_id": "",
+        "tbox_sha256": "",
+        "abox_id": "",
+        "abox_sha256": ""
+      },
+      "generator": {
+        "id": "",
+        "revision": "",
+        "seed": 1
+      },
+      "profile_context": {
+        "id": "",
+        "directory": ""
+      }
+    },
+    "RL": {
+      "components": {
+        "engine": {
+          "name": "RL-ruleset-engine",
+          "version": "",
+          "revision": "",
+          "artifact_digest": ""
+        },
+        "materializer": {
+          "name": "RL-materializer",
+          "version": "",
+          "revision": "",
+          "artifact_digest": ""
+        },
+        "query": {
+          "name": "RL-query-layer",
+          "version": "",
+          "revision": "",
+          "artifact_digest": ""
+        }
+      },
+      "ruleset": {
+        "id": "",
+        "version": "",
+        "revision": "",
+        "artifact_digest": "",
+        "conformance_boundary": ""
+      },
+      "configuration": {
+        "id": "",
+        "digest": ""
+      },
+      "runtime": {
+        "id": "",
+        "dependencies": []
+      },
+      "credentials": {
+        "status": "not_required"
+      },
+      "license": {
+        "status": "not_required"
+      },
+      "capability": {
+        "status": "supported",
+        "supports_query": true
+      },
+      "resource_limits": {
+        "timeout_seconds": 600,
+        "memory": "",
+        "threads": 1
+      },
+      "dataset": {
+        "id": "",
+        "sha256": "",
+        "tbox_id": "",
+        "tbox_sha256": "",
+        "abox_id": "",
+        "abox_sha256": ""
+      },
+      "generator": {
+        "id": "",
+        "revision": "",
+        "seed": 1
+      },
+      "profile_context": {
+        "id": "",
+        "directory": ""
+      }
+    }
+  }
+}

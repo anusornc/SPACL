@@ -3,6 +3,15 @@
 use crate::core::iri::IRI;
 use std::collections::HashMap;
 
+/// A failed semantic materialization or resource bound must not be retried by
+/// a parser that can silently omit the expression which triggered the error.
+pub(crate) fn prevents_lossy_fallback(error: &crate::core::error::OwlError) -> bool {
+    use crate::core::error::OwlError;
+    matches!(error, OwlError::ResourceLimitExceeded { .. })
+        || matches!(error, OwlError::AxiomValidationError { axiom_type, .. }
+            if axiom_type == "RDF/XML class expression")
+}
+
 /// Static string constants to avoid allocations
 pub static PREFIX_RDF: &str = "rdf";
 pub static NS_RDF: &str = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";

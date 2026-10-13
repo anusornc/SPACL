@@ -1,0 +1,945 @@
+{
+  "adr": "docs/adr/0026-owl2bench-multisize-consistency-performance-lane.md",
+  "budget": {
+    "peak_rss_source": "/usr/bin/time -v (Maximum resident set size)",
+    "timeout_seconds_per_run": 3600,
+    "wall_time_source": "time.monotonic around each generator run"
+  },
+  "generator": {
+    "command": "java -jar OWL2Bench.jar <universities> <PROFILE> <seed>",
+    "coverage": {
+      "anchor_universities": 1,
+      "generated_sizes": [
+        2,
+        5,
+        10,
+        20,
+        50
+      ],
+      "profiles": [
+        "DL",
+        "EL",
+        "QL",
+        "RL"
+      ]
+    },
+    "jar_sha256": "sha256:c2bacf1d80e91ec05625b4c458f899a626ef92b85c60c6bac1f0a519060839ff",
+    "name": "OWL2Bench",
+    "revision": "5a27536c8e7f7621b34c61c8a57ed9eb63e7829a",
+    "seed": 1,
+    "source_directory": "/home/admindigit/artifacts/tableauxx/retention-20260907/tmp-preserved/tableauxx-owl2bench.9JJ9KD/repo",
+    "version": "official-jar-artifact"
+  },
+  "identity_sha256": "sha256:b9be2728ad4f0089d6be434e6ec3ef4025bdb50faa1e288f1f4c5a7e349c97a9",
+  "manifest_id": "owl2bench-scalability-ladder:seed=1",
+  "no_answer_keys": true,
+  "points": [
+    {
+      "actuals": null,
+      "determinism": null,
+      "generated": false,
+      "generator_jar_sha256": "sha256:c2bacf1d80e91ec05625b4c458f899a626ef92b85c60c6bac1f0a519060839ff",
+      "generator_revision": "5a27536c8e7f7621b34c61c8a57ed9eb63e7829a",
+      "invocation": "kracr/owl2bench@5a27536c8e7f7621b34c61c8a57ed9eb63e7829a:OWL2Bench.jar 1 DL 1",
+      "origin": "anchor-reuse",
+      "output": {
+        "bytes": 4961866,
+        "path": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/staged/0006_UNIV-BENCH-OWL2DL-seed1-u1.owl",
+        "repo_relative_path": "benchmarks/ontologies/external/owl2bench/staged/0006_UNIV-BENCH-OWL2DL-seed1-u1.owl",
+        "sha256": "sha256:fce9e2c1fa58ffd8bd5deb7de224c1f4a7d8c0eec0c49dce0d42491e1854ed77"
+      },
+      "profile": "DL",
+      "resumed": false,
+      "reused_from": {
+        "adr": "docs/adr/0017-seed-generated-anchors-for-el-ql-dl.md",
+        "anchors_manifest": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/staged/manifest.tsv",
+        "pinned_sha256": "sha256:fce9e2c1fa58ffd8bd5deb7de224c1f4a7d8c0eec0c49dce0d42491e1854ed77",
+        "staged_name": "0006_UNIV-BENCH-OWL2DL-seed1-u1.owl"
+      },
+      "seed": 1,
+      "stage": "scalability",
+      "universities": 1
+    },
+    {
+      "actuals": {
+        "peak_rss_kib": {
+          "run1": 2962400,
+          "run2": 3088532
+        },
+        "rss_recorded": true,
+        "timeout_seconds_per_run": 3600,
+        "wall_time_seconds": {
+          "run1": 11.018,
+          "run2": 11.45
+        }
+      },
+      "determinism": {
+        "run1_sha256": "sha256:39149ca33499076f465c318600f61e59caa01b29f15da37de0849576d0fd735b",
+        "run2_sha256": "sha256:39149ca33499076f465c318600f61e59caa01b29f15da37de0849576d0fd735b",
+        "runs": 2,
+        "status": "byte-identical"
+      },
+      "diagnostics": {
+        "run1_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2DL-seed1-universities2.owl-run1.log",
+        "run2_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2DL-seed1-universities2.owl-run2.log"
+      },
+      "generated": true,
+      "generator_jar_sha256": "sha256:c2bacf1d80e91ec05625b4c458f899a626ef92b85c60c6bac1f0a519060839ff",
+      "generator_revision": "5a27536c8e7f7621b34c61c8a57ed9eb63e7829a",
+      "invocation": "kracr/owl2bench@5a27536c8e7f7621b34c61c8a57ed9eb63e7829a:OWL2Bench.jar 2 DL 1",
+      "origin": "generated",
+      "output": {
+        "bytes": 9691324,
+        "path": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2DL-seed1-universities2.owl",
+        "repo_relative_path": "benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2DL-seed1-universities2.owl",
+        "sha256": "sha256:39149ca33499076f465c318600f61e59caa01b29f15da37de0849576d0fd735b"
+      },
+      "profile": "DL",
+      "resumed": false,
+      "seed": 1,
+      "stage": "scalability",
+      "universities": 2
+    },
+    {
+      "actuals": {
+        "peak_rss_kib": {
+          "run1": 4590984,
+          "run2": 4445336
+        },
+        "rss_recorded": true,
+        "timeout_seconds_per_run": 3600,
+        "wall_time_seconds": {
+          "run1": 21.449,
+          "run2": 22.267
+        }
+      },
+      "determinism": {
+        "run1_sha256": "sha256:0757e8ec6472f6e80b8037f6052ede76c700126bdbf25557db338c04c405ff10",
+        "run2_sha256": "sha256:0757e8ec6472f6e80b8037f6052ede76c700126bdbf25557db338c04c405ff10",
+        "runs": 2,
+        "status": "byte-identical"
+      },
+      "diagnostics": {
+        "run1_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2DL-seed1-universities5.owl-run1.log",
+        "run2_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2DL-seed1-universities5.owl-run2.log"
+      },
+      "generated": true,
+      "generator_jar_sha256": "sha256:c2bacf1d80e91ec05625b4c458f899a626ef92b85c60c6bac1f0a519060839ff",
+      "generator_revision": "5a27536c8e7f7621b34c61c8a57ed9eb63e7829a",
+      "invocation": "kracr/owl2bench@5a27536c8e7f7621b34c61c8a57ed9eb63e7829a:OWL2Bench.jar 5 DL 1",
+      "origin": "generated",
+      "output": {
+        "bytes": 31473955,
+        "path": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2DL-seed1-universities5.owl",
+        "repo_relative_path": "benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2DL-seed1-universities5.owl",
+        "sha256": "sha256:0757e8ec6472f6e80b8037f6052ede76c700126bdbf25557db338c04c405ff10"
+      },
+      "profile": "DL",
+      "resumed": false,
+      "seed": 1,
+      "stage": "scalability",
+      "universities": 5
+    },
+    {
+      "actuals": {
+        "peak_rss_kib": {
+          "run1": 4875480,
+          "run2": 5358436
+        },
+        "rss_recorded": true,
+        "timeout_seconds_per_run": 3600,
+        "wall_time_seconds": {
+          "run1": 41.4,
+          "run2": 44.468
+        }
+      },
+      "determinism": {
+        "run1_sha256": "sha256:31dab34c1c51c95e8729a9740b76c8dacacc4f34778b8dbf251f154b7f967ec1",
+        "run2_sha256": "sha256:31dab34c1c51c95e8729a9740b76c8dacacc4f34778b8dbf251f154b7f967ec1",
+        "runs": 2,
+        "status": "byte-identical"
+      },
+      "diagnostics": {
+        "run1_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2DL-seed1-universities10.owl-run1.log",
+        "run2_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2DL-seed1-universities10.owl-run2.log"
+      },
+      "generated": true,
+      "generator_jar_sha256": "sha256:c2bacf1d80e91ec05625b4c458f899a626ef92b85c60c6bac1f0a519060839ff",
+      "generator_revision": "5a27536c8e7f7621b34c61c8a57ed9eb63e7829a",
+      "invocation": "kracr/owl2bench@5a27536c8e7f7621b34c61c8a57ed9eb63e7829a:OWL2Bench.jar 10 DL 1",
+      "origin": "generated",
+      "output": {
+        "bytes": 68533799,
+        "path": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2DL-seed1-universities10.owl",
+        "repo_relative_path": "benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2DL-seed1-universities10.owl",
+        "sha256": "sha256:31dab34c1c51c95e8729a9740b76c8dacacc4f34778b8dbf251f154b7f967ec1"
+      },
+      "profile": "DL",
+      "resumed": false,
+      "seed": 1,
+      "stage": "scalability",
+      "universities": 10
+    },
+    {
+      "actuals": {
+        "peak_rss_kib": {
+          "run1": 4810352,
+          "run2": 4965680
+        },
+        "rss_recorded": true,
+        "timeout_seconds_per_run": 3600,
+        "wall_time_seconds": {
+          "run1": 72.383,
+          "run2": 73.136
+        }
+      },
+      "determinism": {
+        "run1_sha256": "sha256:74f3dd59e068aba64d7ff1638c9bc4346e8589394d628f84d17eeaca0cfa973c",
+        "run2_sha256": "sha256:74f3dd59e068aba64d7ff1638c9bc4346e8589394d628f84d17eeaca0cfa973c",
+        "runs": 2,
+        "status": "byte-identical"
+      },
+      "diagnostics": {
+        "run1_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2DL-seed1-universities20.owl-run1.log",
+        "run2_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2DL-seed1-universities20.owl-run2.log"
+      },
+      "generated": true,
+      "generator_jar_sha256": "sha256:c2bacf1d80e91ec05625b4c458f899a626ef92b85c60c6bac1f0a519060839ff",
+      "generator_revision": "5a27536c8e7f7621b34c61c8a57ed9eb63e7829a",
+      "invocation": "kracr/owl2bench@5a27536c8e7f7621b34c61c8a57ed9eb63e7829a:OWL2Bench.jar 20 DL 1",
+      "origin": "generated",
+      "output": {
+        "bytes": 133462463,
+        "path": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2DL-seed1-universities20.owl",
+        "repo_relative_path": "benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2DL-seed1-universities20.owl",
+        "sha256": "sha256:74f3dd59e068aba64d7ff1638c9bc4346e8589394d628f84d17eeaca0cfa973c"
+      },
+      "profile": "DL",
+      "resumed": false,
+      "seed": 1,
+      "stage": "scalability",
+      "universities": 20
+    },
+    {
+      "actuals": {
+        "peak_rss_kib": {
+          "run1": 8005260,
+          "run2": 9140680
+        },
+        "rss_recorded": true,
+        "timeout_seconds_per_run": 3600,
+        "wall_time_seconds": {
+          "run1": 179.584,
+          "run2": 171.148
+        }
+      },
+      "determinism": {
+        "run1_sha256": "sha256:74f9ecb11efd06786135a475e0aba40366492ce6d6f0239d639e545570eca6bd",
+        "run2_sha256": "sha256:74f9ecb11efd06786135a475e0aba40366492ce6d6f0239d639e545570eca6bd",
+        "runs": 2,
+        "status": "byte-identical"
+      },
+      "diagnostics": {
+        "run1_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2DL-seed1-universities50.owl-run1.log",
+        "run2_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2DL-seed1-universities50.owl-run2.log"
+      },
+      "generated": true,
+      "generator_jar_sha256": "sha256:c2bacf1d80e91ec05625b4c458f899a626ef92b85c60c6bac1f0a519060839ff",
+      "generator_revision": "5a27536c8e7f7621b34c61c8a57ed9eb63e7829a",
+      "invocation": "kracr/owl2bench@5a27536c8e7f7621b34c61c8a57ed9eb63e7829a:OWL2Bench.jar 50 DL 1",
+      "origin": "generated",
+      "output": {
+        "bytes": 337129563,
+        "path": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2DL-seed1-universities50.owl",
+        "repo_relative_path": "benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2DL-seed1-universities50.owl",
+        "sha256": "sha256:74f9ecb11efd06786135a475e0aba40366492ce6d6f0239d639e545570eca6bd"
+      },
+      "profile": "DL",
+      "resumed": false,
+      "seed": 1,
+      "stage": "scalability",
+      "universities": 50
+    },
+    {
+      "actuals": null,
+      "determinism": null,
+      "generated": false,
+      "generator_jar_sha256": "sha256:c2bacf1d80e91ec05625b4c458f899a626ef92b85c60c6bac1f0a519060839ff",
+      "generator_revision": "5a27536c8e7f7621b34c61c8a57ed9eb63e7829a",
+      "invocation": "kracr/owl2bench@5a27536c8e7f7621b34c61c8a57ed9eb63e7829a:OWL2Bench.jar 1 EL 1",
+      "origin": "anchor-reuse",
+      "output": {
+        "bytes": 4944020,
+        "path": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/staged/0007_UNIV-BENCH-OWL2EL-seed1-u1.owl",
+        "repo_relative_path": "benchmarks/ontologies/external/owl2bench/staged/0007_UNIV-BENCH-OWL2EL-seed1-u1.owl",
+        "sha256": "sha256:49ac036c92153c0995f009ffea03d9843372eef5ffa29fd93f6533f6165f62c1"
+      },
+      "profile": "EL",
+      "resumed": false,
+      "reused_from": {
+        "adr": "docs/adr/0017-seed-generated-anchors-for-el-ql-dl.md",
+        "anchors_manifest": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/staged/manifest.tsv",
+        "pinned_sha256": "sha256:49ac036c92153c0995f009ffea03d9843372eef5ffa29fd93f6533f6165f62c1",
+        "staged_name": "0007_UNIV-BENCH-OWL2EL-seed1-u1.owl"
+      },
+      "seed": 1,
+      "stage": "scalability",
+      "universities": 1
+    },
+    {
+      "actuals": {
+        "peak_rss_kib": {
+          "run1": 3189216,
+          "run2": 3223832
+        },
+        "rss_recorded": true,
+        "timeout_seconds_per_run": 3600,
+        "wall_time_seconds": {
+          "run1": 11.563,
+          "run2": 11.758
+        }
+      },
+      "determinism": {
+        "run1_sha256": "sha256:8292984d29ee2a49f5779a34dff99f17a95a22b33e9c8d33905ab3975d06e1cd",
+        "run2_sha256": "sha256:8292984d29ee2a49f5779a34dff99f17a95a22b33e9c8d33905ab3975d06e1cd",
+        "runs": 2,
+        "status": "byte-identical"
+      },
+      "diagnostics": {
+        "run1_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2EL-seed1-universities2.owl-run1.log",
+        "run2_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2EL-seed1-universities2.owl-run2.log"
+      },
+      "generated": true,
+      "generator_jar_sha256": "sha256:c2bacf1d80e91ec05625b4c458f899a626ef92b85c60c6bac1f0a519060839ff",
+      "generator_revision": "5a27536c8e7f7621b34c61c8a57ed9eb63e7829a",
+      "invocation": "kracr/owl2bench@5a27536c8e7f7621b34c61c8a57ed9eb63e7829a:OWL2Bench.jar 2 EL 1",
+      "origin": "generated",
+      "output": {
+        "bytes": 9673478,
+        "path": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2EL-seed1-universities2.owl",
+        "repo_relative_path": "benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2EL-seed1-universities2.owl",
+        "sha256": "sha256:8292984d29ee2a49f5779a34dff99f17a95a22b33e9c8d33905ab3975d06e1cd"
+      },
+      "profile": "EL",
+      "resumed": false,
+      "seed": 1,
+      "stage": "scalability",
+      "universities": 2
+    },
+    {
+      "actuals": {
+        "peak_rss_kib": {
+          "run1": 4314188,
+          "run2": 4318884
+        },
+        "rss_recorded": true,
+        "timeout_seconds_per_run": 3600,
+        "wall_time_seconds": {
+          "run1": 21.423,
+          "run2": 22.381
+        }
+      },
+      "determinism": {
+        "run1_sha256": "sha256:0c84449834bf4314e5104cb19aab8d95a7a92760f19afa9e944b774596ff01d4",
+        "run2_sha256": "sha256:0c84449834bf4314e5104cb19aab8d95a7a92760f19afa9e944b774596ff01d4",
+        "runs": 2,
+        "status": "byte-identical"
+      },
+      "diagnostics": {
+        "run1_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2EL-seed1-universities5.owl-run1.log",
+        "run2_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2EL-seed1-universities5.owl-run2.log"
+      },
+      "generated": true,
+      "generator_jar_sha256": "sha256:c2bacf1d80e91ec05625b4c458f899a626ef92b85c60c6bac1f0a519060839ff",
+      "generator_revision": "5a27536c8e7f7621b34c61c8a57ed9eb63e7829a",
+      "invocation": "kracr/owl2bench@5a27536c8e7f7621b34c61c8a57ed9eb63e7829a:OWL2Bench.jar 5 EL 1",
+      "origin": "generated",
+      "output": {
+        "bytes": 31456109,
+        "path": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2EL-seed1-universities5.owl",
+        "repo_relative_path": "benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2EL-seed1-universities5.owl",
+        "sha256": "sha256:0c84449834bf4314e5104cb19aab8d95a7a92760f19afa9e944b774596ff01d4"
+      },
+      "profile": "EL",
+      "resumed": false,
+      "seed": 1,
+      "stage": "scalability",
+      "universities": 5
+    },
+    {
+      "actuals": {
+        "peak_rss_kib": {
+          "run1": 5131692,
+          "run2": 5162168
+        },
+        "rss_recorded": true,
+        "timeout_seconds_per_run": 3600,
+        "wall_time_seconds": {
+          "run1": 40.513,
+          "run2": 43.075
+        }
+      },
+      "determinism": {
+        "run1_sha256": "sha256:1ab47d7c8000101a89c67ee781587e9eb406ea0a81ea3fecf26f3f4a1f8c941d",
+        "run2_sha256": "sha256:1ab47d7c8000101a89c67ee781587e9eb406ea0a81ea3fecf26f3f4a1f8c941d",
+        "runs": 2,
+        "status": "byte-identical"
+      },
+      "diagnostics": {
+        "run1_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2EL-seed1-universities10.owl-run1.log",
+        "run2_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2EL-seed1-universities10.owl-run2.log"
+      },
+      "generated": true,
+      "generator_jar_sha256": "sha256:c2bacf1d80e91ec05625b4c458f899a626ef92b85c60c6bac1f0a519060839ff",
+      "generator_revision": "5a27536c8e7f7621b34c61c8a57ed9eb63e7829a",
+      "invocation": "kracr/owl2bench@5a27536c8e7f7621b34c61c8a57ed9eb63e7829a:OWL2Bench.jar 10 EL 1",
+      "origin": "generated",
+      "output": {
+        "bytes": 68515953,
+        "path": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2EL-seed1-universities10.owl",
+        "repo_relative_path": "benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2EL-seed1-universities10.owl",
+        "sha256": "sha256:1ab47d7c8000101a89c67ee781587e9eb406ea0a81ea3fecf26f3f4a1f8c941d"
+      },
+      "profile": "EL",
+      "resumed": false,
+      "seed": 1,
+      "stage": "scalability",
+      "universities": 10
+    },
+    {
+      "actuals": {
+        "peak_rss_kib": {
+          "run1": 5543296,
+          "run2": 5376012
+        },
+        "rss_recorded": true,
+        "timeout_seconds_per_run": 3600,
+        "wall_time_seconds": {
+          "run1": 69.058,
+          "run2": 70.169
+        }
+      },
+      "determinism": {
+        "run1_sha256": "sha256:4cfbc197912c8210168757d65e2d1ffd44a65dc6329332aa584b8054882fafb4",
+        "run2_sha256": "sha256:4cfbc197912c8210168757d65e2d1ffd44a65dc6329332aa584b8054882fafb4",
+        "runs": 2,
+        "status": "byte-identical"
+      },
+      "diagnostics": {
+        "run1_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2EL-seed1-universities20.owl-run1.log",
+        "run2_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2EL-seed1-universities20.owl-run2.log"
+      },
+      "generated": true,
+      "generator_jar_sha256": "sha256:c2bacf1d80e91ec05625b4c458f899a626ef92b85c60c6bac1f0a519060839ff",
+      "generator_revision": "5a27536c8e7f7621b34c61c8a57ed9eb63e7829a",
+      "invocation": "kracr/owl2bench@5a27536c8e7f7621b34c61c8a57ed9eb63e7829a:OWL2Bench.jar 20 EL 1",
+      "origin": "generated",
+      "output": {
+        "bytes": 133444617,
+        "path": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2EL-seed1-universities20.owl",
+        "repo_relative_path": "benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2EL-seed1-universities20.owl",
+        "sha256": "sha256:4cfbc197912c8210168757d65e2d1ffd44a65dc6329332aa584b8054882fafb4"
+      },
+      "profile": "EL",
+      "resumed": false,
+      "seed": 1,
+      "stage": "scalability",
+      "universities": 20
+    },
+    {
+      "actuals": {
+        "peak_rss_kib": {
+          "run1": 9204808,
+          "run2": 9858444
+        },
+        "rss_recorded": true,
+        "timeout_seconds_per_run": 3600,
+        "wall_time_seconds": {
+          "run1": 168.057,
+          "run2": 177.039
+        }
+      },
+      "determinism": {
+        "run1_sha256": "sha256:db32c782dac3713e4e94267b88ac2f2717d682dc68ef9ec7774b711603aff78a",
+        "run2_sha256": "sha256:db32c782dac3713e4e94267b88ac2f2717d682dc68ef9ec7774b711603aff78a",
+        "runs": 2,
+        "status": "byte-identical"
+      },
+      "diagnostics": {
+        "run1_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2EL-seed1-universities50.owl-run1.log",
+        "run2_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2EL-seed1-universities50.owl-run2.log"
+      },
+      "generated": true,
+      "generator_jar_sha256": "sha256:c2bacf1d80e91ec05625b4c458f899a626ef92b85c60c6bac1f0a519060839ff",
+      "generator_revision": "5a27536c8e7f7621b34c61c8a57ed9eb63e7829a",
+      "invocation": "kracr/owl2bench@5a27536c8e7f7621b34c61c8a57ed9eb63e7829a:OWL2Bench.jar 50 EL 1",
+      "origin": "generated",
+      "output": {
+        "bytes": 337111717,
+        "path": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2EL-seed1-universities50.owl",
+        "repo_relative_path": "benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2EL-seed1-universities50.owl",
+        "sha256": "sha256:db32c782dac3713e4e94267b88ac2f2717d682dc68ef9ec7774b711603aff78a"
+      },
+      "profile": "EL",
+      "resumed": false,
+      "seed": 1,
+      "stage": "scalability",
+      "universities": 50
+    },
+    {
+      "actuals": null,
+      "determinism": null,
+      "generated": false,
+      "generator_jar_sha256": "sha256:c2bacf1d80e91ec05625b4c458f899a626ef92b85c60c6bac1f0a519060839ff",
+      "generator_revision": "5a27536c8e7f7621b34c61c8a57ed9eb63e7829a",
+      "invocation": "kracr/owl2bench@5a27536c8e7f7621b34c61c8a57ed9eb63e7829a:OWL2Bench.jar 1 QL 1",
+      "origin": "anchor-reuse",
+      "output": {
+        "bytes": 4945586,
+        "path": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/staged/0008_UNIV-BENCH-OWL2QL-seed1-u1.owl",
+        "repo_relative_path": "benchmarks/ontologies/external/owl2bench/staged/0008_UNIV-BENCH-OWL2QL-seed1-u1.owl",
+        "sha256": "sha256:d2c5037f49f8a71488b3e2e2b8d82057b18bda931319eb4b7cf3d09a41e17d9c"
+      },
+      "profile": "QL",
+      "resumed": false,
+      "reused_from": {
+        "adr": "docs/adr/0017-seed-generated-anchors-for-el-ql-dl.md",
+        "anchors_manifest": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/staged/manifest.tsv",
+        "pinned_sha256": "sha256:d2c5037f49f8a71488b3e2e2b8d82057b18bda931319eb4b7cf3d09a41e17d9c",
+        "staged_name": "0008_UNIV-BENCH-OWL2QL-seed1-u1.owl"
+      },
+      "seed": 1,
+      "stage": "scalability",
+      "universities": 1
+    },
+    {
+      "actuals": {
+        "peak_rss_kib": {
+          "run1": 3028592,
+          "run2": 2988788
+        },
+        "rss_recorded": true,
+        "timeout_seconds_per_run": 3600,
+        "wall_time_seconds": {
+          "run1": 11.076,
+          "run2": 11.31
+        }
+      },
+      "determinism": {
+        "run1_sha256": "sha256:930fae05b88f7dda02a085f8acaee9479293898af703c775cf48112a8791c062",
+        "run2_sha256": "sha256:930fae05b88f7dda02a085f8acaee9479293898af703c775cf48112a8791c062",
+        "runs": 2,
+        "status": "byte-identical"
+      },
+      "diagnostics": {
+        "run1_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2QL-seed1-universities2.owl-run1.log",
+        "run2_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2QL-seed1-universities2.owl-run2.log"
+      },
+      "generated": true,
+      "generator_jar_sha256": "sha256:c2bacf1d80e91ec05625b4c458f899a626ef92b85c60c6bac1f0a519060839ff",
+      "generator_revision": "5a27536c8e7f7621b34c61c8a57ed9eb63e7829a",
+      "invocation": "kracr/owl2bench@5a27536c8e7f7621b34c61c8a57ed9eb63e7829a:OWL2Bench.jar 2 QL 1",
+      "origin": "generated",
+      "output": {
+        "bytes": 9675044,
+        "path": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2QL-seed1-universities2.owl",
+        "repo_relative_path": "benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2QL-seed1-universities2.owl",
+        "sha256": "sha256:930fae05b88f7dda02a085f8acaee9479293898af703c775cf48112a8791c062"
+      },
+      "profile": "QL",
+      "resumed": false,
+      "seed": 1,
+      "stage": "scalability",
+      "universities": 2
+    },
+    {
+      "actuals": {
+        "peak_rss_kib": {
+          "run1": 4738180,
+          "run2": 4761620
+        },
+        "rss_recorded": true,
+        "timeout_seconds_per_run": 3600,
+        "wall_time_seconds": {
+          "run1": 23.54,
+          "run2": 23.52
+        }
+      },
+      "determinism": {
+        "run1_sha256": "sha256:28ce28df0522151463e90a4f54709cdc35d82bb728a7c2e90b3df61190d08ca6",
+        "run2_sha256": "sha256:28ce28df0522151463e90a4f54709cdc35d82bb728a7c2e90b3df61190d08ca6",
+        "runs": 2,
+        "status": "byte-identical"
+      },
+      "diagnostics": {
+        "run1_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2QL-seed1-universities5.owl-run1.log",
+        "run2_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2QL-seed1-universities5.owl-run2.log"
+      },
+      "generated": true,
+      "generator_jar_sha256": "sha256:c2bacf1d80e91ec05625b4c458f899a626ef92b85c60c6bac1f0a519060839ff",
+      "generator_revision": "5a27536c8e7f7621b34c61c8a57ed9eb63e7829a",
+      "invocation": "kracr/owl2bench@5a27536c8e7f7621b34c61c8a57ed9eb63e7829a:OWL2Bench.jar 5 QL 1",
+      "origin": "generated",
+      "output": {
+        "bytes": 31457675,
+        "path": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2QL-seed1-universities5.owl",
+        "repo_relative_path": "benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2QL-seed1-universities5.owl",
+        "sha256": "sha256:28ce28df0522151463e90a4f54709cdc35d82bb728a7c2e90b3df61190d08ca6"
+      },
+      "profile": "QL",
+      "resumed": false,
+      "seed": 1,
+      "stage": "scalability",
+      "universities": 5
+    },
+    {
+      "actuals": {
+        "peak_rss_kib": {
+          "run1": 4905388,
+          "run2": 5142504
+        },
+        "rss_recorded": true,
+        "timeout_seconds_per_run": 3600,
+        "wall_time_seconds": {
+          "run1": 42.905,
+          "run2": 41.557
+        }
+      },
+      "determinism": {
+        "run1_sha256": "sha256:104f2ba06b048b6e6368dc7ad491484cf36b9071ea7dea3f316a4cf267839b82",
+        "run2_sha256": "sha256:104f2ba06b048b6e6368dc7ad491484cf36b9071ea7dea3f316a4cf267839b82",
+        "runs": 2,
+        "status": "byte-identical"
+      },
+      "diagnostics": {
+        "run1_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2QL-seed1-universities10.owl-run1.log",
+        "run2_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2QL-seed1-universities10.owl-run2.log"
+      },
+      "generated": true,
+      "generator_jar_sha256": "sha256:c2bacf1d80e91ec05625b4c458f899a626ef92b85c60c6bac1f0a519060839ff",
+      "generator_revision": "5a27536c8e7f7621b34c61c8a57ed9eb63e7829a",
+      "invocation": "kracr/owl2bench@5a27536c8e7f7621b34c61c8a57ed9eb63e7829a:OWL2Bench.jar 10 QL 1",
+      "origin": "generated",
+      "output": {
+        "bytes": 68517519,
+        "path": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2QL-seed1-universities10.owl",
+        "repo_relative_path": "benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2QL-seed1-universities10.owl",
+        "sha256": "sha256:104f2ba06b048b6e6368dc7ad491484cf36b9071ea7dea3f316a4cf267839b82"
+      },
+      "profile": "QL",
+      "resumed": false,
+      "seed": 1,
+      "stage": "scalability",
+      "universities": 10
+    },
+    {
+      "actuals": {
+        "peak_rss_kib": {
+          "run1": 5382300,
+          "run2": 5115692
+        },
+        "rss_recorded": true,
+        "timeout_seconds_per_run": 3600,
+        "wall_time_seconds": {
+          "run1": 71.793,
+          "run2": 71.938
+        }
+      },
+      "determinism": {
+        "run1_sha256": "sha256:1ae95e39cd0e5cd8a8b878951c7c80b8635d3815132b136d57560c60e259e67a",
+        "run2_sha256": "sha256:1ae95e39cd0e5cd8a8b878951c7c80b8635d3815132b136d57560c60e259e67a",
+        "runs": 2,
+        "status": "byte-identical"
+      },
+      "diagnostics": {
+        "run1_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2QL-seed1-universities20.owl-run1.log",
+        "run2_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2QL-seed1-universities20.owl-run2.log"
+      },
+      "generated": true,
+      "generator_jar_sha256": "sha256:c2bacf1d80e91ec05625b4c458f899a626ef92b85c60c6bac1f0a519060839ff",
+      "generator_revision": "5a27536c8e7f7621b34c61c8a57ed9eb63e7829a",
+      "invocation": "kracr/owl2bench@5a27536c8e7f7621b34c61c8a57ed9eb63e7829a:OWL2Bench.jar 20 QL 1",
+      "origin": "generated",
+      "output": {
+        "bytes": 133446183,
+        "path": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2QL-seed1-universities20.owl",
+        "repo_relative_path": "benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2QL-seed1-universities20.owl",
+        "sha256": "sha256:1ae95e39cd0e5cd8a8b878951c7c80b8635d3815132b136d57560c60e259e67a"
+      },
+      "profile": "QL",
+      "resumed": false,
+      "seed": 1,
+      "stage": "scalability",
+      "universities": 20
+    },
+    {
+      "actuals": {
+        "peak_rss_kib": {
+          "run1": 9315860,
+          "run2": 8921396
+        },
+        "rss_recorded": true,
+        "timeout_seconds_per_run": 3600,
+        "wall_time_seconds": {
+          "run1": 310.9,
+          "run2": 336.218
+        }
+      },
+      "determinism": {
+        "run1_sha256": "sha256:c4731d1d3e3a292e5039f4c191d1e99ee4bb422e2ccfc7d4ae7bd5e445d692d2",
+        "run2_sha256": "sha256:c4731d1d3e3a292e5039f4c191d1e99ee4bb422e2ccfc7d4ae7bd5e445d692d2",
+        "runs": 2,
+        "status": "byte-identical"
+      },
+      "diagnostics": {
+        "run1_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2QL-seed1-universities50.owl-run1.log",
+        "run2_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2QL-seed1-universities50.owl-run2.log"
+      },
+      "generated": true,
+      "generator_jar_sha256": "sha256:c2bacf1d80e91ec05625b4c458f899a626ef92b85c60c6bac1f0a519060839ff",
+      "generator_revision": "5a27536c8e7f7621b34c61c8a57ed9eb63e7829a",
+      "invocation": "kracr/owl2bench@5a27536c8e7f7621b34c61c8a57ed9eb63e7829a:OWL2Bench.jar 50 QL 1",
+      "origin": "generated",
+      "output": {
+        "bytes": 337113283,
+        "path": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2QL-seed1-universities50.owl",
+        "repo_relative_path": "benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2QL-seed1-universities50.owl",
+        "sha256": "sha256:c4731d1d3e3a292e5039f4c191d1e99ee4bb422e2ccfc7d4ae7bd5e445d692d2"
+      },
+      "profile": "QL",
+      "resumed": false,
+      "seed": 1,
+      "stage": "scalability",
+      "universities": 50
+    },
+    {
+      "actuals": null,
+      "determinism": null,
+      "generated": false,
+      "generator_jar_sha256": "sha256:c2bacf1d80e91ec05625b4c458f899a626ef92b85c60c6bac1f0a519060839ff",
+      "generator_revision": "5a27536c8e7f7621b34c61c8a57ed9eb63e7829a",
+      "invocation": "kracr/owl2bench@5a27536c8e7f7621b34c61c8a57ed9eb63e7829a:OWL2Bench.jar 1 RL 1",
+      "origin": "anchor-reuse",
+      "output": {
+        "bytes": 4947582,
+        "path": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/staged/0005_UNIV-BENCH-OWL2RL-seed1-u1.owl",
+        "repo_relative_path": "benchmarks/ontologies/external/owl2bench/staged/0005_UNIV-BENCH-OWL2RL-seed1-u1.owl",
+        "sha256": "sha256:78d7a0780e8cf7bf5d375d2a13b30c6bad8fa5c0763854770c6ae7f6fb9104f3"
+      },
+      "profile": "RL",
+      "resumed": false,
+      "reused_from": {
+        "adr": "docs/adr/0015-seed-generated-rl-correctness-anchor.md",
+        "anchors_manifest": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/staged/manifest.tsv",
+        "pinned_sha256": "sha256:78d7a0780e8cf7bf5d375d2a13b30c6bad8fa5c0763854770c6ae7f6fb9104f3",
+        "staged_name": "0005_UNIV-BENCH-OWL2RL-seed1-u1.owl"
+      },
+      "seed": 1,
+      "stage": "scalability",
+      "universities": 1
+    },
+    {
+      "actuals": {
+        "peak_rss_kib": {
+          "run1": 3192944,
+          "run2": 3023732
+        },
+        "rss_recorded": true,
+        "timeout_seconds_per_run": 3600,
+        "wall_time_seconds": {
+          "run1": 11.235,
+          "run2": 11.244
+        }
+      },
+      "determinism": {
+        "run1_sha256": "sha256:e7326309d1edfe3c4c14aea8f0fa613132d5d2946131c4ac39485d05fd8b7fa9",
+        "run2_sha256": "sha256:e7326309d1edfe3c4c14aea8f0fa613132d5d2946131c4ac39485d05fd8b7fa9",
+        "runs": 2,
+        "status": "byte-identical"
+      },
+      "diagnostics": {
+        "run1_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2RL-seed1-universities2.owl-run1.log",
+        "run2_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2RL-seed1-universities2.owl-run2.log"
+      },
+      "generated": true,
+      "generator_jar_sha256": "sha256:c2bacf1d80e91ec05625b4c458f899a626ef92b85c60c6bac1f0a519060839ff",
+      "generator_revision": "5a27536c8e7f7621b34c61c8a57ed9eb63e7829a",
+      "invocation": "kracr/owl2bench@5a27536c8e7f7621b34c61c8a57ed9eb63e7829a:OWL2Bench.jar 2 RL 1",
+      "origin": "generated",
+      "output": {
+        "bytes": 9677040,
+        "path": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2RL-seed1-universities2.owl",
+        "repo_relative_path": "benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2RL-seed1-universities2.owl",
+        "sha256": "sha256:e7326309d1edfe3c4c14aea8f0fa613132d5d2946131c4ac39485d05fd8b7fa9"
+      },
+      "profile": "RL",
+      "resumed": false,
+      "seed": 1,
+      "stage": "scalability",
+      "universities": 2
+    },
+    {
+      "actuals": {
+        "peak_rss_kib": {
+          "run1": 4398888,
+          "run2": 4116060
+        },
+        "rss_recorded": true,
+        "timeout_seconds_per_run": 3600,
+        "wall_time_seconds": {
+          "run1": 22.35,
+          "run2": 22.755
+        }
+      },
+      "determinism": {
+        "run1_sha256": "sha256:10f66484b14033021f428fc0a1d8ab283f21c150648f58c19c561bfb6cf0efa6",
+        "run2_sha256": "sha256:10f66484b14033021f428fc0a1d8ab283f21c150648f58c19c561bfb6cf0efa6",
+        "runs": 2,
+        "status": "byte-identical"
+      },
+      "diagnostics": {
+        "run1_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2RL-seed1-universities5.owl-run1.log",
+        "run2_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2RL-seed1-universities5.owl-run2.log"
+      },
+      "generated": true,
+      "generator_jar_sha256": "sha256:c2bacf1d80e91ec05625b4c458f899a626ef92b85c60c6bac1f0a519060839ff",
+      "generator_revision": "5a27536c8e7f7621b34c61c8a57ed9eb63e7829a",
+      "invocation": "kracr/owl2bench@5a27536c8e7f7621b34c61c8a57ed9eb63e7829a:OWL2Bench.jar 5 RL 1",
+      "origin": "generated",
+      "output": {
+        "bytes": 31459671,
+        "path": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2RL-seed1-universities5.owl",
+        "repo_relative_path": "benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2RL-seed1-universities5.owl",
+        "sha256": "sha256:10f66484b14033021f428fc0a1d8ab283f21c150648f58c19c561bfb6cf0efa6"
+      },
+      "profile": "RL",
+      "resumed": false,
+      "seed": 1,
+      "stage": "scalability",
+      "universities": 5
+    },
+    {
+      "actuals": {
+        "peak_rss_kib": {
+          "run1": 5291044,
+          "run2": 5488600
+        },
+        "rss_recorded": true,
+        "timeout_seconds_per_run": 3600,
+        "wall_time_seconds": {
+          "run1": 42.608,
+          "run2": 41.54
+        }
+      },
+      "determinism": {
+        "run1_sha256": "sha256:27ad2c9876c01ba7717c83328503d39abbdea045dcb77b15c7bd745f4df244f2",
+        "run2_sha256": "sha256:27ad2c9876c01ba7717c83328503d39abbdea045dcb77b15c7bd745f4df244f2",
+        "runs": 2,
+        "status": "byte-identical"
+      },
+      "diagnostics": {
+        "run1_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2RL-seed1-universities10.owl-run1.log",
+        "run2_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2RL-seed1-universities10.owl-run2.log"
+      },
+      "generated": true,
+      "generator_jar_sha256": "sha256:c2bacf1d80e91ec05625b4c458f899a626ef92b85c60c6bac1f0a519060839ff",
+      "generator_revision": "5a27536c8e7f7621b34c61c8a57ed9eb63e7829a",
+      "invocation": "kracr/owl2bench@5a27536c8e7f7621b34c61c8a57ed9eb63e7829a:OWL2Bench.jar 10 RL 1",
+      "origin": "generated",
+      "output": {
+        "bytes": 68519515,
+        "path": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2RL-seed1-universities10.owl",
+        "repo_relative_path": "benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2RL-seed1-universities10.owl",
+        "sha256": "sha256:27ad2c9876c01ba7717c83328503d39abbdea045dcb77b15c7bd745f4df244f2"
+      },
+      "profile": "RL",
+      "resumed": false,
+      "seed": 1,
+      "stage": "scalability",
+      "universities": 10
+    },
+    {
+      "actuals": {
+        "peak_rss_kib": {
+          "run1": 5782052,
+          "run2": 5004424
+        },
+        "rss_recorded": true,
+        "timeout_seconds_per_run": 3600,
+        "wall_time_seconds": {
+          "run1": 66.314,
+          "run2": 74.855
+        }
+      },
+      "determinism": {
+        "run1_sha256": "sha256:5a0239ea9860dcd4518a9177ecd68e72e5861efd843f845c0165e1727f8a46a8",
+        "run2_sha256": "sha256:5a0239ea9860dcd4518a9177ecd68e72e5861efd843f845c0165e1727f8a46a8",
+        "runs": 2,
+        "status": "byte-identical"
+      },
+      "diagnostics": {
+        "run1_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2RL-seed1-universities20.owl-run1.log",
+        "run2_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2RL-seed1-universities20.owl-run2.log"
+      },
+      "generated": true,
+      "generator_jar_sha256": "sha256:c2bacf1d80e91ec05625b4c458f899a626ef92b85c60c6bac1f0a519060839ff",
+      "generator_revision": "5a27536c8e7f7621b34c61c8a57ed9eb63e7829a",
+      "invocation": "kracr/owl2bench@5a27536c8e7f7621b34c61c8a57ed9eb63e7829a:OWL2Bench.jar 20 RL 1",
+      "origin": "generated",
+      "output": {
+        "bytes": 133448179,
+        "path": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2RL-seed1-universities20.owl",
+        "repo_relative_path": "benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2RL-seed1-universities20.owl",
+        "sha256": "sha256:5a0239ea9860dcd4518a9177ecd68e72e5861efd843f845c0165e1727f8a46a8"
+      },
+      "profile": "RL",
+      "resumed": false,
+      "seed": 1,
+      "stage": "scalability",
+      "universities": 20
+    },
+    {
+      "actuals": {
+        "peak_rss_kib": {
+          "run1": 8224796,
+          "run2": 9088144
+        },
+        "rss_recorded": true,
+        "timeout_seconds_per_run": 3600,
+        "wall_time_seconds": {
+          "run1": 173.298,
+          "run2": 179.825
+        }
+      },
+      "determinism": {
+        "run1_sha256": "sha256:da9f9aa3499d7385ea54e929b4398e3526d639c7f17336a774ead1e65d03ccf2",
+        "run2_sha256": "sha256:da9f9aa3499d7385ea54e929b4398e3526d639c7f17336a774ead1e65d03ccf2",
+        "runs": 2,
+        "status": "byte-identical"
+      },
+      "diagnostics": {
+        "run1_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2RL-seed1-universities50.owl-run1.log",
+        "run2_log": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/logs/UNIV-BENCH-OWL2RL-seed1-universities50.owl-run2.log"
+      },
+      "generated": true,
+      "generator_jar_sha256": "sha256:c2bacf1d80e91ec05625b4c458f899a626ef92b85c60c6bac1f0a519060839ff",
+      "generator_revision": "5a27536c8e7f7621b34c61c8a57ed9eb63e7829a",
+      "invocation": "kracr/owl2bench@5a27536c8e7f7621b34c61c8a57ed9eb63e7829a:OWL2Bench.jar 50 RL 1",
+      "origin": "generated",
+      "output": {
+        "bytes": 337115279,
+        "path": "/home/admindigit/tableauxx/benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2RL-seed1-universities50.owl",
+        "repo_relative_path": "benchmarks/ontologies/external/owl2bench/scalability/UNIV-BENCH-OWL2RL-seed1-universities50.owl",
+        "sha256": "sha256:da9f9aa3499d7385ea54e929b4398e3526d639c7f17336a774ead1e65d03ccf2"
+      },
+      "profile": "RL",
+      "resumed": false,
+      "seed": 1,
+      "stage": "scalability",
+      "universities": 50
+    }
+  ],
+  "schema_version": 1,
+  "source_corpus": "owl2bench",
+  "status": "complete"
+}

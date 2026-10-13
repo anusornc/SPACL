@@ -1,0 +1,25 @@
+{
+  "supports_query": true,
+  "profiles": ["DL"],
+  "data_mode": "directory",
+  "adapter": "hermit-dl",
+  "engine": "HermiT",
+  "engine_version": "manifest-selected",
+  "provenance_relative_path": ".hermit-dl/provenance.json",
+  "query_result_format": "sparql-results-xml-or-tsv",
+  "component_manifest_required": true,
+  "materialization_manifest_required": true,
+  "not_available_exit_code": 125,
+  "unsupported_exit_code": 123,
+  "provenance_fields": [
+    "profile",
+    "context_identity",
+    "component_manifest_sha256",
+    "materialization_manifest_sha256",
+    "hermit_binary_sha256",
+    "hermit_config_sha256",
+    "query_backend_sha256",
+    "source_ontology_sha256",
+    "output_graph_sha256"
+  ]
+}

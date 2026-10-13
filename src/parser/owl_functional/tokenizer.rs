@@ -46,6 +46,7 @@ pub enum TokenType {
 
     // Property expressions
     ObjectInverseOf,
+    ObjectPropertyChain,
 
     // Axiom types
     SubClassOf,
@@ -167,6 +168,30 @@ impl Token {
                 | TokenType::NamedIndividual
                 | TokenType::AnonymousIndividual
                 | TokenType::AnnotationProperty
+                | TokenType::ObjectIntersectionOf
+                | TokenType::ObjectUnionOf
+                | TokenType::ObjectComplementOf
+                | TokenType::ObjectSomeValuesFrom
+                | TokenType::ObjectAllValuesFrom
+                | TokenType::ObjectHasValue
+                | TokenType::ObjectHasSelf
+                | TokenType::ObjectMinCardinality
+                | TokenType::ObjectMaxCardinality
+                | TokenType::ObjectExactCardinality
+                | TokenType::ObjectOneOf
+                | TokenType::DataSomeValuesFrom
+                | TokenType::DataAllValuesFrom
+                | TokenType::DataHasValue
+                | TokenType::DataMinCardinality
+                | TokenType::DataMaxCardinality
+                | TokenType::DataExactCardinality
+                | TokenType::DataIntersectionOf
+                | TokenType::DataUnionOf
+                | TokenType::DataComplementOf
+                | TokenType::DataOneOf
+                | TokenType::DatatypeRestriction
+                | TokenType::ObjectInverseOf
+                | TokenType::ObjectPropertyChain
                 | TokenType::SubClassOf
                 | TokenType::EquivalentClasses
                 | TokenType::DisjointClasses
@@ -379,7 +404,7 @@ impl<'a> Tokenizer<'a> {
                 ))
             }
             '"' => self.parse_string_literal(pos, start_column),
-            '0'..='9' | '-' => self.parse_number_literal(pos, start_column),
+            '0'..='9' | '-' | '+' => self.parse_number_literal(pos, start_column, ch),
             'a'..='z' | 'A'..='Z' | '_' => self.parse_identifier_or_keyword(pos, start_column, ch),
             '\n' => {
                 self.line += 1;
@@ -467,14 +492,21 @@ impl<'a> Tokenizer<'a> {
         ))
     }
 
-    /// Parse a number literal
+    /// Parse a number literal.
+    ///
+    /// The first character was already consumed by the caller and is
+    /// passed in `first_ch`; it seeds the lexeme verbatim so positive
+    /// numbers keep their leading digit (previously every positive
+    /// number lost its first digit and gained a spurious minus sign,
+    /// so `ObjectMinCardinality(10 ...)` read the cardinality as 9).
     fn parse_number_literal(
         &mut self,
         start_pos: usize,
         start_column: usize,
+        first_ch: char,
     ) -> FunctionalSyntaxResult<Token> {
         let mut number = String::new();
-        number.push('-'); // If it started with '-'
+        number.push(first_ch);
         self.column += 1;
 
         while let Some((pos, ch)) = self.chars.clone().next() {
@@ -541,6 +573,25 @@ impl<'a> Tokenizer<'a> {
             "ObjectComplementOf" => TokenType::ObjectComplementOf,
             "ObjectSomeValuesFrom" => TokenType::ObjectSomeValuesFrom,
             "ObjectAllValuesFrom" => TokenType::ObjectAllValuesFrom,
+            "ObjectHasValue" => TokenType::ObjectHasValue,
+            "ObjectHasSelf" => TokenType::ObjectHasSelf,
+            "ObjectMinCardinality" => TokenType::ObjectMinCardinality,
+            "ObjectMaxCardinality" => TokenType::ObjectMaxCardinality,
+            "ObjectExactCardinality" => TokenType::ObjectExactCardinality,
+            "ObjectOneOf" => TokenType::ObjectOneOf,
+            "DataSomeValuesFrom" => TokenType::DataSomeValuesFrom,
+            "DataAllValuesFrom" => TokenType::DataAllValuesFrom,
+            "DataHasValue" => TokenType::DataHasValue,
+            "DataMinCardinality" => TokenType::DataMinCardinality,
+            "DataMaxCardinality" => TokenType::DataMaxCardinality,
+            "DataExactCardinality" => TokenType::DataExactCardinality,
+            "DataIntersectionOf" => TokenType::DataIntersectionOf,
+            "DataUnionOf" => TokenType::DataUnionOf,
+            "DataComplementOf" => TokenType::DataComplementOf,
+            "DataOneOf" => TokenType::DataOneOf,
+            "DatatypeRestriction" => TokenType::DatatypeRestriction,
+            "ObjectInverseOf" => TokenType::ObjectInverseOf,
+            "ObjectPropertyChain" => TokenType::ObjectPropertyChain,
             "SubClassOf" => TokenType::SubClassOf,
             "EquivalentClasses" => TokenType::EquivalentClasses,
             "DisjointClasses" => TokenType::DisjointClasses,

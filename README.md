@@ -1,132 +1,62 @@
-# SPACL (Tableauxx Repository)
+# SPACL
 
-This repository contains the SPACL OWL reasoner implementation and benchmarking toolkit in Rust.
-Repository/package names still use `tableauxx` in some paths and scripts for historical compatibility.
-It supports multi-format ontology loading, profile-aware reasoning, and reproducible head-to-head benchmarking.
+SPACL is a tableaux-based OWL 2 reasoner (binary `owl2-reasoner`) and its
+correctness-gated benchmarking discipline. This repository is the public
+artifact of record for the project's evaluation evidence: everything a
+third party needs to verify the published numbers (Tier 1) or regenerate
+them from official sources (Tier 2). It is the companion repository cited
+by the paper.
 
-## Prerequisites
+## What is here
 
-- Rust toolchain (stable; tested with Rust `1.84+`)
-- Docker Engine (`docker` CLI must be usable by your user)
-- `jq`
-- GNU `timeout` (usually from `coreutils`)
+- `src/`, `Cargo.toml`, `benches/`, `tests/`, `examples/`, `scripts/` — the engine source and its test suite, exactly as evaluated (see `hash_inventory.json` for the source commit binding).
+- `benchmarks/` — the benchmark harness: comparative execution infrastructure, engine Dockerfiles, lane runners, the dataset-ladder generator, and the export pipeline itself.
+- `docs/` — architecture decision records (ADR 0001-0028), the domain glossary (`CONTEXT.md` is at the root), the reproduction research notes, and the two guides below.
+- `evidence/` — the exported results for the four evidence lanes, each with its run identity and claim wording.
+- `hash_inventory.json` — the sha256 inventory binding every file in this export to its source.
 
-Quick check:
+## Evidence at a glance
 
-```bash
-cargo --version
-docker --version
-jq --version
-timeout --version | head -n 1
-```
+Four lanes, each with an explicit claim boundary (the exact sentences are
+in each `evidence/<lane>/README.md`):
 
-## Current benchmark position (latest)
+1. **W3C OWL 2 conformance** — full approved corpus, per-lane evaluation:
+   486 passed / 0 wrong / 21 unsupported (r69). Correctness is judged
+   against the suite's official expected results (ADR 0002).
+2. **OWL2Bench query correctness** — 60/60 query/profile cases with
+   oracle matches `accepted` against the independently audited derived
+   oracle v2; the lane gate passed (ADR 0027).
+3. **ORE 2015 comparative execution performance** — three serial passes
+   over the 604-case consistency sample (306 DL / 298 EL): median
+   container-inclusive wall time, 300s timeout, engines pinned by digest;
+   no correctness claims, no public oracle exists (ADRs 0024/0025).
+4. **OWL2Bench scalability ladders** — three serial passes over the
+   24-point ladder (universities 1-50, seed 1, four profiles) under the
+   same contract; no correctness claims (ADR 0026).
 
-From the latest clean OWL2Bench core 3-run aggregate in this repository:
+Headline numbers live in `evidence/` tables; their provenance is one
+hash-check away.
 
-- Run set: `owl2bench_univ_core_clean_20260223`, `_r2`, `_r3`
-- Aggregate: `benchmarks/competitors/results/history/owl2bench_univ_core_clean_aggregate_20260223`
-- SPACL/Tableauxx: `12/12` success, median wall time `2107.5 ms`, P95 `2707 ms`
-- In this harness, SPACL/Tableauxx is median winner on all 4 core profiles (`DL`, `EL`, `QL`, `RL`)
+## Verify (Tier 1)
 
-See details in `docs/benchmarking/BENCHMARK_RUNBOOK.md`.
+Follow `docs/repro/VERIFICATION_GUIDE.md`: hash-check this tree against
+`hash_inventory.json`, trace every published number to its run identity,
+and recompute the aggregations from the exported TSVs.
 
-## Quick start
+## Reproduce (Tier 2)
 
-```bash
-# Build
-cargo build --release
+Follow `docs/repro/REPRODUCTION_GUIDE.md`: fetch the pinned official
+sources (ORE Zenodo corpus, W3C approved manifest, the OWL2Bench
+generator), regenerate the dataset ladder, rebuild the engine images from
+the committed Dockerfiles, and rerun the sweeps and the verdict.
 
-# Run tests
-cargo test
+## Provenance discipline
 
-# Check consistency
-cargo run --bin owl2-reasoner -- check tests/data/univ-bench.owl
-
-# Auto-select reasoner by ontology profile
-cargo run --bin owl2-reasoner -- check-auto tests/data/univ-bench.owl
-
-# Convert ontology to binary cache format
-cargo run --bin owl2-reasoner -- convert tests/data/univ-bench.owl /tmp/univ-bench.owlbin
-```
-
-## Benchmark smoke test (recommended first)
-
-Before full competitor runs, verify your environment with a one-ontology smoke run:
-
-```bash
-RUN_ID=smoke_$(date +%Y%m%d_%H%M%S) \
-ONTOLOGY_SUITE=standard \
-ONTOLOGY_REGEX='^disjunctive_simple\.owl$' \
-REASONERS_OVERRIDE=tableauxx \
-TIMEOUT_SECONDS=60 \
-SKIP_BUILD=0 \
-benchmarks/competitors/scripts/run_benchmarks.sh all
-```
-
-Verify smoke status:
-
-```bash
-run_dir="$(readlink -f benchmarks/competitors/results/latest)"
-jq -r '.status' "$run_dir"/*.json | sort | uniq -c
-```
-
-Expected: at least one `success` row for `tableauxx`.
-
-If Docker permission fails (e.g., `permission denied while trying to connect to the docker API socket`), add your user to Docker group and re-login:
-
-```bash
-sudo usermod -aG docker "$USER"
-# then log out/login (or reboot) before retrying
-```
-
-## Main CLIs
-
-- `owl2-reasoner`: primary CLI for loading, checking, profiling, and converting ontologies
-- `owl2_validation`: lightweight validation/check/stats CLI
-- `epcis-reasoner`: EPCIS/traceability-oriented demo CLI
-
-Run help:
-
-```bash
-cargo run --bin owl2-reasoner -- help
-cargo run --bin owl2_validation -- help
-cargo run --bin epcis-reasoner -- help
-```
-
-## Benchmarking
-
-Primary benchmark harness:
-
-- `benchmarks/competitors/scripts/run_benchmarks.sh`
-
-External OWL2Bench wrapper:
-
-- `benchmarks/external/owl2bench/prepare.sh`
-- `benchmarks/external/owl2bench/run.sh`
-- `benchmarks/external/owl2bench/report.sh`
-
-Operational benchmark guide:
-
-- `docs/benchmarking/BENCHMARK_RUNBOOK.md`
-
-## Documentation map
-
-Start here:
-
-- `docs/README.md`
-- `docs/QUICK_START.md`
-- `docs/PROJECT_STRUCTURE.md`
-- `docs/DIRECTORY_STRUCTURE.md`
-
-Domain and deployment docs:
-
-- `docs/BLOCKCHAIN_TRANSACTION_PROFILE_GUIDE.md`
+No corpora, datasets, or engine binaries are redistributed here. Every
+external artifact is named by manifest identity (revision, sha256) and is
+fetched from its official source; engines are rebuilt from the committed
+Dockerfiles. This is the pointers-not-blobs rule (ADR 0028).
 
 ## License
 
-- Code: MIT (`LICENSE`)
-
-## Public reproducibility package
-
-A curated public benchmark-audit package is documented in `docs/PUBLIC_REPRODUCIBILITY_PACKAGE.md` and `benchmarks/competitors/results/reproducibility/PUBLIC_REPRODUCIBILITY_MANIFEST_20260605.md`.
+See `LICENSE`.

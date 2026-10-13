@@ -1,0 +1,27 @@
+{
+  "source_commit": "c0f6ef4",
+  "release_binary_sha256": "5e3d2a9407cbe5f079c3ba1ef4cc3a4293505ff88750b48eab7b85effffedbf5",
+  "fixtures": [
+    {
+      "format": "v1",
+      "input": "tests/data/qualified_binary_legacy_v1_input.owl",
+      "input_sha256": "c4f2d74c7ac617f7c531452e900e02e3c01c230e5130b1509ec16bfb81ddf3c3",
+      "output": "tests/data/qualified_binary_legacy_v1.bin",
+      "output_sha256": "40850ce5306706099e63bd1306e01744b60a11f8aed726996b343e8303d08c75"
+    },
+    {
+      "format": "v2",
+      "input": "tests/data/qualified_binary_legacy_cardinality_input.owl",
+      "input_sha256": "32eb65d2af06ced20256e556c2db697ecd08119002ee68f05bf66317019242b5",
+      "output": "tests/data/qualified_binary_legacy_v2_cardinality.bin",
+      "output_sha256": "64df3c709950ee0d16a815c2411fde79ad7c6b334428390b326c685b911338dd"
+    },
+    {
+      "format": "v3",
+      "input": "tests/data/qualified_binary_legacy_cardinality_input.owl",
+      "input_sha256": "32eb65d2af06ced20256e556c2db697ecd08119002ee68f05bf66317019242b5",
+      "output": "tests/data/qualified_binary_legacy_v3_cardinality.bin",
+      "output_sha256": "2afe0487831c43b4da5ff1213c097de540e88180eee83b924813b40ee3c6a1d6"
+    }
+  ]
+}

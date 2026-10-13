@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "id": "AGPL-3.0-only",
+  "open_source": true,
+  "credentials_required": false,
+  "runtime_license_required": false,
+  "distribution_review_status": "pending",
+  "provenance": "Maven Central openllet-parent-2.6.5.pom",
+  "claim_boundary": "License identity is available; redistribution approval is not"
+}

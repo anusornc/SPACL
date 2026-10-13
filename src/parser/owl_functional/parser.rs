@@ -4,6 +4,7 @@
 //! tokenization, grammar parsing, and validation to produce OWL ontologies.
 
 use crate::logic::axioms::*;
+use crate::core::entities::{Entity, NamedIndividual};
 use crate::core::error::{OwlError, OwlResult};
 use crate::core::iri::IRI;
 use crate::core::ontology::Ontology;
@@ -98,8 +99,10 @@ impl OwlFunctionalSyntaxParser {
             .tokenize()
             .map_err(|e| OwlError::ParseError(e.to_string()))?;
 
-        // Parse grammar
-        let mut grammar_parser = GrammarParser::new(tokens);
+        // Parse grammar, seeded with the parser's default and
+        // configured prefix mappings so `prefix:name` references
+        // resolve even when the document omits the declaration.
+        let mut grammar_parser = GrammarParser::with_prefixes(tokens, self.prefixes.clone());
         let ast = grammar_parser
             .parse_document()
             .map_err(|e| OwlError::ParseError(e.to_string()))?;
@@ -135,10 +138,15 @@ impl OwlFunctionalSyntaxParser {
             ontology.set_iri((*iri).clone());
         }
 
-        // Process all content
+        // Process all content. Runtime axiom indexes are rebuilt once
+        // after the corpus is materialized — the same deferred window
+        // the RDF/XML streaming parser uses to avoid per-axiom index
+        // churn across millions of assertions (#162).
+        ontology.begin_deferred_runtime_indexes();
         for content in ast.content() {
             self.process_ontology_content(content, &mut ontology)?;
         }
+        ontology.finish_deferred_runtime_indexes();
 
         Ok(ontology)
     }
@@ -156,6 +164,11 @@ impl OwlFunctionalSyntaxParser {
                 self.process_declaration(declaration, ontology)?;
             }
             OntologyContent::Axiom(axiom) => {
+                // Register assertion individuals before adding the
+                // axiom, the same materialization the RDF/XML parser
+                // applies so individuals referenced only by
+                // assertions are visible in the ontology.
+                self.register_assertion_individuals(axiom, ontology)?;
                 ontology.add_axiom(axiom.clone())?;
             }
             OntologyContent::Import(import) => {
@@ -164,6 +177,40 @@ impl OwlFunctionalSyntaxParser {
             }
         }
 
+        Ok(())
+    }
+
+    /// Ensure every named individual referenced by an assertion axiom
+    /// is registered in the ontology (mirroring the RDF/XML parser's
+    /// assertion materialization, including `_:nodeid` IRIs minted
+    /// for anonymous individuals).
+    fn register_assertion_individuals(
+        &self,
+        axiom: &Axiom,
+        ontology: &mut Ontology,
+    ) -> OwlResult<()> {
+        let references: Vec<Arc<IRI>> = match axiom {
+            Axiom::ClassAssertion(assertion) => vec![assertion.individual().clone()],
+            Axiom::PropertyAssertion(assertion) => {
+                let mut refs = vec![assertion.subject().clone()];
+                if let Some(object_iri) = assertion.object_iri() {
+                    refs.push(object_iri.clone());
+                }
+                refs
+            }
+            Axiom::DataPropertyAssertion(assertion) => vec![assertion.subject().clone()],
+            Axiom::NegativeObjectPropertyAssertion(assertion) => {
+                vec![assertion.subject().clone()]
+            }
+            Axiom::SameIndividual(assertion) => assertion.individuals().to_vec(),
+            Axiom::DifferentIndividuals(assertion) => assertion.individuals().to_vec(),
+            _ => Vec::new(),
+        };
+        for iri in references {
+            if !ontology.contains_named_individual_iri(&iri) {
+                ontology.add_named_individual(NamedIndividual::from_shared_iri(iri))?;
+            }
+        }
         Ok(())
     }
 

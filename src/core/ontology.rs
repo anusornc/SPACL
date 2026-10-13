@@ -170,7 +170,7 @@ pub struct Ontology {
     disjoint_classes_axioms: Vec<usize>,
     class_assertions: Vec<usize>,
     property_assertions: Vec<usize>,
-    data_property_assertions: Vec<Arc<axioms::DataPropertyAssertionAxiom>>,
+    data_property_assertion_slots: Vec<usize>,
     subobject_property_axioms: Vec<Arc<axioms::SubObjectPropertyAxiom>>,
     equivalent_object_properties_axioms: Vec<Arc<axioms::EquivalentObjectPropertiesAxiom>>,
     disjoint_object_properties_axioms: Vec<Arc<axioms::DisjointObjectPropertiesAxiom>>,
@@ -205,6 +205,8 @@ pub struct Ontology {
     object_property_range_axioms: Vec<Arc<axioms::ObjectPropertyRangeAxiom>>,
     data_property_domain_axioms: Vec<Arc<axioms::DataPropertyDomainAxiom>>,
     data_property_range_axioms: Vec<Arc<axioms::DataPropertyRangeAxiom>>,
+    data_property_enumerated_range_axioms:
+        Vec<Arc<axioms::DataPropertyEnumeratedRangeAxiom>>,
     negative_object_property_assertion_axioms:
         Vec<Arc<axioms::NegativeObjectPropertyAssertionAxiom>>,
     negative_data_property_assertion_axioms: Vec<Arc<axioms::NegativeDataPropertyAssertionAxiom>>,
@@ -237,6 +239,27 @@ pub struct Ontology {
     annotations: Vec<Annotation>,
     /// IRI registry for managing namespaces
     iri_registry: IRIRegistry,
+
+    /// Single-list owl:oneOf frames on named classes that #109's
+    /// narrow gate keeps OUT of the axiom stream. The frame's class
+    /// and resolved members stay queryable so consumers that can see
+    /// premise/conclusion roles can lower them selectively (#141,
+    /// #155); every default lane leaves the channel unread.
+    object_enumeration_frames: Vec<ObjectEnumerationFrame>,
+    /// Parser-private deferred window over the runtime-index updates
+    /// (#162); false everywhere outside a
+    /// begin/finish_deferred_runtime_indexes pair.
+    runtime_indexes_deferred: bool,
+}
+
+/// One recorded single-list owl:oneOf frame: the enumerated class and
+/// its resolved member individuals (#155).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ObjectEnumerationFrame {
+    /// The named class carrying the owl:oneOf frame
+    pub class: Arc<IRI>,
+    /// The frame's member individuals, in list order
+    pub members: Vec<Arc<IRI>>,
 }
 
 impl Ontology {
@@ -260,7 +283,7 @@ impl Ontology {
             disjoint_classes_axioms: Vec::new(),
             class_assertions: Vec::new(),
             property_assertions: Vec::new(),
-            data_property_assertions: Vec::new(),
+            data_property_assertion_slots: Vec::new(),
             subobject_property_axioms: Vec::new(),
             equivalent_object_properties_axioms: Vec::new(),
             disjoint_object_properties_axioms: Vec::new(),
@@ -294,6 +317,7 @@ impl Ontology {
             object_property_range_axioms: Vec::new(),
             data_property_domain_axioms: Vec::new(),
             data_property_range_axioms: Vec::new(),
+            data_property_enumerated_range_axioms: Vec::new(),
             negative_object_property_assertion_axioms: Vec::new(),
             negative_data_property_assertion_axioms: Vec::new(),
             class_instances: HashMap::new(),
@@ -307,6 +331,8 @@ impl Ontology {
             annotation_property_index: HashMap::new(),
             annotations: Vec::new(),
             iri_registry: IRIRegistry::new(),
+            object_enumeration_frames: Vec::new(),
+            runtime_indexes_deferred: false,
         }
     }
 
@@ -315,6 +341,24 @@ impl Ontology {
         let mut ontology = Self::new();
         ontology.iri = Some(Arc::new(iri.into()));
         ontology
+    }
+
+    /// Record one single-list owl:oneOf frame the parser kept out of
+    /// the axiom stream (#155). Only the RDF/XML parser writes here;
+    /// default lanes never read it back.
+    pub fn record_object_enumeration_frame(
+        &mut self,
+        class: Arc<IRI>,
+        members: Vec<Arc<IRI>>,
+    ) {
+        self.object_enumeration_frames
+            .push(ObjectEnumerationFrame { class, members });
+    }
+
+    /// The recorded single-list owl:oneOf frames, in document order
+    /// (#155).
+    pub fn object_enumeration_frames(&self) -> &[ObjectEnumerationFrame] {
+        &self.object_enumeration_frames
     }
 
     /// Get the ontology IRI
@@ -606,9 +650,30 @@ impl Ontology {
         self.axioms.push(axiom_arc.clone());
         let axiom_index = self.axioms.len() - 1;
 
-        self.index_axiom_structures(&axiom_arc, axiom_index, true);
+        // While the parser materializes a corpus, the per-axiom
+        // runtime-index churn (HashMap entries cloning predicate and
+        // subject IRIs, the per-type index push) multiplies across
+        // millions of assertions; the deferred mode batches them into
+        // one rebuild — the same contract add_axioms_bulk_trusted
+        // already applies on the binary load path (#162).
+        self.index_axiom_structures(&axiom_arc, axiom_index, !self.runtime_indexes_deferred);
 
         Ok(())
+    }
+
+    /// Begin deferring runtime-index updates (parser-private): every
+    /// add_axiom between here and finish skips the per-axiom index
+    /// updates; finish rebuilds them once. The post-finish index
+    /// state is identical to eager adding (#162).
+    pub(crate) fn begin_deferred_runtime_indexes(&mut self) {
+        self.runtime_indexes_deferred = true;
+    }
+
+    /// End the deferred window and rebuild every runtime index in one
+    /// pass (#162).
+    pub(crate) fn finish_deferred_runtime_indexes(&mut self) {
+        self.runtime_indexes_deferred = false;
+        self.rebuild_runtime_axiom_indexes();
     }
 
     /// Add multiple axioms from a trusted source (e.g. binary loader) with deferred index rebuild.
@@ -649,9 +714,12 @@ impl Ontology {
             axioms::Axiom::DisjointClasses(_) => self.disjoint_classes_axioms.push(axiom_index),
             axioms::Axiom::ClassAssertion(_) => self.class_assertions.push(axiom_index),
             axioms::Axiom::PropertyAssertion(_) => self.property_assertions.push(axiom_index),
-            axioms::Axiom::DataPropertyAssertion(axiom) => {
-                let assertion_arc = Arc::new((**axiom).clone());
-                self.data_property_assertions.push(assertion_arc);
+            axioms::Axiom::DataPropertyAssertion(_) => {
+                // Index-based storage, like the SubClassOf/ClassAssertion
+                // stores: the accessor projects through the master vec,
+                // so no per-assertion deep clone rides the annotation
+                // ocean (#163).
+                self.data_property_assertion_slots.push(axiom_index);
             }
             axioms::Axiom::SubObjectProperty(axiom) => {
                 let subprop_arc = Arc::new((**axiom).clone());
@@ -788,6 +856,11 @@ impl Ontology {
                 self.data_property_range_axioms
                     .push(data_property_range_arc);
             }
+            axioms::Axiom::DataPropertyEnumeratedRange(axiom) => {
+                let enumerated_range_arc = Arc::new((**axiom).clone());
+                self.data_property_enumerated_range_axioms
+                    .push(enumerated_range_arc);
+            }
             axioms::Axiom::NegativeObjectPropertyAssertion(axiom) => {
                 let negative_object_property_assertion_arc = Arc::new((**axiom).clone());
                 self.negative_object_property_assertion_axioms
@@ -911,9 +984,15 @@ impl Ontology {
     pub fn data_property_assertions(
         &self,
     ) -> Vec<&crate::logic::axioms::DataPropertyAssertionAxiom> {
-        self.data_property_assertions
+        // Project through the master vec from the stored indexes —
+        // same iteration order the pushed-clone store had, without the
+        // per-assertion deep clone (#163).
+        self.data_property_assertion_slots
             .iter()
-            .map(|axiom| axiom.as_ref())
+            .filter_map(|index| match self.axioms[*index].as_ref() {
+                axioms::Axiom::DataPropertyAssertion(assertion) => Some(&**assertion),
+                _ => None,
+            })
             .collect()
     }
 
@@ -1535,39 +1614,30 @@ impl Ontology {
     }
 
     /// Validate cardinality within a class expression
-    #[allow(clippy::only_used_in_recursion)]
     fn validate_cardinality_in_expression(
         &self,
         expr: &ClassExpression,
         context_iri: &IRI,
         errors: &mut Vec<OwlError>,
     ) {
-        match expr {
-            ClassExpression::ObjectMinCardinality(cardinality, _)
-            | ClassExpression::ObjectMaxCardinality(cardinality, _)
-            | ClassExpression::ObjectExactCardinality(cardinality, _) => {
-                if *cardinality > 1_000_000 {
-                    errors.push(OwlError::ValidationError(format!(
-                        "Excessive cardinality {} for class {}",
-                        cardinality, context_iri
-                    )));
+        // The visitor includes the root expression; don't recursively feed it
+        // back into this function. It also includes qualified class fillers.
+        for expression in expr.collect_subexpressions() {
+            match expression {
+                ClassExpression::ObjectMinCardinality(cardinality, _, _)
+                | ClassExpression::ObjectMaxCardinality(cardinality, _, _)
+                | ClassExpression::ObjectExactCardinality(cardinality, _, _)
+                | ClassExpression::DataMinCardinality(cardinality, _, _)
+                | ClassExpression::DataMaxCardinality(cardinality, _, _)
+                | ClassExpression::DataExactCardinality(cardinality, _, _) => {
+                    if *cardinality > 1_000_000 {
+                        errors.push(OwlError::ValidationError(format!(
+                            "Excessive cardinality {} for class {}",
+                            cardinality, context_iri
+                        )));
+                    }
                 }
-            }
-            ClassExpression::DataMinCardinality(cardinality, _)
-            | ClassExpression::DataMaxCardinality(cardinality, _)
-            | ClassExpression::DataExactCardinality(cardinality, _) => {
-                if *cardinality > 1_000_000 {
-                    errors.push(OwlError::ValidationError(format!(
-                        "Excessive cardinality {} for class {}",
-                        cardinality, context_iri
-                    )));
-                }
-            }
-            _ => {
-                // Recursively validate nested expressions
-                for sub_expr in expr.collect_subexpressions() {
-                    self.validate_cardinality_in_expression(sub_expr, context_iri, errors);
-                }
+                _ => {}
             }
         }
     }
@@ -1759,6 +1829,16 @@ impl Ontology {
     /// Get all data property range axioms
     pub fn data_property_range_axioms(&self) -> Vec<&crate::logic::axioms::DataPropertyRangeAxiom> {
         self.data_property_range_axioms
+            .iter()
+            .map(|axiom| axiom.as_ref())
+            .collect()
+    }
+
+    /// Get all data property enumerated-range axioms (DataOneOf pools)
+    pub fn data_property_enumerated_range_axioms(
+        &self,
+    ) -> Vec<&crate::logic::axioms::DataPropertyEnumeratedRangeAxiom> {
+        self.data_property_enumerated_range_axioms
             .iter()
             .map(|axiom| axiom.as_ref())
             .collect()

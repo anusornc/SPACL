@@ -588,6 +588,17 @@ impl TableauxReasoner {
     }
 
     pub fn check_consistency(&mut self) -> OwlResult<bool> {
+        // The bounded checker declining its fragment is a pass, not a
+        // verdict; the tableaux below decides (#113). Budget exhaustion
+        // still surfaces — it guards the checker's own correctness.
+        match crate::reasoner::qualified_consistency::check_qualified_consistency(
+            &self.ontology,
+        ) {
+            Ok(Some(result)) => return Ok(result),
+            Ok(None) => {}
+            Err(OwlError::UnsupportedFeature(_)) => {}
+            Err(error) => return Err(error),
+        }
         let mut graph = super::graph::TableauxGraph::new();
         let mut expansion_engine =
             super::expansion::ExpansionEngine::new().with_reasoning_rules(self.rules.clone());
@@ -1250,7 +1261,7 @@ impl TableauxReasoner {
                             }
                         }
                     }
-                    ClassExpression::ObjectMaxCardinality(max, property) => {
+                    ClassExpression::ObjectMaxCardinality(max, property, None) => {
                         let (is_inverse, property_iri) = Self::resolve_property_direction(property);
                         let count =
                             Self::count_role_targets(node_id, property_iri, is_inverse, graph);
@@ -1258,7 +1269,7 @@ impl TableauxReasoner {
                             return Ok(true);
                         }
                     }
-                    ClassExpression::ObjectExactCardinality(exact, property) => {
+                    ClassExpression::ObjectExactCardinality(exact, property, None) => {
                         let (is_inverse, property_iri) = Self::resolve_property_direction(property);
                         let count =
                             Self::count_role_targets(node_id, property_iri, is_inverse, graph);
@@ -1275,6 +1286,98 @@ impl TableauxReasoner {
                 for concept2 in concepts.iter().skip(i + 1) {
                     if self.are_disjoint_class_expressions(concept1, concept2)? {
                         return Ok(true);
+                    }
+                }
+            }
+
+            // Unqualified data-cardinality clash detection. The tableaux is
+            // single-root (every class assertion lands on the root), so the
+            // asserted data values and the cardinality restrictions all meet
+            // on this node. Only fully unqualified restrictions (no
+            // owl:onDataRange) participate — qualified ranges may be
+            // disjoint and merging them would be unsound.
+            {
+                use std::collections::HashMap as StdHashMap;
+                let mut min_bounds: StdHashMap<&IRI, u32> = StdHashMap::new();
+                let mut max_bounds: StdHashMap<&IRI, u32> = StdHashMap::new();
+                let mut restricted_properties: Vec<&IRI> = Vec::new();
+                for concept in &concepts {
+                    match concept {
+                        ClassExpression::DataMinCardinality(min, property, None) => {
+                            if let Some(named) = property.as_named() {
+                                let iri = named.iri();
+                                let slot = min_bounds.entry(iri).or_insert(0);
+                                if *min > *slot {
+                                    *slot = *min;
+                                }
+                                restricted_properties.push(iri);
+                            }
+                        }
+                        ClassExpression::DataMaxCardinality(max, property, None) => {
+                            if let Some(named) = property.as_named() {
+                                let iri = named.iri();
+                                let slot = max_bounds.entry(iri).or_insert(u32::MAX);
+                                if *max < *slot {
+                                    *slot = *max;
+                                }
+                                restricted_properties.push(iri);
+                            }
+                        }
+                        ClassExpression::DataExactCardinality(exact, property, None) => {
+                            // Exact cardinality binds both directions; a
+                            // shared or-pattern arm would swallow it into
+                            // the min side.
+                            if let Some(named) = property.as_named() {
+                                let iri = named.iri();
+                                let min_slot = min_bounds.entry(iri).or_insert(0);
+                                if *exact > *min_slot {
+                                    *min_slot = *exact;
+                                }
+                                let max_slot = max_bounds.entry(iri).or_insert(u32::MAX);
+                                if *exact < *max_slot {
+                                    *max_slot = *exact;
+                                }
+                                restricted_properties.push(iri);
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+                for property in restricted_properties {
+                    if let (Some(min), Some(max)) =
+                        (min_bounds.get(property).copied(), max_bounds.get(property).copied())
+                    {
+                        // min requires that many distinct data values; max
+                        // (or exact) forbids more than that many — the node
+                        // can satisfy both only if min <= max.
+                        if min > max {
+                            return Ok(true);
+                        }
+                    }
+                    if let Some(max) = max_bounds.get(property).copied() {
+                        let distinct_asserted = self
+                            .rules
+                            .data_property_assertions
+                            .iter()
+                            .filter(|assertion| assertion.property().as_ref() == property)
+                            .map(|assertion| assertion.value().clone())
+                            .fold(Vec::new(), |mut values: Vec<_>, value| {
+                                if !values
+                                    .iter()
+                                    .any(|existing: &_| {
+                                        crate::reasoner::simple::literals_are_equal(
+                                            existing, &value,
+                                        )
+                                    })
+                                {
+                                    values.push(value);
+                                }
+                                values
+                            })
+                            .len();
+                        if distinct_asserted as u32 > max {
+                            return Ok(true);
+                        }
                     }
                 }
             }

@@ -6,8 +6,8 @@ use crate::core::entities::*;
 use crate::core::error::{OwlError, OwlResult};
 use crate::core::iri::IRI;
 use crate::core::ontology::Ontology;
-use crate::reasoner::tableaux::TableauxReasoner;
 use crate::logic::axioms::Axiom;
+use crate::reasoner::tableaux::TableauxReasoner;
 
 use smallvec::SmallVec;
 use std::sync::Arc;
@@ -184,6 +184,9 @@ impl ConsistencyChecker {
         // Check for property characteristic contradictions
         contradictions.extend(self.check_property_contradictions()?);
 
+        // Check for property assertions that violate declared characteristics
+        contradictions.extend(self.check_property_assertion_contradictions()?);
+
         Ok(contradictions)
     }
 
@@ -273,6 +276,46 @@ impl ConsistencyChecker {
             let contradictions_for_prop =
                 self.check_property_characteristic_contradictions(prop)?;
             contradictions.extend(contradictions_for_prop);
+        }
+
+        Ok(contradictions)
+    }
+
+    /// Check whether explicit property assertions violate irreflexivity.
+    fn check_property_assertion_contradictions(&self) -> OwlResult<Vec<InconsistencyExplanation>> {
+        let mut contradictions = Vec::new();
+        let ontology = &self.tableaux_reasoner.ontology;
+
+        for irreflexive_axiom in ontology.irreflexive_property_axioms() {
+            for assertion in ontology.property_assertions() {
+                if assertion.property().as_ref() != irreflexive_axiom.property().as_ref() {
+                    continue;
+                }
+
+                let Some(object) = assertion.object_iri() else {
+                    continue;
+                };
+                if object.as_ref() != assertion.subject().as_ref() {
+                    continue;
+                }
+
+                contradictions.push(InconsistencyExplanation {
+                    description: format!(
+                        "Irreflexive property {} has a self-assertion for {}",
+                        irreflexive_axiom.property(),
+                        assertion.subject()
+                    ),
+                    involved_axioms: vec![
+                        Axiom::IrreflexiveProperty(Box::new(irreflexive_axiom.clone())),
+                        Axiom::PropertyAssertion(Box::new(assertion.clone())),
+                    ]
+                    .into(),
+                    contradiction_type: ContradictionType::Other(format!(
+                        "Irreflexive property self-assertion: {}",
+                        irreflexive_axiom.property()
+                    )),
+                });
+            }
         }
 
         Ok(contradictions)

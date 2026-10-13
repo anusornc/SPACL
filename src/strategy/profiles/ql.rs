@@ -1,11 +1,13 @@
 //! QL Profile Validator
 //!
-//! The QL profile is optimized for efficient query answering and
-//! supports conjunctive query answering in LOGSPACE.
+//! Rejects the constructs the OWL 2 QL profile excludes, so the reasoner
+//! router only takes the QL path for ontologies that genuinely sit in
+//! QL (#167; previously every ontology validated, #166 Layer 1).
 
 use super::common::*;
 use crate::core::error::OwlResult;
 use crate::core::ontology::Ontology;
+use crate::logic::axioms::{Axiom, ClassExpression, ObjectPropertyExpression};
 use std::sync::Arc;
 
 /// QL Profile Validator
@@ -21,56 +23,63 @@ impl QLProfileValidator {
             _ontology: ontology,
         }
     }
+}
 
-    /// Check if a construct is allowed in QL
-    #[allow(dead_code)]
-    fn is_allowed_in_ql(&self, construct: &str) -> bool {
-        matches!(
-            construct,
-            "Class"
-                | "ObjectIntersectionOf"
-                | "ObjectSomeValuesFrom"
-                | "ObjectAllValuesFrom"
-                | "ObjectProperty"
-                | "SubClassOf"
-                | "EquivalentClasses"
-                | "DisjointClasses"
-                | "ObjectPropertyDomain"
-                | "ObjectPropertyRange"
-                | "InverseObjectProperties"
-                | "SymmetricObjectProperty"
-                | "AsymmetricObjectProperty"
-                | "ClassAssertion"
-                | "ObjectPropertyAssertion"
-                | "NegativeObjectPropertyAssertion"
-        )
+/// Axioms OWL 2 QL does not support: property chains, inverse-
+/// functional roles, and transitive roles (the QL fragment carries role
+/// inclusions, inverses, and disjointness, but no transitivity).
+/// Conservative: anything uncertain stays unflagged, so a rejection
+/// demotes an ontology to Full rather than wrongly claiming QL.
+fn forbidden_axiom(axiom: &Axiom) -> Option<&'static str> {
+    match axiom {
+        Axiom::SubPropertyChainOf(_) => Some("SubPropertyChainOf"),
+        Axiom::InverseFunctionalProperty(_) => Some("InverseFunctionalProperty"),
+        Axiom::TransitiveProperty(_) => Some("TransitiveProperty"),
+        _ => None,
     }
 }
 
+/// Class expressions outside OWL 2 QL in any position: universal
+/// restrictions and exact cardinality (object and data sides).
+fn forbidden_anywhere_expression(expression: &ClassExpression) -> Option<&'static str> {
+    match expression {
+        ClassExpression::ObjectAllValuesFrom(_, _) => Some("ObjectAllValuesFrom"),
+        ClassExpression::ObjectExactCardinality(_, _, _) => Some("ObjectExactCardinality"),
+        ClassExpression::DataAllValuesFrom(_, _) => Some("DataAllValuesFrom"),
+        ClassExpression::DataExactCardinality(_, _, _) => Some("DataExactCardinality"),
+        _ => None,
+    }
+}
+
+/// QL is superclass-side restricted: existentials, Boolean class
+/// expressions, oneOf, and hasSelf are legal only in subclass position.
+fn forbidden_super_expression(expression: &ClassExpression) -> Option<&'static str> {
+    match expression {
+        ClassExpression::ObjectSomeValuesFrom(_, _) => Some("ObjectSomeValuesFrom"),
+        ClassExpression::ObjectUnionOf(_) => Some("ObjectUnionOf"),
+        ClassExpression::ObjectComplementOf(_) => Some("ObjectComplementOf"),
+        ClassExpression::ObjectOneOf(_) => Some("ObjectOneOf"),
+        ClassExpression::ObjectHasSelf(_) => Some("ObjectHasSelf"),
+        _ => None,
+    }
+}
+
+/// Inverse roles are expressible in QL.
+fn forbidden_property_expression(_: &ObjectPropertyExpression) -> Option<&'static str> {
+    None
+}
+
+static QL_RULE_TABLE: ProfileRuleTable = ProfileRuleTable {
+    profile: Owl2Profile::QL,
+    forbidden_axiom,
+    forbidden_anywhere_expression,
+    forbidden_super_expression,
+    forbidden_property_expression,
+};
+
 impl ProfileValidator for QLProfileValidator {
     fn validate(&self, ontology: &Ontology) -> OwlResult<ProfileValidationResult> {
-        let violations = Vec::new();
-        let mut stats = ValidationStatistics::default();
-
-        // Check class expressions
-        for _class in ontology.classes() {
-            stats.class_expressions_checked += 1;
-            // QL allows specific constructs
-        }
-
-        // Check axioms
-        for _axiom in ontology.subclass_axioms() {
-            stats.axioms_checked += 1;
-        }
-
-        let is_valid = violations.is_empty();
-
-        Ok(ProfileValidationResult {
-            profile: Owl2Profile::QL,
-            is_valid,
-            violations,
-            statistics: stats,
-        })
+        Ok(validate_with_rules(ontology, &QL_RULE_TABLE))
     }
 
     fn profile(&self) -> Owl2Profile {

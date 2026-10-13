@@ -186,6 +186,9 @@ fn count_disjunctions(expr: &ClassExpression) -> usize {
         ClassExpression::ObjectComplementOf(inner) => count_disjunctions(inner),
         ClassExpression::ObjectSomeValuesFrom(_, inner) => count_disjunctions(inner),
         ClassExpression::ObjectAllValuesFrom(_, inner) => count_disjunctions(inner),
+        ClassExpression::ObjectMinCardinality(_, _, Some(inner))
+        | ClassExpression::ObjectMaxCardinality(_, _, Some(inner))
+        | ClassExpression::ObjectExactCardinality(_, _, Some(inner)) => count_disjunctions(inner),
         _ => 0,
     }
 }
@@ -204,6 +207,11 @@ fn count_complex_expressions(expr: &ClassExpression) -> usize {
         ClassExpression::ObjectComplementOf(_) => 1,
         ClassExpression::ObjectSomeValuesFrom(_, inner) => 1 + count_complex_expressions(inner),
         ClassExpression::ObjectAllValuesFrom(_, inner) => 1 + count_complex_expressions(inner),
+        ClassExpression::ObjectMinCardinality(_, _, Some(inner))
+        | ClassExpression::ObjectMaxCardinality(_, _, Some(inner))
+        | ClassExpression::ObjectExactCardinality(_, _, Some(inner)) => {
+            1 + count_complex_expressions(inner)
+        }
         _ => 0,
     }
 }
@@ -228,6 +236,9 @@ fn expression_depth(expr: &ClassExpression) -> usize {
         ClassExpression::ObjectComplementOf(inner) => 1 + expression_depth(inner),
         ClassExpression::ObjectSomeValuesFrom(_, inner) => 1 + expression_depth(inner),
         ClassExpression::ObjectAllValuesFrom(_, inner) => 1 + expression_depth(inner),
+        ClassExpression::ObjectMinCardinality(_, _, Some(inner))
+        | ClassExpression::ObjectMaxCardinality(_, _, Some(inner))
+        | ClassExpression::ObjectExactCardinality(_, _, Some(inner)) => 1 + expression_depth(inner),
         _ => 1,
     }
 }

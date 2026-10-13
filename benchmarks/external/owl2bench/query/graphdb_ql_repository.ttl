@@ -1,0 +1,30 @@
+@prefix rep: <http://www.openrdf.org/config/repository#> .
+@prefix sr: <http://www.openrdf.org/config/repository/sail#> .
+@prefix sail: <http://www.openrdf.org/config/sail#> .
+@prefix graphdb: <http://www.ontotext.com/config/graphdb#> .
+
+<#{{REPOSITORY_ID}}> a rep:Repository ;
+    rep:repositoryID "{{REPOSITORY_ID}}" ;
+    rep:repositoryTitle "OWL2Bench QL GraphDB materialization {{REPOSITORY_ID}}" ;
+    rep:repositoryImpl [
+        rep:repositoryType "graphdb:SailRepository" ;
+        sr:sailImpl [
+            sail:sailType "graphdb:Sail" ;
+            graphdb:base-URL "https://kracr.iiitd.edu.in/OWL2Bench#" ;
+            graphdb:check-for-inconsistencies "false" ;
+            graphdb:disable-sameAs "true" ;
+            graphdb:enable-context-index "false" ;
+            graphdb:enable-literal-index "true" ;
+            graphdb:enablePredicateList "true" ;
+            graphdb:entity-id-size "32" ;
+            graphdb:entity-index-size "10000000" ;
+            graphdb:imports "" ;
+            graphdb:query-limit-results "0" ;
+            graphdb:query-timeout "0" ;
+            graphdb:read-only "false" ;
+            graphdb:repository-type "file-repository" ;
+            graphdb:ruleset "owl2-ql" ;
+            graphdb:storage-folder "storage" ;
+            graphdb:throw-QueryEvaluationException-on-timeout "true" ;
+        ]
+    ] .

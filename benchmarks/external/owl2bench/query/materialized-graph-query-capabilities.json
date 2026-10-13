@@ -1,0 +1,14 @@
+{
+  "adapter": "materialized-graph-oxigraph",
+  "component_manifest_required": true,
+  "data_mode": "query-file-only",
+  "engine": "Oxigraph",
+  "engine_image": "oxigraph/oxigraph:0.5.9",
+  "engine_image_digest": "sha256:e68b3625743db4a4b18129a907ae36766f89bb6deeb8ab50d35685dbabe00b0e",
+  "materialization_handoff_required": true,
+  "materialization_manifest_required": true,
+  "oracle_policy": "execution_only; oracle_unavailable without accepted oracle",
+  "profiles": ["ALL"],
+  "query_result_format": "tsv",
+  "supports_query": true
+}

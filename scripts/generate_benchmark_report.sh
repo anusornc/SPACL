@@ -1,7 +1,7 @@
 #!/bin/bash
 # Generate benchmark summary for paper
 
-echo "=== SPACL Benchmark Summary ==="
+echo "=== Tableauxx Benchmark Summary ==="
 echo ""
 echo "Generated: $(date)"
 echo ""

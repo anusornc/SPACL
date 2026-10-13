@@ -1,7 +1,7 @@
 #!/bin/bash
 # Monitor the overnight benchmark
 
-REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_DIR="/home/admindigit/tableauxx"
 LOG_DIR="$REPO_DIR/results"
 PID_FILE="$LOG_DIR/overnight_benchmark.pid"
 

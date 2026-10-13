@@ -1,0 +1,30 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix rep: <http://www.openrdf.org/config/repository#>.
+@prefix sr: <http://www.openrdf.org/config/repository/sail#>.
+@prefix sail: <http://www.openrdf.org/config/sail#>.
+@prefix graphdb: <http://www.ontotext.com/config/graphdb#>.
+
+[] a rep:Repository ;
+  rep:repositoryID "owl2bench-graphdb-rl" ;
+  rdfs:label "OWL2Bench GraphDB RL materialization boundary" ;
+  rep:repositoryImpl [
+    rep:repositoryType "graphdb:SailRepository" ;
+    sr:sailImpl [
+      sail:sailType "graphdb:Sail" ;
+      graphdb:base-URL "http://example.org/owlim#" ;
+      graphdb:check-for-inconsistencies "false" ;
+      graphdb:disable-sameAs "false" ;
+      graphdb:enable-context-index "true" ;
+      graphdb:enable-literal-index "true" ;
+      graphdb:enablePredicateList "true" ;
+      graphdb:entity-id-size "32" ;
+      graphdb:imports "" ;
+      graphdb:query-limit-results "0" ;
+      graphdb:query-timeout "0" ;
+      graphdb:read-only "false" ;
+      graphdb:repository-type "file-repository" ;
+      graphdb:ruleset "owl2-rl" ;
+      graphdb:storage-folder "storage" ;
+      graphdb:throw-QueryEvaluationException-on-timeout "true"
+    ]
+  ] .

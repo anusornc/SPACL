@@ -1,0 +1,55 @@
+<rdf:RDF
+     xml:base="http://example.org/ic"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:ic="http://example.org/ic#">
+
+    <owl:Ontology rdf:about=""/>
+    <owl:ObjectProperty rdf:about="#q"/>
+    <owl:ObjectProperty rdf:about="#r"/>
+    <owl:ObjectProperty rdf:about="#u"/>
+    <owl:ObjectProperty rdf:about="#v"/>
+
+    <!-- Leading inverse member: inv(q) o r ⊑ s. -->
+    <owl:ObjectProperty rdf:about="#s">
+        <owl:propertyChainAxiom rdf:parseType="Collection">
+            <rdf:Description>
+                <owl:inverseOf rdf:resource="#q"/>
+            </rdf:Description>
+            <rdf:Description rdf:about="#r"/>
+        </owl:propertyChainAxiom>
+    </owl:ObjectProperty>
+
+    <!-- Trailing inverse member: u o inv(v) ⊑ w. -->
+    <owl:ObjectProperty rdf:about="#w">
+        <owl:propertyChainAxiom rdf:parseType="Collection">
+            <rdf:Description rdf:about="#u"/>
+            <rdf:Description>
+                <owl:inverseOf rdf:resource="#v"/>
+            </rdf:Description>
+        </owl:propertyChainAxiom>
+    </owl:ObjectProperty>
+
+    <rdf:Description rdf:about="#a">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+    </rdf:Description>
+    <rdf:Description rdf:about="#b">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+    </rdf:Description>
+    <rdf:Description rdf:about="#c">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+    </rdf:Description>
+
+    <!-- q(b,a) and r(b,c) compose through inv(q) o r into s(a,c). -->
+    <rdf:Description rdf:about="#b">
+        <ic:q rdf:resource="#a"/>
+        <ic:r rdf:resource="#c"/>
+    </rdf:Description>
+    <!-- u(a,b) and v(c,b) compose through u o inv(v) into w(a,c). -->
+    <rdf:Description rdf:about="#a">
+        <ic:u rdf:resource="#b"/>
+    </rdf:Description>
+    <rdf:Description rdf:about="#c">
+        <ic:v rdf:resource="#b"/>
+    </rdf:Description>
+</rdf:RDF>

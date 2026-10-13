@@ -1,0 +1,31 @@
+{
+  "supports_query": true,
+  "profiles": ["EL"],
+  "data_mode": "directory",
+  "adapter": "elk-el",
+  "engine": "ELK",
+  "engine_version": "0.6.0",
+  "engine_artifact": "io.github.liveontologies:elk-cli:0.6.0",
+  "materialization_adapter": "elk-el-export-boundary",
+  "materialization_export_boundary": "finite_query_complete_rdf_graph",
+  "materialization_export_status": "not_available",
+  "taxonomy_output_is_query_complete_graph": false,
+  "provenance_relative_path": ".elk-el/provenance.json",
+  "query_result_format": "sparql-results-xml-or-tsv",
+  "component_manifest_required": true,
+  "materialization_manifest_required": true,
+  "finite_exporter_required_for_materialization": true,
+  "not_available_exit_code": 125,
+  "unsupported_exit_code": 123,
+  "provenance_fields": [
+    "profile",
+    "context_identity",
+    "component_manifest_sha256",
+    "materialization_manifest_sha256",
+    "engine_binary_sha256",
+    "engine_config_sha256",
+    "query_backend_sha256",
+    "source_ontology_sha256",
+    "output_graph_sha256"
+  ]
+}

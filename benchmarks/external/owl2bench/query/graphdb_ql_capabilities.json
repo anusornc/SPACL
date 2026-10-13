@@ -1,0 +1,22 @@
+{
+  "supports_query": true,
+  "profiles": ["QL"],
+  "data_mode": "directory",
+  "adapter": "graphdb-ql",
+  "engine": "GraphDB",
+  "engine_version": "11.5.0",
+  "image": "ontotext/graphdb:11.5.0",
+  "image_platform": "linux/amd64",
+  "image_digest": "sha256:d688879c4e5751a0c323f996d86bf1b2189191290711b1936e211d4510b53485",
+  "image_reference": "ontotext/graphdb@sha256:d688879c4e5751a0c323f996d86bf1b2189191290711b1936e211d4510b53485",
+  "ruleset": "owl2-ql",
+  "provenance_relative_path": ".graphdb-ql/provenance.json",
+  "query_result_format": "sparql-results-xml-or-tsv",
+  "component_manifest_required": true,
+  "materialization_manifest_required": true,
+  "ruleset_required": true,
+  "credential_boundary": "docker-local-runtime-and-license-status-only",
+  "conformance_boundary": "GraphDB 11.5 owl2-ql predefined ruleset; product documentation records OWL2-QL non-conformance, so output is differential execution evidence only",
+  "not_available_exit_code": 125,
+  "unsupported_exit_code": 123
+}

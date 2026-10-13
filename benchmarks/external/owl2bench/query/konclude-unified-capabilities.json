@@ -1,0 +1,44 @@
+{
+  "supports_query": true,
+  "profiles": ["DL", "EL", "QL", "RL"],
+  "data_mode": "directory",
+  "adapter": "konclude-unified",
+  "provenance_relative_path": ".konclude-unified/provenance.json",
+  "engine": "Konclude",
+  "engine_version": "v0.7.0-1138",
+  "release_commit": "0002e80635403960a7df5d93bd0e8f994d4952d0",
+  "release_asset": "Konclude-v0.7.0-1138-Linux-x64-GCC-Static-Qt5.12.10.zip",
+  "release_asset_url": "https://github.com/konclude/Konclude/releases/download/v0.7.0-1138/Konclude-v0.7.0-1138-Linux-x64-GCC-Static-Qt5.12.10.zip",
+  "release_asset_sha256": "37216c18f45a80165aec1e76aeefd62d933d6a3f8f134c5aca0707c676fda76e",
+  "executable_sha256": "5484f16dcff71486a5deed9cf9cea8a0f7febf115aaa6915ad2e8c1cf16965e3",
+  "query_config": "Configs/querying-config.xml",
+  "query_config_sha256": "03686d52957c07781745b069df1ecd1a9ae17ba4efd11cd82d21a0e22a6a3829",
+  "converter": "OWL2Bench convert.jar or an equivalent pinned wrapper",
+  "converter_sha256": "83dd76ee81a5de75fb31ebed584270715b4404e2ac4b36db65836df1b1c18fe7",
+  "query_command": "Konclude sparqlfile -s <query> -i <functional-input> -o <results-xml> -c <config> -v",
+  "query_result_format": "sparql-results-xml",
+  "not_available_exit_code": 125,
+  "resource_limits": {
+    "timeout_seconds": 600,
+    "threads": 1,
+    "memory": "24GiB"
+  },
+  "prefix_injection": {
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "default": "https://kracr.iiitd.edu.in/OWL2Bench#"
+  },
+  "provenance_fields": [
+    "profile",
+    "context_dir",
+    "source_input",
+    "source_sha256",
+    "prepared_input",
+    "prepared_sha256",
+    "converter_path",
+    "converter_sha256",
+    "config_path",
+    "config_sha256",
+    "binary_path",
+    "binary_sha256"
+  ]
+}
