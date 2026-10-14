@@ -2,6 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RUN_BENCH="$ROOT_DIR/benchmarks/competitors/scripts/run_benchmarks.sh"
 RESULTS_HISTORY="$ROOT_DIR/benchmarks/competitors/results/history"
 
@@ -21,3 +22,10 @@ RUN_ID="$RUN_ID" "$RUN_BENCH" report
 
 echo "[owl2bench-report] report: $RESULTS_HISTORY/$RUN_ID/benchmark_report.md"
 echo "[owl2bench-report] csv   : $RESULTS_HISTORY/$RUN_ID/results.csv"
+
+RUN_DIR="$RESULTS_HISTORY/$RUN_ID"
+if [[ -f "$RUN_DIR/owl2bench_manifest.tsv" ]]; then
+  "$SCRIPT_DIR/stage_report.sh" "$RUN_DIR" "$RUN_DIR/owl2bench_manifest.tsv"
+else
+  echo "[owl2bench-report][warn] missing OWL2Bench manifest: $RUN_DIR/owl2bench_manifest.tsv" >&2
+fi

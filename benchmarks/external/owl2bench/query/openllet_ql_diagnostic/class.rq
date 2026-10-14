@@ -1,0 +1,4 @@
+SELECT ?subject
+WHERE {
+  ?subject a <http://benchmark/OWL2Bench#EmployeeEvaluationCommittee> .
+}

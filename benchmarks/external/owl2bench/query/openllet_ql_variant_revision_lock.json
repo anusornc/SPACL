@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "namespace": "openllet-ql",
+  "accepted_revisions": {
+    "openllet-ql/revision-1": "sha256:adbbda455446fac05aeec35281a2749cc88beb88e8b35650d6f04672391ddb33"
+  },
+  "change_policy": "A changed category SHA must use a distinct revision id and fresh artifact-backed evidence"
+}

@@ -1,0 +1,16 @@
+{
+  "supports_query": true,
+  "profiles": ["QL"],
+  "data_mode": "directory",
+  "adapter": "ql-ruleset",
+  "engine": "QL-ruleset-engine",
+  "engine_version": "manifest-selected",
+  "provenance_relative_path": ".ql-ruleset/provenance.json",
+  "query_result_format": "sparql-results-xml-or-tsv",
+  "component_manifest_required": true,
+  "materialization_manifest_required": true,
+  "ruleset_required": true,
+  "credential_boundary": "manifest-status-only",
+  "not_available_exit_code": 125,
+  "unsupported_exit_code": 123
+}

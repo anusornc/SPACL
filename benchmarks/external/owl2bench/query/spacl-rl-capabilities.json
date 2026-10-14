@@ -1,0 +1,15 @@
+{
+  "supports_query": true,
+  "profiles": ["RL"],
+  "data_mode": "directory",
+  "adapter": "spacl-rl",
+  "engine": "SPACL-RL",
+  "engine_version": "owl2-reasoner materialize + pinned Oxigraph query",
+  "provenance_relative_path": ".spacl-rl/provenance.json",
+  "query_result_format": "tsv",
+  "materialization_handoff_required": true,
+  "engine_image": "oxigraph/oxigraph:0.5.9",
+  "engine_image_digest": "sha256:e68b3625743db4a4b18129a907ae36766f89bb6deeb8ab50d35685dbabe00b0e",
+  "not_available_exit_code": 125,
+  "unsupported_exit_code": 123
+}

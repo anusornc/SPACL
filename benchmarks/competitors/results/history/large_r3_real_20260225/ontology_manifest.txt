@@ -1,3 +1,0 @@
-doid.owl
-go-basic.owl
-uberon.owl

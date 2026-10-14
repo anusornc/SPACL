@@ -26,27 +26,42 @@ pub enum ClassExpression {
     /// Object all values from (∀R.C)
     ObjectAllValuesFrom(Box<ObjectPropertyExpression>, Box<ClassExpression>),
     /// Object has value (R(a))
-    ObjectHasValue(Box<ObjectPropertyExpression>, crate::core::entities::Individual),
+    ObjectHasValue(
+        Box<ObjectPropertyExpression>,
+        crate::core::entities::Individual,
+    ),
     /// Object has self (R(a,a))
     ObjectHasSelf(Box<ObjectPropertyExpression>),
-    /// Object min cardinality (≥ n R)
-    ObjectMinCardinality(u32, Box<ObjectPropertyExpression>),
-    /// Object max cardinality (≤ n R)
-    ObjectMaxCardinality(u32, Box<ObjectPropertyExpression>),
-    /// Object exact cardinality (= n R)
-    ObjectExactCardinality(u32, Box<ObjectPropertyExpression>),
+    /// Object min cardinality (≥ n R.C); no qualifier counts all R targets.
+    ObjectMinCardinality(
+        u32,
+        Box<ObjectPropertyExpression>,
+        Option<Box<ClassExpression>>,
+    ),
+    /// Object max cardinality (≤ n R.C); no qualifier counts all R targets.
+    ObjectMaxCardinality(
+        u32,
+        Box<ObjectPropertyExpression>,
+        Option<Box<ClassExpression>>,
+    ),
+    /// Object exact cardinality (= n R.C); no qualifier counts all R targets.
+    ObjectExactCardinality(
+        u32,
+        Box<ObjectPropertyExpression>,
+        Option<Box<ClassExpression>>,
+    ),
     /// Data some values from (∃P.D)
     DataSomeValuesFrom(Box<DataPropertyExpression>, Box<DataRange>),
     /// Data all values from (∀P.D)
     DataAllValuesFrom(Box<DataPropertyExpression>, Box<DataRange>),
     /// Data has value (P(v))
     DataHasValue(Box<DataPropertyExpression>, crate::core::entities::Literal),
-    /// Data min cardinality (≥ n P)
-    DataMinCardinality(u32, Box<DataPropertyExpression>),
-    /// Data max cardinality (≤ n P)
-    DataMaxCardinality(u32, Box<DataPropertyExpression>),
-    /// Data exact cardinality (= n P)
-    DataExactCardinality(u32, Box<DataPropertyExpression>),
+    /// Data min cardinality (≥ n P.D); no qualifier counts all P values.
+    DataMinCardinality(u32, Box<DataPropertyExpression>, Option<Box<DataRange>>),
+    /// Data max cardinality (≤ n P.D); no qualifier counts all P values.
+    DataMaxCardinality(u32, Box<DataPropertyExpression>, Option<Box<DataRange>>),
+    /// Data exact cardinality (= n P.D); no qualifier counts all P values.
+    DataExactCardinality(u32, Box<DataPropertyExpression>, Option<Box<DataRange>>),
 }
 
 impl ClassExpression {
@@ -131,14 +146,12 @@ impl ClassExpression {
             ClassExpression::ObjectHasSelf(_) => {
                 // No subexpressions
             }
-            ClassExpression::ObjectMinCardinality(_, _) => {
-                // No subexpressions
-            }
-            ClassExpression::ObjectMaxCardinality(_, _) => {
-                // No subexpressions
-            }
-            ClassExpression::ObjectExactCardinality(_, _) => {
-                // No subexpressions
+            ClassExpression::ObjectMinCardinality(_, _, qualifier)
+            | ClassExpression::ObjectMaxCardinality(_, _, qualifier)
+            | ClassExpression::ObjectExactCardinality(_, _, qualifier) => {
+                if let Some(qualifier) = qualifier {
+                    qualifier._collect_subexpressions(result);
+                }
             }
             ClassExpression::DataSomeValuesFrom(_, _) => {
                 // No class subexpressions for data ranges
@@ -149,13 +162,13 @@ impl ClassExpression {
             ClassExpression::DataHasValue(_, _) => {
                 // No class subexpressions
             }
-            ClassExpression::DataMinCardinality(_, _) => {
+            ClassExpression::DataMinCardinality(_, _, _) => {
                 // No class subexpressions
             }
-            ClassExpression::DataMaxCardinality(_, _) => {
+            ClassExpression::DataMaxCardinality(_, _, _) => {
                 // No class subexpressions
             }
-            ClassExpression::DataExactCardinality(_, _) => {
+            ClassExpression::DataExactCardinality(_, _, _) => {
                 // No class subexpressions
             }
         }
@@ -179,15 +192,17 @@ impl ClassExpression {
             ClassExpression::ObjectAllValuesFrom(_, expr) => expr.contains_class(class_iri),
             ClassExpression::ObjectHasValue(_, _) => false,
             ClassExpression::ObjectHasSelf(_) => false,
-            ClassExpression::ObjectMinCardinality(_, _) => false,
-            ClassExpression::ObjectMaxCardinality(_, _) => false,
-            ClassExpression::ObjectExactCardinality(_, _) => false,
+            ClassExpression::ObjectMinCardinality(_, _, qualifier)
+            | ClassExpression::ObjectMaxCardinality(_, _, qualifier)
+            | ClassExpression::ObjectExactCardinality(_, _, qualifier) => qualifier
+                .as_ref()
+                .is_some_and(|qualifier| qualifier.contains_class(class_iri)),
             ClassExpression::DataSomeValuesFrom(_, _) => false,
             ClassExpression::DataAllValuesFrom(_, _) => false,
             ClassExpression::DataHasValue(_, _) => false,
-            ClassExpression::DataMinCardinality(_, _) => false,
-            ClassExpression::DataMaxCardinality(_, _) => false,
-            ClassExpression::DataExactCardinality(_, _) => false,
+            ClassExpression::DataMinCardinality(_, _, _) => false,
+            ClassExpression::DataMaxCardinality(_, _, _) => false,
+            ClassExpression::DataExactCardinality(_, _, _) => false,
         }
     }
 }

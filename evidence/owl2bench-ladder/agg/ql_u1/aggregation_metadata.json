@@ -1,0 +1,23 @@
+{
+  "aggregation_type": "comparative_repetition_median",
+  "ontology_suite": "standard",
+  "operation": "consistency",
+  "pass_count": 3,
+  "pass_run_ids": [
+    "owl2bench_cmp_p1_ql_u1",
+    "owl2bench_cmp_p2_ql_u1",
+    "owl2bench_cmp_p3_ql_u1"
+  ],
+  "engines": [
+    "hermit",
+    "konclude",
+    "tableauxx"
+  ],
+  "statistic": "per-case median container-inclusive wall time across passes (recorded passes only)",
+  "artifacts": {
+    "median_times": "comparative_median_times.tsv",
+    "paper_table": "comparative_paper_table.md",
+    "engine_summary_tsv": "comparative_engine_summary.tsv",
+    "engine_summary_md": "comparative_engine_summary.md"
+  }
+}

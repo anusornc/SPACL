@@ -91,7 +91,7 @@ def generate_report(results):
     return "\n".join(report)
 
 def main():
-    print("🚀 SPACL Benchmark Runner")
+    print("🚀 Tableauxx Benchmark Runner")
     print("=" * 60)
     
     # Check if cargo is available

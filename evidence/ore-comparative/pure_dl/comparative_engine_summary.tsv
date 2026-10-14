@@ -1,0 +1,4 @@
+engine	cases	completed	timeout	failed	not_available	other_execution	median_wall_time_ms	total_wall_time_ms
+hermit	306	287	5	14	0	0	4336	2535300
+konclude	306	303	2	0	1	0	5846	3668346
+tableauxx	306	305	0	1	0	0	2330	2111536

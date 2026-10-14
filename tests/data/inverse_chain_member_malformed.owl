@@ -1,0 +1,17 @@
+<rdf:RDF
+     xml:base="http://example.org/ic"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:owl="http://www.w3.org/2002/07/owl#">
+
+    <owl:Ontology rdf:about=""/>
+    <owl:ObjectProperty rdf:about="#r"/>
+
+    <!-- A blank-node member with no owl:inverseOf is not a property
+         expression; parsing must fail closed, not drop the axiom. -->
+    <owl:ObjectProperty rdf:about="#s">
+        <owl:propertyChainAxiom rdf:parseType="Collection">
+            <rdf:Description/>
+            <rdf:Description rdf:about="#r"/>
+        </owl:propertyChainAxiom>
+    </owl:ObjectProperty>
+</rdf:RDF>

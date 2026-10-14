@@ -52,6 +52,7 @@ pub enum Axiom {
     ObjectPropertyRange(Box<core::ObjectPropertyRangeAxiom>),
     DataPropertyDomain(Box<core::DataPropertyDomainAxiom>),
     DataPropertyRange(Box<core::DataPropertyRangeAxiom>),
+    DataPropertyEnumeratedRange(Box<core::DataPropertyEnumeratedRangeAxiom>),
     SubPropertyChainOf(Box<core::SubPropertyChainOfAxiom>),
     HasKey(Box<core::HasKeyAxiom>),
     SameIndividual(Box<core::SameIndividualAxiom>),
@@ -105,6 +106,9 @@ impl Axiom {
             Axiom::ObjectPropertyRange(_) => AxiomType::ObjectPropertyRange,
             Axiom::DataPropertyDomain(_) => AxiomType::DataPropertyDomain,
             Axiom::DataPropertyRange(_) => AxiomType::DataPropertyRange,
+            Axiom::DataPropertyEnumeratedRange(_) => {
+                AxiomType::DataPropertyEnumeratedRange
+            }
             Axiom::SubPropertyChainOf(_) => AxiomType::SubPropertyChainOf,
             Axiom::HasKey(_) => AxiomType::HasKey,
             Axiom::SameIndividual(_) => AxiomType::SameIndividual,

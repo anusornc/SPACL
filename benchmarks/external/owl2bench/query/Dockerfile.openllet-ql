@@ -1,0 +1,39 @@
+FROM maven:3.9-eclipse-temurin-17@sha256:e2532c643e3fbc52e339b24b6a47196b46ec8c269e08da3cd49365db41d9d252
+
+WORKDIR /opt/reasoner
+
+COPY openllet_ql_pom.xml /opt/reasoner/pom.xml
+COPY openllet_ql_classpath.sha256 /opt/reasoner/expected-classpath.sha256
+
+RUN mkdir -p src/main/java provenance && \
+    mvn -q package -DskipTests && \
+    (cd target/dependency && sha256sum ./*.jar | sed 's#  \./#  #' | LC_ALL=C sort -k2) \
+      > /opt/reasoner/classpath.sha256 && \
+    diff -u /opt/reasoner/expected-classpath.sha256 /opt/reasoner/classpath.sha256 && \
+    mvn -q org.apache.maven.plugins:maven-dependency-plugin:3.6.1:tree \
+      -DoutputFile=/opt/reasoner/dependency-tree.txt \
+      -DoutputType=text && \
+    cp /root/.m2/repository/com/github/galigator/openllet/openllet-parent/2.6.5/openllet-parent-2.6.5.pom \
+      /opt/reasoner/provenance/ && \
+    sha256sum pom.xml classpath.sha256 dependency-tree.txt provenance/openllet-parent-2.6.5.pom \
+      > /opt/reasoner/provenance.sha256
+
+COPY OpenlletQlMaterializer.java /opt/reasoner/OpenlletQlMaterializer.java
+COPY openllet_ql_runtime_config.json /opt/reasoner/openllet_ql_runtime_config.json
+
+RUN mkdir -p /opt/reasoner/bin && \
+    javac -cp '/opt/reasoner/target/dependency/*' \
+      -d /opt/reasoner/bin \
+      /opt/reasoner/OpenlletQlMaterializer.java && \
+    sha256sum OpenlletQlMaterializer.java openllet_ql_runtime_config.json \
+      >> /opt/reasoner/provenance.sha256
+
+ARG BUILD_REVISION=unknown
+
+LABEL org.opencontainers.image.title="Tableauxx Openllet QL runtime" \
+      org.opencontainers.image.description="Benchmark-only Openllet QL finite materialization runtime; no service endpoint" \
+      org.opencontainers.image.revision="${BUILD_REVISION}" \
+      org.opencontainers.image.licenses="AGPL-3.0-only" \
+      org.opencontainers.image.source="https://github.com/anusornc/tableauxx"
+
+ENTRYPOINT ["java", "-cp", "/opt/reasoner/bin:/opt/reasoner/target/dependency/*", "OpenlletQlMaterializer"]

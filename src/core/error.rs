@@ -41,6 +41,10 @@ pub enum OwlError {
     #[error("Reasoning error: {0}")]
     ReasoningError(String),
 
+    /// Unsupported reasoning fragment
+    #[error("Unsupported feature: {0}")]
+    UnsupportedFeature(String),
+
     /// Tableaux reasoning errors
     #[error("Tableaux reasoning error: {node_id}: {message}")]
     TableauxError { node_id: usize, message: String },
@@ -230,9 +234,7 @@ impl ErrorContext {
             OwlError::ReasoningError(msg) => {
                 OwlError::ReasoningError(format!("{context_str}:{msg}"))
             }
-            OwlError::StorageError(msg) => {
-                OwlError::StorageError(format!("{context_str}:{msg}"))
-            }
+            OwlError::StorageError(msg) => OwlError::StorageError(format!("{context_str}:{msg}")),
             OwlError::ParseError(msg) => OwlError::ParseError(format!("{context_str}:{msg}")),
             _ => error,
         }

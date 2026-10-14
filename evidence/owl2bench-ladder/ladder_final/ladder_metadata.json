@@ -1,0 +1,289 @@
+{
+  "ladder_type": "owl2bench_consistency_scalability",
+  "lane_terms": "execution performance and completability evidence only (ADR 0024/0026)",
+  "statistic": "repetition median of container-inclusive wall time per engine across three serial passes; completability = completed/cases",
+  "expected": {
+    "profiles": [
+      "DL",
+      "EL",
+      "QL",
+      "RL"
+    ],
+    "sizes": [
+      1,
+      2,
+      5,
+      10,
+      20,
+      50
+    ]
+  },
+  "profiles": {
+    "DL": {
+      "engines": [
+        "tableauxx",
+        "hermit",
+        "konclude"
+      ],
+      "table": "ladder_dl.md",
+      "points": [
+        {
+          "universities": 1,
+          "aggregation_dir": "owl2bench_cmp_agg_dl_u1",
+          "pass_run_ids": [
+            "owl2bench_cmp_p1_dl_u1",
+            "owl2bench_cmp_p2_dl_u1",
+            "owl2bench_cmp_p3_dl_u1"
+          ]
+        },
+        {
+          "universities": 2,
+          "aggregation_dir": "owl2bench_cmp_agg_dl_u2",
+          "pass_run_ids": [
+            "owl2bench_cmp_p1_dl_u2",
+            "owl2bench_cmp_p2_dl_u2",
+            "owl2bench_cmp_p3_dl_u2"
+          ]
+        },
+        {
+          "universities": 5,
+          "aggregation_dir": "owl2bench_cmp_agg_dl_u5",
+          "pass_run_ids": [
+            "owl2bench_cmp_p1_dl_u5",
+            "owl2bench_cmp_p2_dl_u5",
+            "owl2bench_cmp_p3_dl_u5"
+          ]
+        },
+        {
+          "universities": 10,
+          "aggregation_dir": "owl2bench_cmp_agg_dl_u10",
+          "pass_run_ids": [
+            "owl2bench_cmp_p1_dl_u10",
+            "owl2bench_cmp_p2_dl_u10",
+            "owl2bench_cmp_p3_dl_u10"
+          ]
+        },
+        {
+          "universities": 20,
+          "aggregation_dir": "owl2bench_cmp_agg_dl_u20",
+          "pass_run_ids": [
+            "owl2bench_cmp_p1_dl_u20",
+            "owl2bench_cmp_p2_dl_u20",
+            "owl2bench_cmp_p3_dl_u20"
+          ]
+        },
+        {
+          "universities": 50,
+          "aggregation_dir": "owl2bench_cmp_agg_dl_u50",
+          "pass_run_ids": [
+            "owl2bench_cmp_p1_dl_u50",
+            "owl2bench_cmp_p2_dl_u50",
+            "owl2bench_cmp_p3_dl_u50"
+          ]
+        }
+      ]
+    },
+    "EL": {
+      "engines": [
+        "tableauxx",
+        "hermit",
+        "konclude",
+        "elk"
+      ],
+      "table": "ladder_el.md",
+      "points": [
+        {
+          "universities": 1,
+          "aggregation_dir": "owl2bench_cmp_agg_el_u1",
+          "pass_run_ids": [
+            "owl2bench_cmp_p1_el_u1",
+            "owl2bench_cmp_p2_el_u1",
+            "owl2bench_cmp_p3_el_u1"
+          ]
+        },
+        {
+          "universities": 2,
+          "aggregation_dir": "owl2bench_cmp_agg_el_u2",
+          "pass_run_ids": [
+            "owl2bench_cmp_p1_el_u2",
+            "owl2bench_cmp_p2_el_u2",
+            "owl2bench_cmp_p3_el_u2"
+          ]
+        },
+        {
+          "universities": 5,
+          "aggregation_dir": "owl2bench_cmp_agg_el_u5",
+          "pass_run_ids": [
+            "owl2bench_cmp_p1_el_u5",
+            "owl2bench_cmp_p2_el_u5",
+            "owl2bench_cmp_p3_el_u5"
+          ]
+        },
+        {
+          "universities": 10,
+          "aggregation_dir": "owl2bench_cmp_agg_el_u10",
+          "pass_run_ids": [
+            "owl2bench_cmp_p1_el_u10",
+            "owl2bench_cmp_p2_el_u10",
+            "owl2bench_cmp_p3_el_u10"
+          ]
+        },
+        {
+          "universities": 20,
+          "aggregation_dir": "owl2bench_cmp_agg_el_u20",
+          "pass_run_ids": [
+            "owl2bench_cmp_p1_el_u20",
+            "owl2bench_cmp_p2_el_u20",
+            "owl2bench_cmp_p3_el_u20"
+          ]
+        },
+        {
+          "universities": 50,
+          "aggregation_dir": "owl2bench_cmp_agg_el_u50",
+          "pass_run_ids": [
+            "owl2bench_cmp_p1_el_u50",
+            "owl2bench_cmp_p2_el_u50",
+            "owl2bench_cmp_p3_el_u50"
+          ]
+        }
+      ]
+    },
+    "QL": {
+      "engines": [
+        "tableauxx",
+        "hermit",
+        "konclude"
+      ],
+      "table": "ladder_ql.md",
+      "points": [
+        {
+          "universities": 1,
+          "aggregation_dir": "owl2bench_cmp_agg_ql_u1",
+          "pass_run_ids": [
+            "owl2bench_cmp_p1_ql_u1",
+            "owl2bench_cmp_p2_ql_u1",
+            "owl2bench_cmp_p3_ql_u1"
+          ]
+        },
+        {
+          "universities": 2,
+          "aggregation_dir": "owl2bench_cmp_agg_ql_u2",
+          "pass_run_ids": [
+            "owl2bench_cmp_p1_ql_u2",
+            "owl2bench_cmp_p2_ql_u2",
+            "owl2bench_cmp_p3_ql_u2"
+          ]
+        },
+        {
+          "universities": 5,
+          "aggregation_dir": "owl2bench_cmp_agg_ql_u5",
+          "pass_run_ids": [
+            "owl2bench_cmp_p1_ql_u5",
+            "owl2bench_cmp_p2_ql_u5",
+            "owl2bench_cmp_p3_ql_u5"
+          ]
+        },
+        {
+          "universities": 10,
+          "aggregation_dir": "owl2bench_cmp_agg_ql_u10",
+          "pass_run_ids": [
+            "owl2bench_cmp_p1_ql_u10",
+            "owl2bench_cmp_p2_ql_u10",
+            "owl2bench_cmp_p3_ql_u10"
+          ]
+        },
+        {
+          "universities": 20,
+          "aggregation_dir": "owl2bench_cmp_agg_ql_u20",
+          "pass_run_ids": [
+            "owl2bench_cmp_p1_ql_u20",
+            "owl2bench_cmp_p2_ql_u20",
+            "owl2bench_cmp_p3_ql_u20"
+          ]
+        },
+        {
+          "universities": 50,
+          "aggregation_dir": "owl2bench_cmp_agg_ql_u50",
+          "pass_run_ids": [
+            "owl2bench_cmp_p1_ql_u50",
+            "owl2bench_cmp_p2_ql_u50",
+            "owl2bench_cmp_p3_ql_u50"
+          ]
+        }
+      ]
+    },
+    "RL": {
+      "engines": [
+        "tableauxx",
+        "hermit",
+        "konclude"
+      ],
+      "table": "ladder_rl.md",
+      "points": [
+        {
+          "universities": 1,
+          "aggregation_dir": "owl2bench_cmp_agg_rl_u1",
+          "pass_run_ids": [
+            "owl2bench_cmp_p1_rl_u1",
+            "owl2bench_cmp_p2_rl_u1",
+            "owl2bench_cmp_p3_rl_u1"
+          ]
+        },
+        {
+          "universities": 2,
+          "aggregation_dir": "owl2bench_cmp_agg_rl_u2",
+          "pass_run_ids": [
+            "owl2bench_cmp_p1_rl_u2",
+            "owl2bench_cmp_p2_rl_u2",
+            "owl2bench_cmp_p3_rl_u2"
+          ]
+        },
+        {
+          "universities": 5,
+          "aggregation_dir": "owl2bench_cmp_agg_rl_u5",
+          "pass_run_ids": [
+            "owl2bench_cmp_p1_rl_u5",
+            "owl2bench_cmp_p2_rl_u5",
+            "owl2bench_cmp_p3_rl_u5"
+          ]
+        },
+        {
+          "universities": 10,
+          "aggregation_dir": "owl2bench_cmp_agg_rl_u10",
+          "pass_run_ids": [
+            "owl2bench_cmp_p1_rl_u10",
+            "owl2bench_cmp_p2_rl_u10",
+            "owl2bench_cmp_p3_rl_u10"
+          ]
+        },
+        {
+          "universities": 20,
+          "aggregation_dir": "owl2bench_cmp_agg_rl_u20",
+          "pass_run_ids": [
+            "owl2bench_cmp_p1_rl_u20",
+            "owl2bench_cmp_p2_rl_u20",
+            "owl2bench_cmp_p3_rl_u20"
+          ]
+        },
+        {
+          "universities": 50,
+          "aggregation_dir": "owl2bench_cmp_agg_rl_u50",
+          "pass_run_ids": [
+            "owl2bench_cmp_p1_rl_u50",
+            "owl2bench_cmp_p2_rl_u50",
+            "owl2bench_cmp_p3_rl_u50"
+          ]
+        }
+      ]
+    }
+  },
+  "legend": [
+    "<median>ms (completed/cases)",
+    "TO=timeout",
+    "NA=not available",
+    "NC=non-comparable parser/runtime incompatibility",
+    "KIL=interrupted cleanup kill",
+    "ORPH=container orphan cleanup",
+    "FAIL=hard runtime failure"
+  ]
+}

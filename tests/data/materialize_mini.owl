@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+<rdf:RDF xml:base="http://example.org/m"
+     xmlns="http://example.org/m#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#">
+    <owl:Ontology rdf:about="http://example.org/m"/>
+
+    <owl:Class rdf:about="#Person"/>
+    <owl:Class rdf:about="#Man">
+        <rdfs:subClassOf rdf:resource="#Person"/>
+    </owl:Class>
+    <owl:Class rdf:about="#Student">
+        <rdfs:subClassOf rdf:resource="#Person"/>
+    </owl:Class>
+    <owl:Class rdf:about="#GradStudent">
+        <rdfs:subClassOf rdf:resource="#Student"/>
+    </owl:Class>
+    <owl:Class rdf:about="#Organization"/>
+    <owl:Class rdf:about="#Foo">
+        <owl:equivalentClass rdf:resource="#Bar"/>
+    </owl:Class>
+    <owl:Class rdf:about="#Bar"/>
+
+    <owl:ObjectProperty rdf:about="#knows">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#SymmetricProperty"/>
+        <rdfs:domain rdf:resource="#Person"/>
+    </owl:ObjectProperty>
+    <owl:ObjectProperty rdf:about="#worksFor">
+        <rdfs:domain rdf:resource="#Person"/>
+        <rdfs:range rdf:resource="#Organization"/>
+        <rdfs:subPropertyOf rdf:resource="#affiliatedWith"/>
+    </owl:ObjectProperty>
+    <owl:ObjectProperty rdf:about="#affiliatedWith"/>
+    <owl:ObjectProperty rdf:about="#locatedIn">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#TransitiveProperty"/>
+    </owl:ObjectProperty>
+    <owl:ObjectProperty rdf:about="#evaluates"/>
+    <owl:ObjectProperty rdf:about="#evaluatedBy">
+        <owl:inverseOf rdf:resource="#evaluates"/>
+        <rdfs:domain rdf:resource="#Student"/>
+    </owl:ObjectProperty>
+    <owl:DatatypeProperty rdf:about="#hasAge"/>
+
+    <owl:NamedIndividual rdf:about="#bob">
+        <rdf:type rdf:resource="#Man"/>
+        <knows rdf:resource="#alice"/>
+        <worksFor rdf:resource="#acme"/>
+    </owl:NamedIndividual>
+    <owl:NamedIndividual rdf:about="#alice">
+        <rdf:type rdf:resource="#GradStudent"/>
+    </owl:NamedIndividual>
+    <owl:NamedIndividual rdf:about="#carol">
+        <rdf:type rdf:resource="#Foo"/>
+    </owl:NamedIndividual>
+    <owl:NamedIndividual rdf:about="#dave">
+        <hasAge rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">42</hasAge>
+    </owl:NamedIndividual>
+    <owl:NamedIndividual rdf:about="#erin">
+        <locatedIn rdf:nodeID="place1"/>
+    </owl:NamedIndividual>
+    <owl:NamedIndividual rdf:about="#profX">
+        <evaluates rdf:resource="#alice"/>
+    </owl:NamedIndividual>
+    <owl:NamedIndividual rdf:about="#acme">
+        <locatedIn rdf:resource="#berlin"/>
+    </owl:NamedIndividual>
+    <owl:NamedIndividual rdf:about="#berlin">
+        <locatedIn rdf:resource="#germany"/>
+    </owl:NamedIndividual>
+    <owl:NamedIndividual rdf:about="#germany"/>
+</rdf:RDF>

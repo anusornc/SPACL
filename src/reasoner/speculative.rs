@@ -1,30 +1,34 @@
 //! Speculative Parallel Tableaux with Adaptive Conflict Learning (SPACL)
 //!
-//! A novel reasoning algorithm that combines speculative parallelism with
-//! conflict-driven learning from failed branches, achieving significant
-//! speedups on complex ontologies while maintaining completeness.
+//! Implements speculative branch exploration, optional nogood learning from
+//! failed branches, and configurable branch-priority policies.
 //!
-//! # Key Innovations
+//! # Current scheduling boundary
 //!
-//! 1. **Speculative Branch Exploration**: When encountering disjunctions (A ⊔ B),
-//!    both branches are explored speculatively in parallel using work-stealing.
+//! `SchedulingMode::Adaptive` currently evaluates fixed branch-count and
+//! estimated-cost thresholds once before reasoning. The name is retained for
+//! API compatibility; the active execution path does not update thresholds
+//! from runtime feedback.
 //!
-//! 2. **Conflict-Driven Learning**: When a branch leads to contradiction,
-//!    learn a "nogood" clause that prunes similar branches in future reasoning.
+//! `AdaptiveTuner` is a disconnected experimental helper. It is not invoked by
+//! `SpeculativeTableauxReasoner::is_consistent`, and the separate evolutionary
+//! strategy module is not part of this scheduling decision.
 //!
-//! 3. **Adaptive Parallelism**: Use evolutionary optimization to dynamically
-//!    adjust the threshold for when to parallelize vs sequential exploration.
+//! # Mechanisms
 //!
-//! 4. **Proof Reuse**: Cache and reuse partial proofs across different reasoning tasks.
+//! - Work-stealing exploration of admitted disjunction branches.
+//! - Optional nogood retention and subsumption-based branch pruning.
+//! - Baseline, deterministic heuristic, and model-backed branch ordering.
+//! - Telemetry for scheduling decisions, work, pruning, and policy activity.
 //!
-//! # Performance Characteristics
-//!
-//! - **Best case**: Exponential speedup on highly branching ontologies
-//! - **Worst case**: O(1) overhead compared to sequential tableaux
-//! - **Memory**: Linear in the number of active speculative branches
+//! Semantic preservation is a verification objective, not a formal theorem in
+//! this repository. Performance must be established by paired benchmark runs;
+//! the `SpeculativeStats::speedup` field is only a legacy utilization proxy.
 
 #![allow(dead_code)]
 
+use super::boolean_consistency::check_boolean_consistency;
+use super::qualified_consistency::check_qualified_consistency;
 use super::simple::SimpleReasoner;
 use crate::core::error::{OwlError, OwlResult};
 use crate::core::iri::IRI;
@@ -32,7 +36,10 @@ use crate::core::ontology::Ontology;
 use crate::logic::axioms::class_expressions::ClassExpression;
 use crossbeam::channel::{unbounded, Receiver, Sender};
 use crossbeam::deque::{Stealer, Worker};
+use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
+use std::fs::OpenOptions;
+use std::io::{BufWriter, Write};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
 use std::thread;
@@ -99,6 +106,34 @@ impl Nogood {
 /// Statistics for speculative reasoning
 #[derive(Debug, Default, Clone)]
 pub struct SpeculativeStats {
+    /// Effective scheduling mode for the run
+    pub scheduling_mode: String,
+    /// Effective branch-priority policy for the run
+    pub branch_policy: String,
+    /// Number of unique disjunction expressions detected for gating
+    pub disjunctions_detected: usize,
+    /// Heuristic branch-count estimate used by the parallel gate
+    pub estimated_branch_count: usize,
+    /// Heuristic cost estimate (microseconds) used by the parallel gate
+    pub estimated_cost_us: usize,
+    /// Configured branch threshold used by the gate
+    pub branch_threshold: usize,
+    /// Effective cost threshold used by the gate (already multiplied by workers)
+    pub cost_gate_threshold_us: usize,
+    /// Whether the branch-count gate passed
+    pub branch_gate_passed: bool,
+    /// Whether the cost gate passed
+    pub cost_gate_passed: bool,
+    /// Whether this run actually entered speculative parallel execution
+    pub used_parallel: bool,
+    /// Exact Boolean verdict that bypassed admitted speculative work this run.
+    /// None means no SPACL shortcut, not that the sequential checker was unused.
+    pub boolean_certificate: Option<bool>,
+    /// Exact qualified object-cardinality/hasSelf verdict that bypassed
+    /// speculative artificial witnesses for the original ontology.
+    pub qualified_consistency_certificate: Option<bool>,
+    /// Work items that expanded into child work
+    pub work_items_expanded: usize,
     /// Total branches created
     pub branches_created: usize,
     /// Branches pruned by nogoods
@@ -117,11 +152,29 @@ pub struct SpeculativeStats {
     pub global_cache_hits: usize,
     /// Total nogood checks performed
     pub nogood_checks: usize,
+    /// Times a worker attempted to steal work
+    pub steal_attempts: usize,
+    /// Successful steal operations
+    pub steal_successes: usize,
+    /// Number of worker tasks started for speculative execution
+    pub workers_started: usize,
+    /// Number of worker tasks that completed their loop before return
+    pub workers_completed: usize,
+    /// Splits where policy produced an order different from ontology order
+    pub policy_reordered_splits: usize,
+    /// Policy fallbacks (e.g., hybrid mode without a loaded model)
+    pub policy_fallbacks: usize,
+    /// Number of branch-split decisions routed through hybrid policy mode
+    pub hybrid_policy_calls: usize,
+    /// Hybrid policy decisions where a model ranking was actually used
+    pub hybrid_model_calls: usize,
+    /// Number of branch snapshots exported for offline training
+    pub branch_snapshots_written: usize,
     /// Time spent in speculative work that was later cancelled
     pub wasted_time_ms: u64,
     /// Total reasoning time in milliseconds
     pub reasoning_time_ms: u64,
-    /// Actual speedup achieved
+    /// Legacy parallel-utilization proxy; not measured speedup against a baseline
     pub speedup: f64,
 }
 
@@ -148,11 +201,20 @@ impl SpeculativeStats {
     pub fn report(&self) -> String {
         format!(
             "SPACL Statistics:\n\
+            - Policy: schedule={}, branch_policy={}\n\
+            - Policy telemetry: hybrid_calls={}, model_calls={}, fallbacks={}, reorders={}\n\
             - Branches: {} created, {} pruned ({:.1}%), {} successful\n\
             - Contradictions: {} found\n\
             - Nogoods: {} learned, {} hits ({:.1}%)\n\
             - Cache hits: {} local, {} global\n\
-            - Speedup: {:.2}x",
+            - Workers: {} started, {} completed\n\
+            - Parallel-utilization proxy: {:.2}x",
+            self.scheduling_mode,
+            self.branch_policy,
+            self.hybrid_policy_calls,
+            self.hybrid_model_calls,
+            self.policy_fallbacks,
+            self.policy_reordered_splits,
             self.branches_created,
             self.branches_pruned,
             self.pruning_effectiveness() * 100.0,
@@ -163,6 +225,8 @@ impl SpeculativeStats {
             self.nogood_hit_rate() * 100.0,
             self.local_cache_hits,
             self.global_cache_hits,
+            self.workers_started,
+            self.workers_completed,
             self.speedup
         )
     }
@@ -185,6 +249,13 @@ struct WorkItem {
     next_disjunction_idx: usize,
 }
 
+#[derive(Debug, Clone, Copy)]
+struct BranchPolicyContext {
+    branch_id: BranchId,
+    depth: usize,
+    disjunction_index: usize,
+}
+
 /// Result from speculative execution
 #[derive(Debug, Clone)]
 enum WorkResult {
@@ -199,11 +270,69 @@ enum WorkResult {
     },
 }
 
+#[derive(Debug, Clone, Copy)]
+struct ParallelDecision {
+    disjunctions_detected: usize,
+    estimated_branch_count: usize,
+    estimated_cost_us: usize,
+    branch_threshold: usize,
+    cost_gate_threshold_us: usize,
+    branch_gate_passed: bool,
+    cost_gate_passed: bool,
+    use_parallel: bool,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SchedulingMode {
+    /// One-shot fixed branch-and-cost admission gate (legacy variant name)
+    Adaptive,
+    Sequential,
+    AlwaysParallel,
+}
+
+impl SchedulingMode {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            SchedulingMode::Adaptive => "adaptive",
+            SchedulingMode::Sequential => "sequential",
+            SchedulingMode::AlwaysParallel => "always_parallel",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BranchPolicyMode {
+    /// Use ontology operand order (current baseline behavior)
+    Baseline,
+    /// Use deterministic structural heuristic ranking
+    Heuristic,
+    /// Learned ranking policy loaded from model file; safely falls back when unavailable
+    HybridRrn,
+}
+
+impl BranchPolicyMode {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            BranchPolicyMode::Baseline => "baseline",
+            BranchPolicyMode::Heuristic => "heuristic",
+            BranchPolicyMode::HybridRrn => "hybrid_rrn",
+        }
+    }
+}
+
 /// Configuration for speculative parallelism
 #[derive(Debug, Clone)]
 pub struct SpeculativeConfig {
     /// Number of worker threads
     pub num_workers: usize,
+    /// Scheduling policy for speculative branch exploration
+    pub scheduling_mode: SchedulingMode,
+    /// Branch-priority policy for disjunction operand ordering
+    pub branch_policy: BranchPolicyMode,
+    /// Optional path to a learned policy model (linear or gbdt_stump_v1) used in `hybrid_rrn` mode
+    pub rrn_model_path: Option<String>,
+    /// Optional JSONL output path for branch-level policy snapshots
+    pub branch_snapshot_path: Option<String>,
     /// Maximum speculative depth (to prevent explosion)
     pub max_speculative_depth: usize,
     /// Threshold for parallelizing disjunctions (min branch size)
@@ -214,10 +343,12 @@ pub struct SpeculativeConfig {
     pub max_nogoods: usize,
     /// Timeout for speculative work
     pub speculative_timeout_ms: u64,
-    /// Adaptive tuning enabled
+    /// Whether the static estimated-cost gate participates in `Adaptive` mode
+    ///
+    /// This legacy field name does not enable feedback-driven threshold updates.
     pub adaptive_tuning: bool,
-    /// Use cost-based adaptive threshold (microseconds)
-    /// Only parallelize if estimated work > this value
+    /// Fixed per-worker cost threshold in microseconds
+    /// Only parallelize if estimated work reaches the effective threshold.
     pub cost_threshold_us: usize,
     /// Estimated microseconds per disjunction operand
     pub cost_per_operand_us: usize,
@@ -229,16 +360,435 @@ impl Default for SpeculativeConfig {
     fn default() -> Self {
         Self {
             num_workers: num_cpus::get(),
+            scheduling_mode: SchedulingMode::Adaptive,
+            branch_policy: BranchPolicyMode::Baseline,
+            rrn_model_path: None,
+            branch_snapshot_path: None,
             max_speculative_depth: 10,
-            parallel_threshold: 10000, // High threshold - only parallel for very large ontologies
+            // Calibrated conservatively so branch-count gate avoids pathological
+            // parallelization on medium disjunctive workloads while still leaving
+            // room for larger branch-heavy cases to opt in.
+            parallel_threshold: 2000,
             enable_learning: true,
             max_nogoods: 10000,
             speculative_timeout_ms: 30000,
             adaptive_tuning: true,
             cost_threshold_us: 500, // 500µs minimum to justify parallelization
             cost_per_operand_us: 50, // 50µs per operand
-            cost_per_nesting_us: 30, // 30µs per nesting level
+            cost_per_nesting_us: 15, // Conservative refinement from calibration; keeps default in the 2000+ plateau
         }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(default)]
+struct RrnLinearWeights {
+    bias: f64,
+    union_weight: f64,
+    intersection_weight: f64,
+    complement_weight: f64,
+    some_values_weight: f64,
+    all_values_weight: f64,
+    atom_weight: f64,
+    depth_weight: f64,
+    node_weight: f64,
+}
+
+impl Default for RrnLinearWeights {
+    fn default() -> Self {
+        Self {
+            bias: 0.0,
+            union_weight: 5.0,
+            intersection_weight: 2.5,
+            complement_weight: 1.0,
+            some_values_weight: 1.5,
+            all_values_weight: 1.5,
+            atom_weight: 0.3,
+            depth_weight: 0.7,
+            node_weight: 0.1,
+        }
+    }
+}
+
+impl RrnLinearWeights {
+    fn score(&self, fv: &ExprFeatureVector) -> f64 {
+        self.bias
+            + self.union_weight * fv.union_nodes as f64
+            + self.intersection_weight * fv.intersection_nodes as f64
+            + self.complement_weight * fv.complement_nodes as f64
+            + self.some_values_weight * fv.some_values_nodes as f64
+            + self.all_values_weight * fv.all_values_nodes as f64
+            + self.atom_weight * fv.atom_nodes as f64
+            + self.depth_weight * fv.max_depth as f64
+            + self.node_weight * fv.total_nodes as f64
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+struct ExprFeatureVector {
+    union_nodes: usize,
+    intersection_nodes: usize,
+    complement_nodes: usize,
+    some_values_nodes: usize,
+    all_values_nodes: usize,
+    atom_nodes: usize,
+    total_nodes: usize,
+    max_depth: usize,
+}
+
+impl ExprFeatureVector {
+    fn combine_with(&mut self, other: &ExprFeatureVector) {
+        self.union_nodes += other.union_nodes;
+        self.intersection_nodes += other.intersection_nodes;
+        self.complement_nodes += other.complement_nodes;
+        self.some_values_nodes += other.some_values_nodes;
+        self.all_values_nodes += other.all_values_nodes;
+        self.atom_nodes += other.atom_nodes;
+        self.total_nodes += other.total_nodes;
+        self.max_depth = self.max_depth.max(other.max_depth);
+    }
+
+    fn from_expression(expr: &ClassExpression, depth: usize) -> Self {
+        let mut out = Self {
+            total_nodes: 1,
+            max_depth: depth,
+            ..Self::default()
+        };
+
+        match expr {
+            ClassExpression::ObjectUnionOf(operands) => {
+                out.union_nodes = 1;
+                for op in operands {
+                    out.combine_with(&Self::from_expression(op, depth + 1));
+                }
+            }
+            ClassExpression::ObjectIntersectionOf(operands) => {
+                out.intersection_nodes = 1;
+                for op in operands {
+                    out.combine_with(&Self::from_expression(op, depth + 1));
+                }
+            }
+            ClassExpression::ObjectComplementOf(inner) => {
+                out.complement_nodes = 1;
+                out.combine_with(&Self::from_expression(inner, depth + 1));
+            }
+            ClassExpression::ObjectSomeValuesFrom(_, inner) => {
+                out.some_values_nodes = 1;
+                out.combine_with(&Self::from_expression(inner, depth + 1));
+            }
+            ClassExpression::ObjectAllValuesFrom(_, inner) => {
+                out.all_values_nodes = 1;
+                out.combine_with(&Self::from_expression(inner, depth + 1));
+            }
+            _ => {
+                out.atom_nodes = 1;
+            }
+        }
+        out
+    }
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct SnapshotOperandFeatures {
+    union_nodes: usize,
+    intersection_nodes: usize,
+    complement_nodes: usize,
+    some_values_nodes: usize,
+    all_values_nodes: usize,
+    atom_nodes: usize,
+    total_nodes: usize,
+    max_depth: usize,
+}
+
+impl From<ExprFeatureVector> for SnapshotOperandFeatures {
+    fn from(value: ExprFeatureVector) -> Self {
+        Self {
+            union_nodes: value.union_nodes,
+            intersection_nodes: value.intersection_nodes,
+            complement_nodes: value.complement_nodes,
+            some_values_nodes: value.some_values_nodes,
+            all_values_nodes: value.all_values_nodes,
+            atom_nodes: value.atom_nodes,
+            total_nodes: value.total_nodes,
+            max_depth: value.max_depth,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(default)]
+struct RrnGbdtStump {
+    feature: String,
+    threshold: f64,
+    left_value: f64,
+    right_value: f64,
+}
+
+impl Default for RrnGbdtStump {
+    fn default() -> Self {
+        Self {
+            feature: "total_nodes".to_string(),
+            threshold: 0.0,
+            left_value: 0.0,
+            right_value: 0.0,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(default)]
+struct RrnGbdtModel {
+    model_type: String,
+    base_score: f64,
+    learning_rate: f64,
+    stumps: Vec<RrnGbdtStump>,
+}
+
+impl Default for RrnGbdtModel {
+    fn default() -> Self {
+        Self {
+            model_type: "gbdt_stump_v1".to_string(),
+            base_score: 0.0,
+            learning_rate: 0.1,
+            stumps: Vec::new(),
+        }
+    }
+}
+
+impl RrnGbdtModel {
+    fn feature_value(feature: &str, fv: &ExprFeatureVector) -> f64 {
+        match feature {
+            "union_nodes" | "union" => fv.union_nodes as f64,
+            "intersection_nodes" | "intersection" => fv.intersection_nodes as f64,
+            "complement_nodes" | "complement" => fv.complement_nodes as f64,
+            "some_values_nodes" | "some_values" | "some" => fv.some_values_nodes as f64,
+            "all_values_nodes" | "all_values" | "all" => fv.all_values_nodes as f64,
+            "atom_nodes" | "atom" => fv.atom_nodes as f64,
+            "max_depth" | "depth" => fv.max_depth as f64,
+            "total_nodes" | "node_count" | "nodes" => fv.total_nodes as f64,
+            _ => 0.0,
+        }
+    }
+
+    fn score(&self, fv: &ExprFeatureVector) -> f64 {
+        let mut score = self.base_score;
+        for stump in &self.stumps {
+            let x = Self::feature_value(&stump.feature, fv);
+            let delta = if x <= stump.threshold {
+                stump.left_value
+            } else {
+                stump.right_value
+            };
+            score += self.learning_rate * delta;
+        }
+        score
+    }
+}
+
+#[derive(Debug, Clone)]
+enum RrnPolicyModel {
+    Linear(RrnLinearWeights),
+    Gbdt(RrnGbdtModel),
+}
+
+impl RrnPolicyModel {
+    fn from_path(path: &str) -> Result<Self, String> {
+        let raw = std::fs::read_to_string(path)
+            .map_err(|err| format!("failed reading RRN model file '{}': {}", path, err))?;
+        let value: serde_json::Value = serde_json::from_str(&raw)
+            .map_err(|err| format!("failed parsing RRN model '{}': {}", path, err))?;
+        let model_type = value
+            .get("model_type")
+            .and_then(|v| v.as_str())
+            .unwrap_or("linear")
+            .to_string();
+        if model_type.eq_ignore_ascii_case("gbdt_stump_v1") {
+            let model: RrnGbdtModel = serde_json::from_value(value)
+                .map_err(|err| format!("failed parsing GBDT policy model '{}': {}", path, err))?;
+            Ok(Self::Gbdt(model))
+        } else {
+            let weights: RrnLinearWeights = serde_json::from_value(value).map_err(|err| {
+                format!(
+                    "failed parsing linear policy model '{}': {} (model_type='{}')",
+                    path, err, model_type
+                )
+            })?;
+            Ok(Self::Linear(weights))
+        }
+    }
+
+    fn score_expression(&self, expr: &ClassExpression) -> f64 {
+        let fv = ExprFeatureVector::from_expression(expr, 0);
+        match self {
+            RrnPolicyModel::Linear(weights) => weights.score(&fv),
+            RrnPolicyModel::Gbdt(model) => model.score(&fv),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+struct PolicyRanking {
+    ordered_operands: Vec<ClassExpression>,
+    ordered_indices: Vec<usize>,
+    scores: Vec<f64>,
+    reordered: bool,
+    used_model: bool,
+    used_fallback: bool,
+}
+
+#[derive(Debug, Clone)]
+struct BranchPolicyEngine {
+    mode: BranchPolicyMode,
+    rrn_model: Option<RrnPolicyModel>,
+}
+
+impl BranchPolicyEngine {
+    fn new(config: &SpeculativeConfig) -> Self {
+        if !matches!(config.branch_policy, BranchPolicyMode::HybridRrn) {
+            return Self {
+                mode: config.branch_policy,
+                rrn_model: None,
+            };
+        }
+
+        let rrn_model = config
+            .rrn_model_path
+            .as_deref()
+            .and_then(|path| RrnPolicyModel::from_path(path).ok());
+        Self {
+            mode: config.branch_policy,
+            rrn_model,
+        }
+    }
+
+    fn heuristic_score(expr: &ClassExpression) -> f64 {
+        match expr {
+            ClassExpression::ObjectUnionOf(operands) => {
+                20.0 + operands.len() as f64 * 4.0
+                    + operands
+                        .iter()
+                        .map(|op| Self::heuristic_score(op))
+                        .sum::<f64>()
+            }
+            ClassExpression::ObjectIntersectionOf(operands) => {
+                10.0 + operands.len() as f64 * 2.0
+                    + operands
+                        .iter()
+                        .map(|op| Self::heuristic_score(op))
+                        .sum::<f64>()
+            }
+            ClassExpression::ObjectComplementOf(inner) => 3.0 + Self::heuristic_score(inner),
+            ClassExpression::ObjectSomeValuesFrom(_, inner) => 5.0 + Self::heuristic_score(inner),
+            ClassExpression::ObjectAllValuesFrom(_, inner) => 5.0 + Self::heuristic_score(inner),
+            _ => 1.0,
+        }
+    }
+
+    fn rank(&self, operands: &[ClassExpression]) -> PolicyRanking {
+        let mut scored: Vec<(f64, usize, ClassExpression)> = match self.mode {
+            BranchPolicyMode::Baseline => operands
+                .iter()
+                .cloned()
+                .enumerate()
+                .map(|(idx, expr)| (idx as f64, idx, expr))
+                .collect(),
+            BranchPolicyMode::Heuristic => operands
+                .iter()
+                .cloned()
+                .enumerate()
+                .map(|(idx, expr)| (Self::heuristic_score(&expr), idx, expr))
+                .collect(),
+            BranchPolicyMode::HybridRrn => {
+                if let Some(model) = &self.rrn_model {
+                    operands
+                        .iter()
+                        .cloned()
+                        .enumerate()
+                        .map(|(idx, expr)| (model.score_expression(&expr), idx, expr))
+                        .collect()
+                } else {
+                    operands
+                        .iter()
+                        .cloned()
+                        .enumerate()
+                        .map(|(idx, expr)| (Self::heuristic_score(&expr), idx, expr))
+                        .collect()
+                }
+            }
+        };
+
+        if !matches!(self.mode, BranchPolicyMode::Baseline) {
+            scored.sort_by(|a, b| b.0.total_cmp(&a.0).then_with(|| a.1.cmp(&b.1)));
+        }
+
+        let ordered_indices: Vec<usize> = scored.iter().map(|(_, idx, _)| *idx).collect();
+        let scores: Vec<f64> = scored.iter().map(|(score, _, _)| *score).collect();
+        let ordered_operands: Vec<ClassExpression> =
+            scored.into_iter().map(|(_, _, expr)| expr).collect();
+
+        let reordered = ordered_indices
+            .iter()
+            .enumerate()
+            .any(|(pos, idx)| pos != *idx);
+        let used_model =
+            matches!(self.mode, BranchPolicyMode::HybridRrn) && self.rrn_model.is_some();
+        let used_fallback = matches!(self.mode, BranchPolicyMode::HybridRrn) && !used_model;
+
+        PolicyRanking {
+            ordered_operands,
+            ordered_indices,
+            scores,
+            reordered,
+            used_model,
+            used_fallback,
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+struct BranchSnapshotRecord {
+    branch_id: u64,
+    depth: usize,
+    disjunction_index: usize,
+    policy_mode: String,
+    operand_count: usize,
+    ordered_indices: Vec<usize>,
+    operand_scores: Vec<f64>,
+    operand_features: Vec<SnapshotOperandFeatures>,
+    reordered: bool,
+    hybrid_model_used: bool,
+    hybrid_fallback_used: bool,
+}
+
+struct BranchSnapshotWriter {
+    writer: Mutex<BufWriter<std::fs::File>>,
+}
+
+impl BranchSnapshotWriter {
+    fn from_path(path: &str) -> Result<Self, String> {
+        let file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(path)
+            .map_err(|err| format!("failed opening branch snapshot file '{}': {}", path, err))?;
+        Ok(Self {
+            writer: Mutex::new(BufWriter::new(file)),
+        })
+    }
+
+    fn write_record(&self, record: &BranchSnapshotRecord) -> Result<(), String> {
+        let mut guard = self
+            .writer
+            .lock()
+            .map_err(|_| "failed to lock branch snapshot writer".to_string())?;
+        serde_json::to_writer(&mut *guard, record)
+            .map_err(|err| format!("failed serializing branch snapshot: {}", err))?;
+        guard
+            .write_all(b"\n")
+            .map_err(|err| format!("failed writing branch snapshot newline: {}", err))?;
+        guard
+            .flush()
+            .map_err(|err| format!("failed flushing branch snapshot writer: {}", err))
     }
 }
 
@@ -459,23 +1009,19 @@ impl SpeculativeTableauxReasoner {
     /// - Number of disjunctions (unions) in the ontology
     /// - Number of existential restrictions
     /// - Number of classes with multiple parents
-    fn estimate_branch_count(&self) -> usize {
-        let mut estimate = 1;
+    fn estimate_branch_count(&self, disjunctions_detected: usize) -> usize {
+        let mut disjoint_axioms = 0usize;
 
         // Count disjunctive axioms (each adds branching)
         for axiom in self.ontology.axioms() {
             if let crate::logic::axioms::Axiom::DisjointClasses(_) = axiom.as_ref() {
-                estimate += 2; // Each disjointness can cause branching
+                disjoint_axioms += 1;
             }
         }
 
         // Scale by number of classes (rough heuristic)
         let class_count = self.ontology.classes().len();
-        estimate = estimate.max(class_count / 10);
-
-        // For simple hierarchies, estimate is low
-        // For complex ontologies with many unions/intersections, estimate is high
-        estimate.max(1)
+        (disjunctions_detected + 2 * disjoint_axioms + class_count / 10).max(1)
     }
 
     /// Check ontology consistency using sequential processing
@@ -530,6 +1076,15 @@ impl SpeculativeTableauxReasoner {
             ClassExpression::ObjectComplementOf(inner) => {
                 self.find_disjunctions_in_expression(inner, disjunctions);
             }
+            ClassExpression::ObjectSomeValuesFrom(_, class)
+            | ClassExpression::ObjectAllValuesFrom(_, class) => {
+                self.find_disjunctions_in_expression(class, disjunctions);
+            }
+            ClassExpression::ObjectMinCardinality(_, _, Some(qualifier))
+            | ClassExpression::ObjectMaxCardinality(_, _, Some(qualifier))
+            | ClassExpression::ObjectExactCardinality(_, _, Some(qualifier)) => {
+                self.find_disjunctions_in_expression(qualifier, disjunctions);
+            }
             _ => {} // Atomic classes, no recursion needed
         }
     }
@@ -564,6 +1119,11 @@ impl SpeculativeTableauxReasoner {
             ClassExpression::ObjectAllValuesFrom(_, class) => {
                 self.config.cost_per_nesting_us * 2 + self.estimate_expression_cost(class)
             }
+            ClassExpression::ObjectMinCardinality(_, _, Some(qualifier))
+            | ClassExpression::ObjectMaxCardinality(_, _, Some(qualifier))
+            | ClassExpression::ObjectExactCardinality(_, _, Some(qualifier)) => {
+                self.config.cost_per_nesting_us * 2 + self.estimate_expression_cost(qualifier)
+            }
             _ => 10, // Atomic classes are cheap
         }
     }
@@ -576,22 +1136,54 @@ impl SpeculativeTableauxReasoner {
             .sum()
     }
 
-    /// Decide whether to use parallel processing based on cost estimation
-    fn should_use_parallel(&self, disjunctions: &[ClassExpression]) -> bool {
+    /// Evaluate the implementation-aligned parallel gating decision.
+    fn evaluate_parallel_decision(&self, disjunctions: &[ClassExpression]) -> ParallelDecision {
+        let disjunctions_detected = disjunctions.len();
+        let estimated_branch_count = self.estimate_branch_count(disjunctions_detected);
+        let branch_threshold = self.config.parallel_threshold;
+        let estimated_cost_us = if disjunctions.is_empty() {
+            0
+        } else {
+            self.estimate_total_cost(disjunctions)
+        };
+        let cost_gate_threshold_us = self.config.cost_threshold_us * self.config.num_workers;
+
         if disjunctions.is_empty() {
-            return false; // No disjunctions = nothing to parallelize
+            return ParallelDecision {
+                disjunctions_detected,
+                estimated_branch_count,
+                estimated_cost_us,
+                branch_threshold,
+                cost_gate_threshold_us,
+                branch_gate_passed: false,
+                cost_gate_passed: false,
+                use_parallel: false,
+            };
         }
 
-        // If adaptive tuning is disabled, use simple threshold
-        if !self.config.adaptive_tuning {
-            return disjunctions.len() >= self.config.parallel_threshold;
+        let branch_gate_passed = estimated_branch_count >= branch_threshold;
+        let cost_gate_passed = if self.config.adaptive_tuning {
+            estimated_cost_us >= cost_gate_threshold_us
+        } else {
+            true
+        };
+        let adaptive_parallel = branch_gate_passed && cost_gate_passed;
+        let use_parallel = match self.config.scheduling_mode {
+            SchedulingMode::Adaptive => adaptive_parallel,
+            SchedulingMode::Sequential => false,
+            SchedulingMode::AlwaysParallel => !disjunctions.is_empty(),
+        };
+
+        ParallelDecision {
+            disjunctions_detected,
+            estimated_branch_count,
+            estimated_cost_us,
+            branch_threshold,
+            cost_gate_threshold_us,
+            branch_gate_passed,
+            cost_gate_passed,
+            use_parallel,
         }
-
-        // Use cost-based threshold
-        let estimated_cost = self.estimate_total_cost(disjunctions);
-        let threshold = self.config.cost_threshold_us * self.config.num_workers;
-
-        estimated_cost >= threshold
     }
 
     /// Create root work item for recursive speculative expansion.
@@ -620,11 +1212,70 @@ impl SpeculativeTableauxReasoner {
         assertions
     }
 
+    fn prioritize_operands(
+        operands: &[Box<ClassExpression>],
+        context: BranchPolicyContext,
+        policy_engine: &BranchPolicyEngine,
+        stats: &Arc<Mutex<SpeculativeStats>>,
+        snapshot_writer: Option<&Arc<BranchSnapshotWriter>>,
+    ) -> Vec<ClassExpression> {
+        let original: Vec<ClassExpression> = operands.iter().map(|op| (**op).clone()).collect();
+        let ranking = policy_engine.rank(&original);
+
+        if let Ok(mut s) = stats.lock() {
+            if ranking.reordered {
+                s.policy_reordered_splits += 1;
+            }
+            if matches!(policy_engine.mode, BranchPolicyMode::HybridRrn) {
+                s.hybrid_policy_calls += 1;
+                if ranking.used_model {
+                    s.hybrid_model_calls += 1;
+                }
+                if ranking.used_fallback {
+                    s.policy_fallbacks += 1;
+                }
+            }
+        }
+
+        if let Some(writer) = snapshot_writer {
+            let operand_features: Vec<SnapshotOperandFeatures> = ranking
+                .ordered_operands
+                .iter()
+                .map(|expr| {
+                    SnapshotOperandFeatures::from(ExprFeatureVector::from_expression(expr, 0))
+                })
+                .collect();
+            let record = BranchSnapshotRecord {
+                branch_id: context.branch_id.0,
+                depth: context.depth,
+                disjunction_index: context.disjunction_index,
+                policy_mode: policy_engine.mode.as_str().to_string(),
+                operand_count: original.len(),
+                ordered_indices: ranking.ordered_indices.clone(),
+                operand_scores: ranking.scores.clone(),
+                operand_features,
+                reordered: ranking.reordered,
+                hybrid_model_used: ranking.used_model,
+                hybrid_fallback_used: ranking.used_fallback,
+            };
+            if writer.write_record(&record).is_ok() {
+                if let Ok(mut s) = stats.lock() {
+                    s.branch_snapshots_written += 1;
+                }
+            }
+        }
+
+        ranking.ordered_operands
+    }
+
     /// Expand a work item by splitting on the next selected disjunction.
     fn expand_work_item(
         item: &WorkItem,
         max_depth: usize,
         branch_counter: &AtomicUsize,
+        policy_engine: &BranchPolicyEngine,
+        stats: &Arc<Mutex<SpeculativeStats>>,
+        snapshot_writer: Option<&Arc<BranchSnapshotWriter>>,
     ) -> Option<Vec<WorkItem>> {
         if item.depth >= max_depth || item.next_disjunction_idx >= item.disjunctions.len() {
             return None;
@@ -636,13 +1287,25 @@ impl SpeculativeTableauxReasoner {
                 return None;
             }
 
-            let mut new_work = Vec::with_capacity(operands.len());
-            for operand in operands {
+            let context = BranchPolicyContext {
+                branch_id: item.branch_id,
+                depth: item.depth,
+                disjunction_index: item.next_disjunction_idx,
+            };
+            let prioritized = Self::prioritize_operands(
+                operands.as_ref(),
+                context,
+                policy_engine,
+                stats,
+                snapshot_writer,
+            );
+            let mut new_work = Vec::with_capacity(prioritized.len());
+            for operand in prioritized {
                 let mut constraints = item.constraints.clone();
-                constraints.push((**operand).clone());
+                constraints.push(operand.clone());
 
                 let mut test_expressions = item.test_expressions.clone();
-                test_expressions.insert((**operand).clone());
+                test_expressions.insert(operand);
 
                 let next_id = branch_counter.fetch_add(1, Ordering::SeqCst) as u64;
                 new_work.push(WorkItem {
@@ -674,16 +1337,80 @@ impl SpeculativeTableauxReasoner {
     /// Automatically selects between sequential and parallel processing
     /// based on the estimated problem complexity.
     pub fn is_consistent(&mut self) -> OwlResult<bool> {
-        // Find disjunctions first to estimate cost
-        let disjunctions = self.find_disjunctions();
-
-        // Use adaptive threshold to decide between sequential and parallel
-        if !self.should_use_parallel(&disjunctions) {
-            // Cost is too low - use sequential to avoid parallel overhead
-            return self.is_consistent_sequential();
+        let start_time = Instant::now();
+        if let Ok(mut stats) = self.stats.lock() {
+            stats.scheduling_mode = self.config.scheduling_mode.as_str().to_string();
+            stats.branch_policy = self.config.branch_policy.as_str().to_string();
+            stats.used_parallel = false;
+            stats.boolean_certificate = None;
+            stats.qualified_consistency_certificate = None;
         }
 
-        let start_time = Instant::now();
+        match check_qualified_consistency(&self.ontology) {
+            Ok(Some(verdict)) => {
+                if let Ok(mut stats) = self.stats.lock() {
+                    stats.qualified_consistency_certificate = Some(verdict);
+                    stats.reasoning_time_ms = start_time.elapsed().as_millis() as u64;
+                }
+                return Ok(verdict);
+            }
+            // The checker declining its fragment (mixed axioms) is a
+            // pass, not a verdict; the sequential layers below decide
+            // (#113). Budget exhaustion still surfaces — it is a guard
+            // on the checker's own correctness, not a fragment
+            // boundary.
+            Err(OwlError::UnsupportedFeature(_)) => {}
+            Err(error) => return Err(error),
+            Ok(None) => {}
+        }
+
+        // Find disjunctions first to estimate cost
+        let disjunctions = self.find_disjunctions();
+        let decision = self.evaluate_parallel_decision(&disjunctions);
+
+        if let Ok(mut stats) = self.stats.lock() {
+            stats.scheduling_mode = self.config.scheduling_mode.as_str().to_string();
+            stats.branch_policy = self.config.branch_policy.as_str().to_string();
+            stats.disjunctions_detected = decision.disjunctions_detected;
+            stats.estimated_branch_count = decision.estimated_branch_count;
+            stats.estimated_cost_us = decision.estimated_cost_us;
+            stats.branch_threshold = decision.branch_threshold;
+            stats.cost_gate_threshold_us = decision.cost_gate_threshold_us;
+            stats.branch_gate_passed = decision.branch_gate_passed;
+            stats.cost_gate_passed = decision.cost_gate_passed;
+            stats.used_parallel = false;
+            stats.boolean_certificate = None;
+            stats.qualified_consistency_certificate = None;
+        }
+
+        // Apply the one-shot static gate before selecting the execution path.
+        if !decision.use_parallel {
+            // Cost is too low - use sequential to avoid parallel overhead
+            let start_time = Instant::now();
+            let result = self.is_consistent_sequential();
+            if let Ok(mut stats) = self.stats.lock() {
+                stats.reasoning_time_ms = start_time.elapsed().as_millis() as u64;
+            }
+            return result;
+        }
+
+        // Legacy branches assert selected operands on an artificial witness.
+        // An empty class need not have a witness: certify the original exact
+        // Boolean fragment before that branch construction can change its truth.
+        let certificate = check_boolean_consistency(&self.ontology)?;
+        match certificate {
+            Some(verdict) => {
+                if let Ok(mut stats) = self.stats.lock() {
+                    stats.boolean_certificate = Some(verdict);
+                    stats.reasoning_time_ms = start_time.elapsed().as_millis() as u64;
+                }
+                return Ok(verdict);
+            }
+            None => {}
+        }
+        if let Ok(mut stats) = self.stats.lock() {
+            stats.used_parallel = true;
+        }
 
         // Reset flags
         self.shutdown.store(false, Ordering::SeqCst);
@@ -692,6 +1419,7 @@ impl SpeculativeTableauxReasoner {
         // Initialize work queue and channels
         let work_queue = Worker::new_fifo();
         let (result_tx, result_rx) = unbounded();
+        let (worker_done_tx, worker_done_rx) = unbounded();
         let outstanding_work = Arc::new(AtomicUsize::new(0));
         let branch_counter = Arc::new(AtomicUsize::new(1)); // branch 0 is root
 
@@ -737,6 +1465,13 @@ impl SpeculativeTableauxReasoner {
         // Use global rayon thread pool instead of spawning threads
         // This eliminates thread creation overhead (~200-300µs per call)
         let pool = &*SPACL_THREAD_POOL;
+        let policy_engine = Arc::new(BranchPolicyEngine::new(&self.config));
+        let snapshot_writer = self
+            .config
+            .branch_snapshot_path
+            .as_deref()
+            .and_then(|path| BranchSnapshotWriter::from_path(path).ok())
+            .map(Arc::new);
 
         // Spawn workers on the thread pool after work is enqueued.
         // This avoids a race where workers observe outstanding_work == 0 and exit early.
@@ -749,10 +1484,13 @@ impl SpeculativeTableauxReasoner {
             let shutdown = Arc::clone(&self.shutdown);
             let solution_found = Arc::clone(&self.solution_found);
             let result_tx = result_tx.clone();
+            let worker_done_tx = worker_done_tx.clone();
             let ontology = Arc::clone(&self.ontology);
             let config = self.config.clone();
             let outstanding = Arc::clone(&outstanding_work);
             let branch_counter = Arc::clone(&branch_counter);
+            let policy_engine = Arc::clone(&policy_engine);
+            let snapshot_writer = snapshot_writer.as_ref().map(Arc::clone);
 
             // Spawn on global thread pool instead of creating new thread
             pool.spawn(move || {
@@ -769,28 +1507,31 @@ impl SpeculativeTableauxReasoner {
                     config,
                     outstanding,
                     branch_counter,
+                    policy_engine,
+                    snapshot_writer,
+                    worker_done_tx,
                 );
             });
         }
+        drop(worker_done_tx);
 
         // Store None since we're using thread pool (not managing threads directly)
         self.workers = None;
 
         // Wait for results (thread pool workers will check shutdown flag)
-        let result = self.collect_results(&outstanding_work)?;
+        let result = self.collect_results(&outstanding_work);
 
         // Signal workers to shutdown
         self.shutdown.store(true, Ordering::SeqCst);
-        // Note: Thread pool threads are reused, no need to join
-        // They will exit worker_loop when shutdown flag is set
+        let completion_result =
+            Self::wait_for_worker_completion(&worker_done_rx, self.config.num_workers);
 
         let elapsed = start_time.elapsed();
         if let Ok(mut stats) = self.stats.lock() {
             stats.reasoning_time_ms = elapsed.as_millis() as u64;
-            // Calculate speedup if we have timing data
+            // Calculate the legacy utilization proxy from completed branch work.
             if stats.branches_created > 0 {
-                // Estimate: if we processed N branches in parallel with W workers
-                // speedup ≈ N / (time with parallelism overhead)
+                // This is not a paired measurement against sequential execution.
                 let worker_count = self.config.num_workers;
                 let completed = stats.successful_branches + stats.contradictions_found;
                 if completed > 0 {
@@ -800,7 +1541,11 @@ impl SpeculativeTableauxReasoner {
             }
         }
 
-        Ok(result)
+        match (result, completion_result) {
+            (Err(err), _) => Err(err),
+            (Ok(_), Err(err)) => Err(err),
+            (Ok(value), Ok(())) => Ok(value),
+        }
     }
 
     /// Worker thread main loop using SimpleReasoner
@@ -817,7 +1562,14 @@ impl SpeculativeTableauxReasoner {
         config: SpeculativeConfig,
         outstanding_work: Arc<AtomicUsize>,
         branch_counter: Arc<AtomicUsize>,
+        policy_engine: Arc<BranchPolicyEngine>,
+        snapshot_writer: Option<Arc<BranchSnapshotWriter>>,
+        worker_done_tx: Sender<()>,
     ) {
+        if let Ok(mut s) = stats.lock() {
+            s.workers_started += 1;
+        }
+
         // Create thread-local nogood cache for reduced synchronization
         let mut local_cache = if config.enable_learning {
             Some(ThreadLocalNogoodCache::new(100)) // Sync every 100 checks
@@ -845,13 +1597,31 @@ impl SpeculativeTableauxReasoner {
 
             // Try to get work
             let work_item = if let Ok(queue) = shared_queue.try_lock() {
-                // Try local queue first
-                queue.pop().or_else(|| {
-                    // Then try stealing
-                    stealer.steal().success()
-                })
+                if let Some(local) = queue.pop() {
+                    Some(local)
+                } else {
+                    if let Ok(mut s) = stats.lock() {
+                        s.steal_attempts += 1;
+                    }
+                    let stolen = stealer.steal().success();
+                    if stolen.is_some() {
+                        if let Ok(mut s) = stats.lock() {
+                            s.steal_successes += 1;
+                        }
+                    }
+                    stolen
+                }
             } else {
-                stealer.steal().success()
+                if let Ok(mut s) = stats.lock() {
+                    s.steal_attempts += 1;
+                }
+                let stolen = stealer.steal().success();
+                if stolen.is_some() {
+                    if let Ok(mut s) = stats.lock() {
+                        s.steal_successes += 1;
+                    }
+                }
+                stolen
             };
 
             let work_item = match work_item {
@@ -882,7 +1652,7 @@ impl SpeculativeTableauxReasoner {
                     (nogoods.check_conflict(&assertions), false)
                 };
 
-                if let Some(_nogood) = conflict {
+                if let Some(nogood) = conflict {
                     // Pruned by nogood
                     if let Ok(mut s) = stats.lock() {
                         s.branches_pruned += 1;
@@ -894,7 +1664,13 @@ impl SpeculativeTableauxReasoner {
                             s.global_cache_hits += 1;
                         }
                     }
-                    outstanding_work.fetch_sub(1, Ordering::SeqCst);
+                    let previous = outstanding_work.fetch_sub(1, Ordering::SeqCst);
+                    if previous == 1 {
+                        let _ = result_tx.send(WorkResult::Contradiction {
+                            branch_id: work_item.branch_id,
+                            nogood,
+                        });
+                    }
                     continue;
                 } else {
                     // No hit, but we still performed a check
@@ -914,27 +1690,30 @@ impl SpeculativeTableauxReasoner {
                 local_cache.as_mut(),
                 worker_id,
                 &branch_counter,
+                policy_engine.as_ref(),
+                snapshot_writer.as_ref(),
             );
 
             match result {
                 WorkResult::Partial { new_work, .. } => {
                     // Parent item was expanded into child items.
-                    outstanding_work.fetch_sub(1, Ordering::SeqCst);
                     if let Ok(mut s) = stats.lock() {
+                        s.work_items_expanded += 1;
                         s.branches_created += new_work.len();
                     }
 
-                    for child in new_work {
-                        if let Ok(queue) = shared_queue.lock() {
-                            queue.push(child);
+                    if let Ok(queue) = shared_queue.lock() {
+                        for child in new_work {
                             outstanding_work.fetch_add(1, Ordering::SeqCst);
+                            queue.push(child);
                         }
                     }
+                    outstanding_work.fetch_sub(1, Ordering::SeqCst);
                 }
                 WorkResult::Success { .. } => {
-                    outstanding_work.fetch_sub(1, Ordering::SeqCst);
                     solution_found.store(true, Ordering::SeqCst);
                     let _ = result_tx.send(result);
+                    outstanding_work.fetch_sub(1, Ordering::SeqCst);
                 }
                 WorkResult::Contradiction { .. } => {
                     outstanding_work.fetch_sub(1, Ordering::SeqCst);
@@ -942,6 +1721,35 @@ impl SpeculativeTableauxReasoner {
                 }
             }
         }
+
+        if let Ok(mut s) = stats.lock() {
+            s.workers_completed += 1;
+        }
+        let _ = worker_done_tx.send(());
+    }
+
+    fn wait_for_worker_completion(
+        worker_done_rx: &Receiver<()>,
+        expected_workers: usize,
+    ) -> OwlResult<()> {
+        let mut completed = 0;
+
+        while completed < expected_workers {
+            // `speculative_timeout_ms` applies to result collection, not cleanup.
+            // After shutdown, the caller drains every finite worker loop so a
+            // timeout/error cannot return while old worker tasks still mutate
+            // shared per-run state.
+            match worker_done_rx.recv() {
+                Ok(()) => completed += 1,
+                Err(crossbeam::channel::RecvError) => {
+                    return Err(OwlError::ReasoningError(format!(
+                        "Speculative worker completion channel disconnected: completed {completed}/{expected_workers}"
+                    )));
+                }
+            }
+        }
+
+        Ok(())
     }
 
     fn ontology_with_constraints(
@@ -1041,10 +1849,17 @@ impl SpeculativeTableauxReasoner {
         local_cache: Option<&mut ThreadLocalNogoodCache>,
         _worker_id: usize,
         branch_counter: &Arc<AtomicUsize>,
+        policy_engine: &BranchPolicyEngine,
+        snapshot_writer: Option<&Arc<BranchSnapshotWriter>>,
     ) -> WorkResult {
-        if let Some(new_work) =
-            Self::expand_work_item(&item, config.max_speculative_depth, branch_counter)
-        {
+        if let Some(new_work) = Self::expand_work_item(
+            &item,
+            config.max_speculative_depth,
+            branch_counter,
+            policy_engine,
+            stats,
+            snapshot_writer,
+        ) {
             if !new_work.is_empty() {
                 return WorkResult::Partial {
                     branch_id: item.branch_id,
@@ -1060,23 +1875,31 @@ impl SpeculativeTableauxReasoner {
         let is_consistent = reasoner.is_consistent().unwrap_or(true);
 
         if !is_consistent {
-            // Learn only verified branch-level cores for pruning safety.
-            let nogood_assertions =
-                Self::verified_nogood_from_constraints(ontology, item.branch_id, &item.constraints);
-            let nogood = Nogood::new(nogood_assertions);
+            let nogood = if config.enable_learning {
+                // Learn only verified branch-level cores for pruning safety.
+                let nogood_assertions = Self::verified_nogood_from_constraints(
+                    ontology,
+                    item.branch_id,
+                    &item.constraints,
+                );
+                let nogood = Nogood::new(nogood_assertions);
 
-            // Add to local cache if available, otherwise to global (skip empty nogoods).
-            if !nogood.assertions.is_empty() {
-                if let Some(cache) = local_cache {
-                    cache.add_nogood(nogood.clone());
-                } else {
-                    nogoods.add_nogood(nogood.clone());
+                // Add to local cache if available, otherwise to global (skip empty nogoods).
+                if !nogood.assertions.is_empty() {
+                    if let Some(cache) = local_cache {
+                        cache.add_nogood(nogood.clone());
+                    } else {
+                        nogoods.add_nogood(nogood.clone());
+                    }
                 }
-            }
+                nogood
+            } else {
+                Nogood::new(HashSet::new())
+            };
 
             if let Ok(mut stats) = stats.lock() {
                 stats.contradictions_found += 1;
-                if !nogood.assertions.is_empty() {
+                if config.enable_learning && !nogood.assertions.is_empty() {
                     stats.nogoods_learned += 1;
                 }
             }
@@ -1108,7 +1931,7 @@ impl SpeculativeTableauxReasoner {
             }
 
             if outstanding_work.load(Ordering::SeqCst) == 0 {
-                return Ok(false);
+                return Ok(self.solution_found.load(Ordering::SeqCst));
             }
 
             match receiver.recv_timeout(Duration::from_millis(100)) {
@@ -1131,7 +1954,7 @@ impl SpeculativeTableauxReasoner {
                 }
                 Err(crossbeam::channel::RecvTimeoutError::Disconnected) => {
                     if outstanding_work.load(Ordering::SeqCst) == 0 {
-                        return Ok(false);
+                        return Ok(self.solution_found.load(Ordering::SeqCst));
                     }
                     return Err(OwlError::ReasoningError(
                         "Speculative worker channel disconnected before completion".to_string(),
@@ -1160,13 +1983,28 @@ impl SpeculativeTableauxReasoner {
         self.nogoods.stats()
     }
 
-    /// Enable/disable adaptive tuning
+    /// Enable/disable the fixed estimated-cost gate used by `Adaptive` mode
+    ///
+    /// This does not connect the standalone `AdaptiveTuner` to execution.
     pub fn set_adaptive_tuning(&mut self, enabled: bool) {
         self.config.adaptive_tuning = enabled;
     }
+
+    /// Override the scheduling policy for ablations and controlled experiments.
+    pub fn set_scheduling_mode(&mut self, mode: SchedulingMode) {
+        self.config.scheduling_mode = mode;
+    }
+
+    /// Enable/disable nogood learning for ablations and controlled experiments.
+    pub fn set_learning_enabled(&mut self, enabled: bool) {
+        self.config.enable_learning = enabled;
+    }
 }
 
-/// Adaptive parameter tuner using evolutionary optimization
+/// Disconnected experimental threshold helper using bounded hill climbing
+///
+/// This public utility is retained for compatibility. The active SPACL
+/// execution path does not construct or call it.
 pub struct AdaptiveTuner {
     /// Current parallelism threshold
     current_threshold: AtomicUsize,
@@ -1222,7 +2060,8 @@ mod tests {
     use super::*;
     use crate::core::entities::Class;
     use crate::core::ontology::Ontology;
-    use crate::logic::axioms::SubClassOfAxiom;
+    use crate::logic::axioms::{DisjointClassesAxiom, SubClassOfAxiom};
+    use tempfile::NamedTempFile;
 
     #[test]
     fn test_nogood_creation() {
@@ -1249,10 +2088,161 @@ mod tests {
     }
 
     #[test]
+    fn last_pruned_work_item_notifies_result_collector() {
+        let class_a = ClassExpression::Class(Class::new("http://example.org/A"));
+        let class_b = ClassExpression::Class(Class::new("http://example.org/B"));
+
+        let worker = Worker::new_fifo();
+        let stealer = worker.stealer();
+        for id in 0..99 {
+            let mut test_expressions = HashSet::new();
+            test_expressions.insert(class_b.clone());
+            worker.push(WorkItem {
+                branch_id: BranchId::new(id),
+                constraints: Vec::new(),
+                test_expressions,
+                depth: 0,
+                disjunctions: Arc::new(Vec::new()),
+                next_disjunction_idx: 0,
+            });
+        }
+        let mut pruned_assertions = HashSet::new();
+        pruned_assertions.insert(class_a.clone());
+        worker.push(WorkItem {
+            branch_id: BranchId::new(99),
+            constraints: Vec::new(),
+            test_expressions: pruned_assertions.clone(),
+            depth: 0,
+            disjunctions: Arc::new(Vec::new()),
+            next_disjunction_idx: 0,
+        });
+        let shared_queue = Arc::new(Mutex::new(worker));
+
+        let nogoods = Arc::new(NogoodDatabase::new(16));
+        nogoods.add_nogood(Nogood::new(pruned_assertions));
+
+        let stats = Arc::new(Mutex::new(SpeculativeStats::default()));
+        let shutdown = Arc::new(AtomicBool::new(false));
+        let solution_found = Arc::new(AtomicBool::new(false));
+        let (result_tx, result_rx) = unbounded();
+        let mut ontology = Ontology::new();
+        let clash = Class::new("http://example.org/Clash");
+        let other = Class::new("http://example.org/OtherClash");
+        let individual =
+            crate::core::entities::NamedIndividual::new("http://example.org/clash-witness");
+        ontology.add_class(clash.clone()).unwrap();
+        ontology.add_class(other.clone()).unwrap();
+        ontology.add_named_individual(individual.clone()).unwrap();
+        ontology
+            .add_disjoint_classes_axiom(DisjointClassesAxiom::new(vec![
+                clash.iri().clone(),
+                other.iri().clone(),
+            ]))
+            .unwrap();
+        for class in [clash, other] {
+            ontology
+                .add_class_assertion(crate::logic::axioms::ClassAssertionAxiom::new(
+                    individual.iri().clone(),
+                    ClassExpression::Class(class),
+                ))
+                .unwrap();
+        }
+        let ontology = Arc::new(ontology);
+        let config = SpeculativeConfig::default();
+        let outstanding_work = Arc::new(AtomicUsize::new(100));
+        let branch_counter = Arc::new(AtomicUsize::new(1));
+        let policy_engine = Arc::new(BranchPolicyEngine::new(&config));
+        let (worker_done_tx, worker_done_rx) = unbounded();
+
+        SpeculativeTableauxReasoner::worker_loop(
+            0,
+            shared_queue,
+            stealer,
+            Arc::clone(&nogoods),
+            Arc::clone(&stats),
+            shutdown,
+            solution_found,
+            result_tx,
+            ontology,
+            config,
+            Arc::clone(&outstanding_work),
+            branch_counter,
+            policy_engine,
+            None,
+            worker_done_tx,
+        );
+
+        assert!(worker_done_rx.try_recv().is_ok());
+        assert_eq!(outstanding_work.load(Ordering::SeqCst), 0);
+
+        let pruned_result = result_rx.try_iter().find_map(|result| match result {
+            WorkResult::Contradiction { branch_id, nogood } if branch_id == BranchId::new(99) => {
+                Some(nogood)
+            }
+            _ => None,
+        });
+        assert!(
+            pruned_result.is_some(),
+            "last pruned work must notify collector"
+        );
+        assert_eq!(pruned_result.unwrap().size, 1);
+    }
+
+    #[test]
     fn test_speculative_config_default() {
         let config = SpeculativeConfig::default();
         assert!(config.enable_learning);
         assert_eq!(config.max_speculative_depth, 10);
+        assert_eq!(config.scheduling_mode, SchedulingMode::Adaptive);
+    }
+
+    #[test]
+    fn test_parallel_decision_respects_forced_modes() {
+        let mut ontology = Ontology::new();
+        let a = Class::new("http://example.org/A");
+        let b = Class::new("http://example.org/B");
+        let c = Class::new("http://example.org/C");
+        ontology.add_class(a.clone()).unwrap();
+        ontology.add_class(b.clone()).unwrap();
+        ontology.add_class(c.clone()).unwrap();
+        ontology
+            .add_subclass_axiom(SubClassOfAxiom::new(
+                ClassExpression::Class(a),
+                ClassExpression::ObjectUnionOf(
+                    vec![
+                        Box::new(ClassExpression::Class(b)),
+                        Box::new(ClassExpression::Class(c)),
+                    ]
+                    .into(),
+                ),
+            ))
+            .unwrap();
+
+        let mut config = SpeculativeConfig::default();
+        config.parallel_threshold = usize::MAX;
+        let reasoner = SpeculativeTableauxReasoner::with_config(ontology.clone(), config.clone());
+        let disjunctions = reasoner.find_disjunctions();
+        assert!(
+            !reasoner
+                .evaluate_parallel_decision(&disjunctions)
+                .use_parallel
+        );
+
+        config.scheduling_mode = SchedulingMode::AlwaysParallel;
+        let reasoner = SpeculativeTableauxReasoner::with_config(ontology.clone(), config.clone());
+        assert!(
+            reasoner
+                .evaluate_parallel_decision(&disjunctions)
+                .use_parallel
+        );
+
+        config.scheduling_mode = SchedulingMode::Sequential;
+        let reasoner = SpeculativeTableauxReasoner::with_config(ontology, config);
+        assert!(
+            !reasoner
+                .evaluate_parallel_decision(&disjunctions)
+                .use_parallel
+        );
     }
 
     #[test]
@@ -1281,8 +2271,18 @@ mod tests {
             next_disjunction_idx: 0,
         };
         let counter = AtomicUsize::new(1);
-        let expanded =
-            SpeculativeTableauxReasoner::expand_work_item(&item, 10, &counter).expect("expansion");
+        let config = SpeculativeConfig::default();
+        let policy_engine = BranchPolicyEngine::new(&config);
+        let stats = Arc::new(Mutex::new(SpeculativeStats::default()));
+        let expanded = SpeculativeTableauxReasoner::expand_work_item(
+            &item,
+            10,
+            &counter,
+            &policy_engine,
+            &stats,
+            None,
+        )
+        .expect("expansion");
 
         assert_eq!(expanded.len(), 3);
         for child in expanded {
@@ -1290,6 +2290,144 @@ mod tests {
             assert_eq!(child.next_disjunction_idx, 1);
             assert_eq!(child.depth, 1);
         }
+    }
+
+    #[test]
+    fn heuristic_policy_reorders_operands_and_updates_stats() {
+        let a = ClassExpression::Class(Class::new("http://example.org/A"));
+        let b = ClassExpression::Class(Class::new("http://example.org/B"));
+        let c = ClassExpression::Class(Class::new("http://example.org/C"));
+        let nested =
+            ClassExpression::ObjectUnionOf(vec![Box::new(b.clone()), Box::new(c.clone())].into());
+
+        let item = WorkItem {
+            branch_id: BranchId::new(0),
+            constraints: Vec::new(),
+            test_expressions: HashSet::new(),
+            depth: 0,
+            disjunctions: Arc::new(vec![ClassExpression::ObjectUnionOf(
+                vec![Box::new(a.clone()), Box::new(nested.clone())].into(),
+            )]),
+            next_disjunction_idx: 0,
+        };
+
+        let counter = AtomicUsize::new(1);
+        let mut config = SpeculativeConfig::default();
+        config.branch_policy = BranchPolicyMode::Heuristic;
+        let policy_engine = BranchPolicyEngine::new(&config);
+        let stats = Arc::new(Mutex::new(SpeculativeStats::default()));
+
+        let expanded = SpeculativeTableauxReasoner::expand_work_item(
+            &item,
+            10,
+            &counter,
+            &policy_engine,
+            &stats,
+            None,
+        )
+        .expect("expansion");
+
+        assert_eq!(expanded.len(), 2);
+        assert_eq!(expanded[0].constraints.first(), Some(&nested));
+        assert_eq!(stats.lock().unwrap().policy_reordered_splits, 1);
+    }
+
+    #[test]
+    fn hybrid_rrn_mode_uses_safe_fallback_telemetry() {
+        let a = ClassExpression::Class(Class::new("http://example.org/A"));
+        let b = ClassExpression::Class(Class::new("http://example.org/B"));
+        let c = ClassExpression::Class(Class::new("http://example.org/C"));
+
+        let item = WorkItem {
+            branch_id: BranchId::new(0),
+            constraints: Vec::new(),
+            test_expressions: HashSet::new(),
+            depth: 0,
+            disjunctions: Arc::new(vec![ClassExpression::ObjectUnionOf(
+                vec![
+                    Box::new(a.clone()),
+                    Box::new(ClassExpression::ObjectUnionOf(
+                        vec![Box::new(b), Box::new(c)].into(),
+                    )),
+                ]
+                .into(),
+            )]),
+            next_disjunction_idx: 0,
+        };
+
+        let counter = AtomicUsize::new(1);
+        let mut config = SpeculativeConfig::default();
+        config.branch_policy = BranchPolicyMode::HybridRrn;
+        let policy_engine = BranchPolicyEngine::new(&config);
+        let stats = Arc::new(Mutex::new(SpeculativeStats::default()));
+
+        let expanded = SpeculativeTableauxReasoner::expand_work_item(
+            &item,
+            10,
+            &counter,
+            &policy_engine,
+            &stats,
+            None,
+        )
+        .expect("expansion");
+        assert_eq!(expanded.len(), 2);
+
+        let snapshot = stats.lock().unwrap().clone();
+        assert_eq!(snapshot.hybrid_policy_calls, 1);
+        assert_eq!(snapshot.hybrid_model_calls, 0);
+        assert_eq!(snapshot.policy_fallbacks, 1);
+    }
+
+    #[test]
+    fn branch_snapshot_export_writes_jsonl() {
+        let a = ClassExpression::Class(Class::new("http://example.org/A"));
+        let b = ClassExpression::Class(Class::new("http://example.org/B"));
+
+        let item = WorkItem {
+            branch_id: BranchId::new(0),
+            constraints: Vec::new(),
+            test_expressions: HashSet::new(),
+            depth: 0,
+            disjunctions: Arc::new(vec![ClassExpression::ObjectUnionOf(
+                vec![Box::new(a), Box::new(b)].into(),
+            )]),
+            next_disjunction_idx: 0,
+        };
+
+        let counter = AtomicUsize::new(1);
+        let config = SpeculativeConfig::default();
+        let policy_engine = BranchPolicyEngine::new(&config);
+        let stats = Arc::new(Mutex::new(SpeculativeStats::default()));
+
+        let snapshot_file = NamedTempFile::new().expect("temp file");
+        let snapshot_path = snapshot_file.path().to_string_lossy().to_string();
+        let writer = Arc::new(BranchSnapshotWriter::from_path(&snapshot_path).expect("writer"));
+
+        let expanded = SpeculativeTableauxReasoner::expand_work_item(
+            &item,
+            10,
+            &counter,
+            &policy_engine,
+            &stats,
+            Some(&writer),
+        )
+        .expect("expansion");
+        assert_eq!(expanded.len(), 2);
+
+        let text = std::fs::read_to_string(&snapshot_path).expect("snapshot read");
+        assert!(
+            !text.trim().is_empty(),
+            "snapshot file must contain at least one JSONL row"
+        );
+        let first_line = text.lines().next().expect("first line");
+        let value: serde_json::Value = serde_json::from_str(first_line).expect("valid json");
+        assert_eq!(value["branch_id"].as_u64(), Some(0));
+        assert_eq!(value["operand_count"].as_u64(), Some(2));
+        assert_eq!(
+            value["operand_features"].as_array().map(|a| a.len()),
+            Some(2)
+        );
+        assert_eq!(stats.lock().unwrap().branch_snapshots_written, 1);
     }
 
     #[test]
@@ -1303,25 +2441,28 @@ mod tests {
 
     #[test]
     fn contradictory_branch_without_constraints_does_not_learn_fallback_nogood() {
-        // Build a small ontology that SimpleReasoner currently flags inconsistent
-        // even without added branch constraints.
+        // Build a small ontology with a verified contradiction that does not
+        // come from branch constraints.
         let mut ontology = Ontology::new();
         let a = Class::new("http://example.org/A");
         let b = Class::new("http://example.org/B");
         ontology.add_class(a.clone()).unwrap();
         ontology.add_class(b.clone()).unwrap();
         ontology
-            .add_subclass_axiom(SubClassOfAxiom::new(
-                ClassExpression::Class(a.clone()),
-                ClassExpression::Class(b.clone()),
-            ))
+            .add_disjoint_classes_axiom(DisjointClassesAxiom::new(vec![
+                a.iri().clone(),
+                b.iri().clone(),
+            ]))
             .unwrap();
-        ontology
-            .add_subclass_axiom(SubClassOfAxiom::new(
-                ClassExpression::Class(b.clone()),
-                ClassExpression::Class(a.clone()),
-            ))
-            .unwrap();
+        let witness = Arc::new(IRI::new("http://example.org/witness").unwrap());
+        for class in [&a, &b] {
+            ontology
+                .add_class_assertion(crate::logic::axioms::ClassAssertionAxiom::new(
+                    witness.clone(),
+                    ClassExpression::Class(class.clone()),
+                ))
+                .unwrap();
+        }
 
         let item = WorkItem {
             branch_id: BranchId::new(0),
@@ -1341,6 +2482,7 @@ mod tests {
         let stats = Arc::new(Mutex::new(SpeculativeStats::default()));
         let config = SpeculativeConfig::default();
         let branch_counter = Arc::new(AtomicUsize::new(1));
+        let policy_engine = BranchPolicyEngine::new(&config);
 
         let result = SpeculativeTableauxReasoner::process_work_item_simple(
             item,
@@ -1351,6 +2493,8 @@ mod tests {
             None,
             0,
             &branch_counter,
+            &policy_engine,
+            None,
         );
 
         match result {

@@ -4,9 +4,44 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 RUN_BENCH="$ROOT_DIR/benchmarks/competitors/scripts/run_benchmarks.sh"
 
+validate_stage_result() {
+  local ontology_file="$1"
+  local ontology_base="${ontology_file%.owl}"
+  local run_id="${RUN_ID:-}"
+  local json_file="$ROOT_DIR/benchmarks/competitors/results/history/$run_id/tableauxx_${ontology_base}.json"
+
+  if [[ -z "$run_id" || ! -f "$json_file" ]]; then
+    echo "[error] missing result file: $json_file" >&2
+    exit 2
+  fi
+
+  jq -se '
+    length == 1
+    and (.[0] |
+    (.execution_status // .status) == "success"
+    and (if has("status") then .status == "success" else true end)
+    and (if has("execution_status") then .execution_status == "success" else true end)
+    and ((.semantic_result // .reasoning_result) | IN("consistent", "inconsistent"))
+    and (if has("semantic_result") and has("reasoning_result") then .semantic_result == .reasoning_result else true end)
+    and (.parse_time_ms as $parse | (($parse | type) == "number") and (($parse | floor) == $parse) and ($parse >= 0))
+    and (.reason_time_ms as $reason | (($reason | type) == "number") and (($reason | floor) == $reason) and ($reason >= 0))
+    )
+  ' "$json_file" >/dev/null
+}
+
+if [[ "${1:-}" == "--validate-result" ]]; then
+  if [[ $# -ne 2 ]]; then
+    echo "[error] --validate-result requires an ontology file name" >&2
+    exit 2
+  fi
+  validate_stage_result "$2"
+  exit 0
+fi
+
 if [[ $# -lt 1 ]]; then
   cat <<'EOF'
 Usage: run_stage_benchmark.sh <ontology-file-name>
+       RUN_ID=<retained-run> run_stage_benchmark.sh --validate-result <ontology-file-name>
 
 Examples:
   run_stage_benchmark.sh go-basic.owl
@@ -99,8 +134,11 @@ e2e_parse="$(extract_field "$E2E_RUN" parse_time_ms)"
 e2e_reason="$(extract_field "$E2E_RUN" reason_time_ms)"
 e2e_status="$(extract_field "$E2E_RUN" status)"
 
-if [[ "$e2e_status" != "success" ]]; then
-  echo "[error] E2E run did not succeed (status=$e2e_status)" >&2
+if ! RUN_ID="$E2E_RUN" validate_stage_result "$ONTOLOGY_FILE"; then
+  e2e_result="$(extract_field "$E2E_RUN" reasoning_result)"
+  e2e_parse="$(extract_field "$E2E_RUN" parse_time_ms)"
+  e2e_reason="$(extract_field "$E2E_RUN" reason_time_ms)"
+  echo "[error] E2E run is not a valid stage result (status=$e2e_status result=$e2e_result parse_ms=$e2e_parse reason_ms=$e2e_reason)" >&2
   exit 1
 fi
 

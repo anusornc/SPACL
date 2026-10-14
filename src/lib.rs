@@ -1,16 +1,19 @@
-//! # OWL2 Reasoner (SPACL)
+//! # OWL2 Reasoner (Tableauxx)
 //!
-//! A high-performance, feature-complete OWL2 reasoning engine with novel
-//! speculative parallel reasoning (SPACL algorithm).
+//! A Rust OWL 2 reasoning engine with multiple parsers, profile-aware routing,
+//! and an experimental speculative parallel reasoner (SPACL).
 //!
 //! ## Features
 //!
-//! - **SPACL Algorithm**: Novel Speculative Parallel Tableaux with Adaptive Conflict Learning
-//! - **Complete OWL2 DL support**: Full SROIQ(D) description logic
+//! - **SPACL reasoner**: Work-stealing branch exploration, optional nogood
+//!   learning, and a static pre-run branch-and-cost scheduling gate
+//! - **OWL 2 reasoning**: Supported operations and semantic boundaries are
+//!   tracked by the repository's conformance tests and specifications
 //! - **Multi-format parsing**: Turtle, RDF/XML, OWL/XML, N-Triples, JSON-LD
 //! - **Profile optimization**: Automatic selection of EL/QL/RL optimizations
 //! - **Meta-reasoning**: ML-based strategy selection
-//! - **Evolutionary optimization**: Self-tuning parameters
+//! - **Strategy experiments**: Separate evolutionary and learned-policy
+//!   utilities that are not automatic SPACL threshold tuning
 //!
 //! ## Project Structure
 //!
@@ -21,7 +24,7 @@
 //! ├── parser/        # Input parsers (Turtle, RDF/XML, etc.)
 //! ├── reasoner/      # Reasoning engines
 //! │   ├── tableaux/  # Traditional tableaux
-//! │   ├── speculative.rs  # SPACL (our novel algorithm)
+//! │   ├── speculative.rs  # SPACL speculative reasoner
 //! │   └── simple.rs  # Cached simple reasoner
 //! ├── strategy/      # Strategy selection & optimization
 //! │   ├── meta_reasoner.rs
@@ -109,10 +112,23 @@ pub use parser::{
 };
 
 pub use reasoner::{
-    batch_operations::*, classification::*, consistency::*,
-    hierarchical_classification::HierarchicalClassificationEngine, profile_optimized::*,
-    simple::SimpleReasoner, speculative::*, tableaux::*, ComplexityLevel, ExpressivenessLevel,
-    OntologyFeatures, OwlReasoner, Reasoner, ReasoningResult, ReasoningStats, ReasoningTask,
+    batch_operations::*,
+    classification::*,
+    consistency::*,
+    evaluation::{
+        evaluate_consistency, evaluate_consistency_with_config, evaluate_entailment,
+        evaluate_inconsistency, evaluate_inconsistency_with_config, EvaluationCorrectnessStatus,
+        EvaluationExecutionStatus, EvaluationOperation, EvaluationResponse, EvaluationResultStatus,
+        EvaluationStatus, RuntimeMetadata, SemanticResult, UnsupportedFragment,
+        UnsupportedFragmentSide,
+    },
+    hierarchical_classification::HierarchicalClassificationEngine,
+    profile_optimized::*,
+    simple::SimpleReasoner,
+    speculative::*,
+    tableaux::*,
+    ComplexityLevel, ExpressivenessLevel, OntologyFeatures, OwlReasoner, Reasoner, ReasoningResult,
+    ReasoningStats, ReasoningTask,
 };
 
 pub use strategy::{

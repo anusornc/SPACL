@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN git clone --depth 1 https://bitbucket.org/dtsarkov/factplusplus.git . 2>/dev/null || \
     (echo "Cloning FaCT++..." && \
      # Alternative: Download release if available
-     apt-get update && apt-get install -y --no-install-recommends wget unzip ca-certificates && \
+     apt-get update && apt-get install -y wget && \
      wget -q "https://bitbucket.org/dtsarkov/factplusplus/downloads/factplusplus-1.6.5-linux64.zip" -O factpp.zip 2>/dev/null && \
      unzip factpp.zip && rm factpp.zip)
 

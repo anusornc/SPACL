@@ -315,6 +315,8 @@ impl SubDataPropertyOfAxiom {
     pub fn new(sub_property: Arc<IRI>, super_property: Arc<IRI>) -> Self {
         Self { sub_property, super_property }
     }
+    pub fn sub_property(&self) -> &Arc<IRI> { &self.sub_property }
+    pub fn super_property(&self) -> &Arc<IRI> { &self.super_property }
 }
 
 /// EquivalentDataProperties axiom
@@ -339,6 +341,10 @@ impl DisjointDataPropertiesAxiom {
     pub fn new(properties: Vec<Arc<IRI>>) -> Self {
         Self { properties }
     }
+
+    pub fn properties(&self) -> &Vec<Arc<IRI>> {
+        &self.properties
+    }
 }
 
 /// FunctionalDataProperty axiom
@@ -350,6 +356,10 @@ pub struct FunctionalDataPropertyAxiom {
 impl FunctionalDataPropertyAxiom {
     pub fn new(property: Arc<IRI>) -> Self {
         Self { property }
+    }
+
+    pub fn property(&self) -> &Arc<IRI> {
+        &self.property
     }
 }
 
@@ -363,6 +373,10 @@ impl SameIndividualAxiom {
     pub fn new(individuals: Vec<Arc<IRI>>) -> Self {
         Self { individuals }
     }
+
+    pub fn individuals(&self) -> &Vec<Arc<IRI>> {
+        &self.individuals
+    }
 }
 
 /// DifferentIndividuals axiom
@@ -374,6 +388,10 @@ pub struct DifferentIndividualsAxiom {
 impl DifferentIndividualsAxiom {
     pub fn new(individuals: Vec<Arc<IRI>>) -> Self {
         Self { individuals }
+    }
+
+    pub fn individuals(&self) -> &Vec<Arc<IRI>> {
+        &self.individuals
     }
 }
 
@@ -387,6 +405,14 @@ pub struct HasKeyAxiom {
 impl HasKeyAxiom {
     pub fn new(class: Arc<IRI>, properties: Vec<Arc<IRI>>) -> Self {
         Self { class, properties }
+    }
+
+    pub fn class(&self) -> &Arc<IRI> {
+        &self.class
+    }
+
+    pub fn properties(&self) -> &Vec<Arc<IRI>> {
+        &self.properties
     }
 }
 
@@ -446,6 +472,14 @@ impl SubPropertyChainOfAxiom {
     pub fn new(properties: Vec<Arc<IRI>>, super_property: Arc<IRI>) -> Self {
         Self { properties, super_property }
     }
+
+    pub fn properties(&self) -> &[Arc<IRI>] {
+        &self.properties
+    }
+
+    pub fn super_property(&self) -> &Arc<IRI> {
+        &self.super_property
+    }
 }
 
 /// InverseObjectProperties axiom
@@ -458,6 +492,14 @@ pub struct InverseObjectPropertiesAxiom {
 impl InverseObjectPropertiesAxiom {
     pub fn new(property1: Arc<IRI>, property2: Arc<IRI>) -> Self {
         Self { property1, property2 }
+    }
+
+    pub fn property1(&self) -> &Arc<IRI> {
+        &self.property1
+    }
+
+    pub fn property2(&self) -> &Arc<IRI> {
+        &self.property2
     }
 }
 
@@ -514,6 +556,14 @@ impl DataPropertyDomainAxiom {
     pub fn new(property: Arc<IRI>, domain: Arc<IRI>) -> Self {
         Self { property, domain }
     }
+
+    pub fn property(&self) -> &Arc<IRI> {
+        &self.property
+    }
+
+    pub fn domain(&self) -> &Arc<IRI> {
+        &self.domain
+    }
 }
 
 /// DataPropertyRange axiom
@@ -526,6 +576,37 @@ pub struct DataPropertyRangeAxiom {
 impl DataPropertyRangeAxiom {
     pub fn new(property: Arc<IRI>, range: Arc<IRI>) -> Self {
         Self { property, range }
+    }
+
+    pub fn property(&self) -> &Arc<IRI> {
+        &self.property
+    }
+
+    pub fn range(&self) -> &Arc<IRI> {
+        &self.range
+    }
+}
+
+/// DataPropertyRange whose range object is a DataOneOf enumeration:
+/// every value of the property must be one of the listed literals
+/// (#150, W3C oneOf-004's intersecting pools).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DataPropertyEnumeratedRangeAxiom {
+    property: Arc<IRI>,
+    values: Vec<crate::core::entities::Literal>,
+}
+
+impl DataPropertyEnumeratedRangeAxiom {
+    pub fn new(property: Arc<IRI>, values: Vec<crate::core::entities::Literal>) -> Self {
+        Self { property, values }
+    }
+
+    pub fn property(&self) -> &Arc<IRI> {
+        &self.property
+    }
+
+    pub fn values(&self) -> &[crate::core::entities::Literal] {
+        &self.values
     }
 }
 
@@ -549,6 +630,21 @@ impl NegativeObjectPropertyAssertionAxiom {
     pub fn new(subject: Arc<IRI>, property: Arc<IRI>, object: Arc<IRI>) -> Self {
         Self { subject, property, object: PropertyAssertionObject::Named(object) }
     }
+
+    pub fn subject(&self) -> &Arc<IRI> {
+        &self.subject
+    }
+
+    pub fn property(&self) -> &Arc<IRI> {
+        &self.property
+    }
+
+    pub fn object_iri(&self) -> Option<&Arc<IRI>> {
+        match &self.object {
+            PropertyAssertionObject::Named(object) => Some(object),
+            PropertyAssertionObject::Anonymous(_) => None,
+        }
+    }
 }
 
 /// NegativeDataPropertyAssertion axiom
@@ -562,6 +658,18 @@ pub struct NegativeDataPropertyAssertionAxiom {
 impl NegativeDataPropertyAssertionAxiom {
     pub fn new(subject: Arc<IRI>, property: Arc<IRI>, value: Literal) -> Self {
         Self { subject, property, value }
+    }
+
+    pub fn subject(&self) -> &Arc<IRI> {
+        &self.subject
+    }
+
+    pub fn property(&self) -> &Arc<IRI> {
+        &self.property
+    }
+
+    pub fn value(&self) -> &Literal {
+        &self.value
     }
 }
 

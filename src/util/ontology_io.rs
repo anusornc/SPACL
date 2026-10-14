@@ -165,9 +165,7 @@ fn parse_text(path: &Path) -> OwlResult<Ontology> {
     stage_log("text_detect_done", &format!("ms={}", detect_ms));
 
     let parse_start = Instant::now();
-    let ontology = parser
-        .parse_str(&content)
-        .map_err(|e| OwlError::ParseError(format!("{:?}", e)))?;
+    let ontology = parser.parse_str(&content)?;
     let parse_ms = parse_start.elapsed().as_millis();
     stage_log(
         "text_parse_done",
@@ -405,6 +403,9 @@ pub fn load_ontology_with_env(path: &Path) -> OwlResult<Ontology> {
                 ontology
             }
             Err(parse_err) => {
+                if crate::parser::rdf_xml_common::prevents_lossy_fallback(&parse_err) {
+                    return Err(parse_err);
+                }
                 if should_fallback_to_full_text_parse(&selected_path) {
                     eprintln!(
                         "Parser file-mode failed for {}: {:?}. Retrying with full-text parse.",

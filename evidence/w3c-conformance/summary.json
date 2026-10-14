@@ -1,0 +1,29 @@
+{
+  "baseline_w3c_test_type_counts": {
+    "ConsistencyTest": 162,
+    "InconsistencyTest": 84,
+    "NegativeEntailmentTest": 9,
+    "PositiveEntailmentTest": 74
+  },
+  "operation_counts": {
+    "consistency": 237,
+    "entailment": 152,
+    "inconsistency": 118
+  },
+  "result_status_counts": {
+    "passed": 486,
+    "unsupported": 21
+  },
+  "run_dir": "/home/admindigit/tableauxx/benchmarks/external/w3c-owl2/results/history/w3c_owl2_approved_full_20261009_r69",
+  "total_results": 507,
+  "w3c_expected_result_counts": {
+    "false": 9,
+    "true": 498
+  },
+  "w3c_test_type_counts": {
+    "ConsistencyTest": 237,
+    "InconsistencyTest": 118,
+    "NegativeEntailmentTest": 9,
+    "PositiveEntailmentTest": 143
+  }
+}

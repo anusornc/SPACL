@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "variant": "openllet-ql-runtime",
+  "component": {
+    "name": "Openllet QL",
+    "openllet_version": "2.6.5",
+    "owlapi_version": "5.5.1"
+  },
+  "base_image": "maven:3.9-eclipse-temurin-17@sha256:e2532c643e3fbc52e339b24b6a47196b46ec8c269e08da3cd49365db41d9d252",
+  "runtime": {
+    "platform": "linux/amd64",
+    "java": "Eclipse Temurin 17",
+    "maven": "3.9",
+    "build_network": "host-maven-resolution-only",
+    "execution_network": "none",
+    "service_endpoint": "none"
+  },
+  "resource_limits": {
+    "timeout_seconds": 600,
+    "memory": "24GiB",
+    "threads": 1,
+    "cpu": "1",
+    "disk": "10GiB",
+    "network": "disabled"
+  },
+  "license": {
+    "status": "open_source_distribution_review_pending",
+    "spdx": "AGPL-3.0-only",
+    "open_source": true,
+    "credentials_required": false
+  },
+  "claim_boundary": {
+    "benchmark_only": true,
+    "service_artifact": false,
+    "answer_key_created": false,
+    "semantic_oracle": false,
+    "archive_committed": false,
+    "archive_published": false
+  }
+}

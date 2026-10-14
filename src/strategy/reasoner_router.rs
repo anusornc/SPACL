@@ -223,6 +223,11 @@ fn count_unions_in_expression(expr: &crate::logic::axioms::ClassExpression) -> u
         ClassExpression::ObjectComplementOf(inner) => count_unions_in_expression(inner),
         ClassExpression::ObjectSomeValuesFrom(_, inner) => count_unions_in_expression(inner),
         ClassExpression::ObjectAllValuesFrom(_, inner) => count_unions_in_expression(inner),
+        ClassExpression::ObjectMinCardinality(_, _, Some(inner))
+        | ClassExpression::ObjectMaxCardinality(_, _, Some(inner))
+        | ClassExpression::ObjectExactCardinality(_, _, Some(inner)) => {
+            count_unions_in_expression(inner)
+        }
         _ => 0,
     }
 }

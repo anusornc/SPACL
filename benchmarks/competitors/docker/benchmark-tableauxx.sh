@@ -89,7 +89,14 @@ echo "{\"reasoner\": \"Tableauxx\", \"version\": \"0.2.0\", \"operation\": \"$OP
 echo "[bench] tableauxx input_file=$INPUT_FILE" >&2
 
 tmp_output=$(mktemp)
+tmp_dir=$(mktemp -d)
+report_json="$tmp_dir/check-auto-report.json"
 start_time=$(date +%s%N)
+cleanup() {
+    rm -f "$tmp_output"
+    rm -rf "$tmp_dir"
+}
+trap cleanup EXIT
 
 run_and_capture() {
     local output_file="$1"
@@ -129,7 +136,7 @@ if [ "$OPERATION" = "consistency" ]; then
         SPACL_BRANCH_SNAPSHOT_FILE="$SPACL_BRANCH_SNAPSHOT_FILE" \
         SPACL_NOGOOD="$SPACL_NOGOOD" \
         SPACL_EMIT_STATS="$SPACL_EMIT_STATS" \
-        /opt/reasoner/owl2-reasoner check-auto "$INPUT_FILE"
+        /opt/reasoner/owl2-reasoner check-auto "$INPUT_FILE" --report-json "$report_json"
     then
         cmd_status=0
     else
@@ -149,27 +156,34 @@ fi
 end_time=$(date +%s%N)
 duration_ms=$(( (end_time - start_time) / 1000000 ))
 
-reasoning_result="unknown"
-if grep -qi "INCONSISTENT" "$tmp_output"; then
-    reasoning_result="inconsistent"
-elif grep -qi "CONSISTENT" "$tmp_output"; then
-    reasoning_result="consistent"
-fi
-
-parse_ms="$(grep -Eo '\[phase\][[:space:]]+parse_done[[:space:]]+ms=[0-9]+' "$tmp_output" | tail -1 | grep -Eo '[0-9]+' || true)"
-reason_ms="$(grep -Eo '\[phase\][[:space:]]+reason_done[[:space:]]+ms=[0-9]+' "$tmp_output" | tail -1 | grep -Eo '[0-9]+' || true)"
-if [[ -z "$parse_ms" ]]; then
-    parse_ms=-1
-fi
-if [[ -z "$reason_ms" ]]; then
-    reason_ms=-1
-fi
-
-if [ "$cmd_status" -eq 0 ]; then
-    echo "{\"duration_ms\": $duration_ms, \"status\": \"completed\", \"reasoning_result\": \"$reasoning_result\", \"parse_time_ms\": $parse_ms, \"reason_time_ms\": $reason_ms}"
+if [[ "$OPERATION" = "consistency" ]]; then
+    if [[ -s "$report_json" ]]; then
+        cat "$report_json"
+    else
+        echo "[bench] missing check-auto report after ${duration_ms}ms" >&2
+    fi
 else
-    echo "{\"duration_ms\": $duration_ms, \"status\": \"failed\", \"reasoning_result\": \"$reasoning_result\", \"parse_time_ms\": $parse_ms, \"reason_time_ms\": $reason_ms}"
+    reasoning_result="unknown"
+    if grep -qi "INCONSISTENT" "$tmp_output"; then
+        reasoning_result="inconsistent"
+    elif grep -qi "CONSISTENT" "$tmp_output"; then
+        reasoning_result="consistent"
+    fi
+
+    parse_ms="$(grep -Eo '\[phase\][[:space:]]+parse_done[[:space:]]+ms=[0-9]+' "$tmp_output" | tail -1 | grep -Eo '[0-9]+' || true)"
+    reason_ms="$(grep -Eo '\[phase\][[:space:]]+reason_done[[:space:]]+ms=[0-9]+' "$tmp_output" | tail -1 | grep -Eo '[0-9]+' || true)"
+    if [[ -z "$parse_ms" ]]; then
+        parse_ms=-1
+    fi
+    if [[ -z "$reason_ms" ]]; then
+        reason_ms=-1
+    fi
+
+    if [ "$cmd_status" -eq 0 ]; then
+        echo "{\"duration_ms\": $duration_ms, \"status\": \"completed\", \"reasoning_result\": \"$reasoning_result\", \"parse_time_ms\": $parse_ms, \"reason_time_ms\": $reason_ms}"
+    else
+        echo "{\"duration_ms\": $duration_ms, \"status\": \"failed\", \"reasoning_result\": \"$reasoning_result\", \"parse_time_ms\": $parse_ms, \"reason_time_ms\": $reason_ms}"
+    fi
 fi
 
-rm -f "$tmp_output"
 exit "$cmd_status"

@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "variant_control": {
+    "revision_id": "openllet-ql/revision-1",
+    "category_sha256": "sha256:adbbda455446fac05aeec35281a2749cc88beb88e8b35650d6f04672391ddb33"
+  },
+  "component": {
+    "name": "Openllet QL",
+    "implementation": "Openllet",
+    "open_source": true,
+    "openllet_version": "2.6.5",
+    "owlapi_version": "5.5.1",
+    "boundary": "benchmark-only finite materialization runtime for OWL2Bench QL"
+  },
+  "runtime": {
+    "variant_revision": "openllet-ql-runtime-v1",
+    "base_image": {
+      "reference": "maven:3.9-eclipse-temurin-17@sha256:e2532c643e3fbc52e339b24b6a47196b46ec8c269e08da3cd49365db41d9d252",
+      "digest": "sha256:e2532c643e3fbc52e339b24b6a47196b46ec8c269e08da3cd49365db41d9d252"
+    },
+    "image": {
+      "reference": "tableauxx-openllet-ql@sha256:548e5ecefa8b252f8baec95bfb4e9528363257b653dd79a189aa0f351df937bd",
+      "mutable_tag": "tableauxx-openllet-ql:2.6.5",
+      "digest": "sha256:548e5ecefa8b252f8baec95bfb4e9528363257b653dd79a189aa0f351df937bd",
+      "platform": "linux/amd64"
+    },
+    "dependencies": [
+      {
+        "name": "base-image",
+        "version": "maven:3.9-eclipse-temurin-17",
+        "digest": "sha256:e2532c643e3fbc52e339b24b6a47196b46ec8c269e08da3cd49365db41d9d252"
+      },
+      {
+        "name": "openllet-image",
+        "version": "2.6.5",
+        "digest": "sha256:548e5ecefa8b252f8baec95bfb4e9528363257b653dd79a189aa0f351df937bd"
+      },
+      {
+        "name": "openllet-owlapi",
+        "version": "2.6.5",
+        "digest": "sha256:c9f9376f59b0103ac8fe19d715a1f205dc2b4a1b677e8a4289659346c72da588"
+      },
+      {
+        "name": "owlapi-distribution",
+        "version": "5.5.1",
+        "digest": "sha256:747b1a5269fee2992487dcde946f16dfbc14aa458d50854994a0485cf263ce07"
+      },
+      {
+        "name": "classpath-lock",
+        "version": "78-jars",
+        "digest": "sha256:3d76bf2d04e731e435377e4f9fe6f2f64916701de7cf4366a49e9b71c8081661"
+      }
+    ],
+    "build_network": "host-maven-resolution-only",
+    "execution_network": "none",
+    "materialization_network": "none",
+    "service_endpoint": "none",
+    "archive": {
+      "path_policy": "operator-local-only",
+      "committed": false,
+      "published": false
+    }
+  },
+  "inputs": {
+    "dockerfile": {
+      "path": "benchmarks/external/owl2bench/query/Dockerfile.openllet-ql",
+      "sha256": "sha256:8d9ed270615706623d9dd27f67cb5b0572107af248b85407871b537894eed60e"
+    },
+    "pom": {
+      "path": "benchmarks/external/owl2bench/query/openllet_ql_pom.xml",
+      "sha256": "sha256:3cbc867c7eec0d4e08425fc67111a2334b28e987a4fa66ca6b2451683d6692cc"
+    },
+    "configuration": {
+      "path": "benchmarks/external/owl2bench/query/openllet_ql_runtime_config.json",
+      "sha256": "sha256:fa5809fd1ac3163acf6718bd3842bea20fa13482f88c9a64f79452cfd3eea6e8"
+    },
+    "exporter": {
+      "path": "benchmarks/external/owl2bench/query/OpenlletQlMaterializer.java",
+      "sha256": "sha256:b004fec66095e89bee2ee15f259a517af676fdc312b400eebcb5ad3a3405bc3d"
+    }
+  },
+  "classpath": {
+    "path": "benchmarks/external/owl2bench/query/openllet_ql_classpath.sha256",
+    "lock_sha256": "sha256:3d76bf2d04e731e435377e4f9fe6f2f64916701de7cf4366a49e9b71c8081661",
+    "jar_count": 78,
+    "drift_policy": "build-fails-on-any-extra-missing-or-mismatched-jar"
+  },
+  "graph_contract": {
+    "profile": "QL",
+    "execution_variant": "openllet-ql",
+    "materialization_revision": "openllet-ql-materialization-v1",
+    "source_domain": "owl2bench-ql-universities=1-seed=1",
+    "source_included": true,
+    "finite_named_entailments": true,
+    "anonymous_witness_policy": "not_exported",
+    "query_count": 10
+  },
+  "resource_limits": {
+    "timeout_seconds": 600,
+    "memory": "24GiB",
+    "threads": 1,
+    "cpu": "1",
+    "disk": "10GiB",
+    "network": "disabled",
+    "variant": "openllet-ql-pinned-runtime"
+  },
+  "credentials": {
+    "status": "not_required",
+    "secret_material": false
+  },
+  "license": {
+    "status": "open_source_distribution_review_pending",
+    "spdx": "AGPL-3.0-only",
+    "provenance": "Maven Central openllet-parent-2.6.5.pom",
+    "open_source": true,
+    "credentials_required": false,
+    "distribution_review_required": true
+  }
+}

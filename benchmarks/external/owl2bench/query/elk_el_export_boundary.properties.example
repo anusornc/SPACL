@@ -1,0 +1,26 @@
+# ELK 0.6.0 OWL2Bench EL materialization/export boundary.
+#
+# elk_el_materializer.sh reads this file when ELK_EL_EXPORT_BOUNDARY_CONFIG
+# points at it. Environment variables with the same purpose are also accepted.
+# The official ELK artifacts are pinned separately from any future finite RDF
+# exporter. Classification or taxonomy output alone is not accepted as a
+# query-complete materialization graph.
+
+elk.version=0.6.0
+elk.revision=official-0.6.0
+elk.owlapi_jar=/path/to/elk-owlapi-0.6.0.jar
+elk.owlapi_sha256=sha256:19c21b0e9f9595b61ed67b2fe9343264edeb8a4b9070bd733ba7677fef50e1df
+elk.cli_jar=/path/to/elk.jar
+elk.cli_sha256=sha256:8340bc1421c28aa5f0affff3a5533ef3f24f6cf19b3df7bbe43e237f7633600c
+
+# Leave exporter.path unset until a real finite class/object/data/TBox/RBox
+# RDF exporter over named terms and input blank nodes is available.
+# exporter.path=/path/to/elk-finite-rdf-exporter
+# exporter.sha256=sha256:<64 lowercase hex characters>
+# exporter.version=<pinned version>
+# exporter.revision=<source revision>
+# exporter.boundary=finite_query_complete_rdf_graph
+
+resource.timeout_seconds=600
+resource.memory=24GiB
+resource.threads=1

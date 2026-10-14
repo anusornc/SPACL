@@ -7,14 +7,19 @@
 //! - `meta`: Meta-reasoner for strategy selection
 
 pub mod batch_operations;
+pub mod boolean_consistency;
 pub mod classification;
 pub mod compact_hierarchy;
 pub mod consistency;
+pub mod evaluation;
 pub mod grail_hierarchy;
 pub mod hierarchical_classification;
+pub mod materialize;
 pub mod optimized_hierarchy;
 pub mod profile_optimized;
+pub mod qualified_consistency;
 pub mod rules;
+pub mod rdf_based;
 pub mod simple;
 pub mod speculative;
 pub mod tableaux;

@@ -1,0 +1,27 @@
+{
+  "supports_query": true,
+  "profiles": ["DL", "EL", "QL", "RL"],
+  "data_mode": "directory",
+  "adapter": "spacl-split",
+  "engine": "SPACL-STACK",
+  "engine_version": "owl2-reasoner materialize --profile + pinned Oxigraph query",
+  "provenance_relative_paths": {
+    "DL": ".spacl-dl/provenance.json",
+    "EL": ".spacl-el/provenance.json",
+    "QL": ".spacl-ql/provenance.json",
+    "RL": ".spacl-rl/provenance.json"
+  },
+  "provenance_adapters": {
+    "DL": "spacl-dl",
+    "EL": "spacl-el",
+    "QL": "spacl-ql",
+    "RL": "spacl-rl"
+  },
+  "query_result_format": "tsv",
+  "materialization_handoff_required": true,
+  "adapter_managed_materialization": true,
+  "engine_image": "oxigraph/oxigraph:0.5.9",
+  "engine_image_digest": "sha256:e68b3625743db4a4b18129a907ae36766f89bb6deeb8ab50d35685dbabe00b0e",
+  "not_available_exit_code": 125,
+  "unsupported_exit_code": 123
+}

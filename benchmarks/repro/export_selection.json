@@ -1,0 +1,603 @@
+{
+  "schema_version": 1,
+  "bundle_name": "spacl-public-companion",
+  "description": "Selection manifest for the ADR 0028 publishable-reproduction export (issue #203). tracked_selection lists repository paths (files or directories; directories expand to the git-tracked files beneath them) that enter the bundle. lanes list the gitignored run directories whose headline artifacts are exported under evidence/, with the run-identity file used per export and the verbatim ADR claim sentences each lane must carry. forbidden_suffix_allowlist names tracked harness files (tiny repository-config templates and a five-line diagnostic fixture, not corpora or datasets) that carry a forbidden suffix by naming convention only; each must be part of the selection and still passes the size cap.",
+  "max_artifact_bytes": 8388608,
+  "forbidden_suffixes": [
+    ".owl",
+    ".owx",
+    ".rdf",
+    ".ttl",
+    ".nt",
+    ".nq",
+    ".jar",
+    ".zip",
+    ".tar",
+    ".gz",
+    ".bin",
+    ".exe",
+    ".parquet",
+    ".sqlite",
+    ".db"
+  ],
+  "forbidden_suffix_allowlist": [
+    "benchmarks/external/owl2bench/query/graphdb_ql_repository.ttl",
+    "benchmarks/external/owl2bench/query/graphdb_rl_repository_config.ttl",
+    "benchmarks/external/owl2bench/query/openllet_ql_diagnostic/extension.nq",
+    "tests/data/"
+  ],
+  "bundle_claim": {
+    "adr": "docs/adr/0028-publishable-reproduction-via-spacl-public-repo.md",
+    "sentence": "Redistribution is pointers, not blobs: no engine binaries, no corpora, and no generated datasets are redistributed; manifests record identities and hashes, sources are fetched from their official pins, and engine images are rebuilt from committed Dockerfiles."
+  },
+  "tracked_selection": [
+    "CONTEXT.md",
+    "Cargo.lock",
+    "Cargo.toml",
+    "benches",
+    "benchmarks/campaign",
+    "benchmarks/competitors/docker",
+    "benchmarks/competitors/scripts",
+    "benchmarks/external/ore",
+    "benchmarks/external/owl2bench",
+    "benchmarks/external/w3c-owl2",
+    "benchmarks/ontologies/external/owl2bench",
+    "benchmarks/repro",
+    "docs/adr",
+    "docs/agents/domain.md",
+    "docs/repro",
+    "docs/research/ORE_2015_CONSISTENCY_ORACLE_20260826.md",
+    "docs/research/ORE_2015_CONSISTENCY_ORACLE_RECOVERY_20260901.md",
+    "docs/research/ORE_2015_CONSISTENCY_RESULT_SOURCE_MANIFEST_20260901.tsv",
+    "docs/research/OWL2BENCH_60_CASE_EXPECTED_RESULT_ORACLE_RESEARCH_20260901.md",
+    "docs/research/OWL2BENCH_ANSWER_KEY_HUNT_20260926.md",
+    "examples",
+    "scripts",
+    "src",
+    "tests"
+  ],
+  "lanes": [
+    {
+      "name": "w3c-conformance",
+      "title": "W3C OWL 2 approved corpus conformance run",
+      "claims": [
+        {
+          "adr": "docs/adr/0002-three-lane-w3c-full-corpus-gate.md",
+          "sentence": "Each lane report records its own source hash, semantics-specific oracle hash, and status counts; a lane passes only with zero wrong, failed, and unsupported rows, while timeout or unavailable oracle evidence blocks the lane."
+        }
+      ],
+      "exports": [
+        {
+          "source_dir": "benchmarks/external/w3c-owl2/results/history/w3c_owl2_approved_full_20261009_r69",
+          "dest": ".",
+          "artifacts": [
+            "summary.json",
+            "report.md"
+          ],
+          "identity": {
+            "file": "run_metadata.json",
+            "run_id_fields": [
+              "run_id"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "owl2bench-query-verdict",
+      "title": "OWL2Bench query correctness verdict (SPACL split stack, seed 1)",
+      "claims": [
+        {
+          "adr": "docs/adr/0027-stage-suite-retyping-and-spacl-split-stack-reconciliation.md",
+          "sentence": "The accepted SPACL query verdict (lane gate passed, 60/60 oracle matches accepted)"
+        }
+      ],
+      "exports": [
+        {
+          "source_dir": "benchmarks/external/owl2bench/verdict-stack-shipped-seed1/results/spacl-stack-shipped-verdict-seed1-split",
+          "dest": ".",
+          "artifacts": [
+            "summary.json",
+            "report.md"
+          ],
+          "identity": {
+            "file": "run_metadata.json",
+            "run_id_fields": [
+              "run_id"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "ore-comparative",
+      "title": "ORE 2015 consistency sample comparative execution performance",
+      "claims": [
+        {
+          "adr": "docs/adr/0024-ore-2015-performance-only-lane.md",
+          "sentence": "Its published claims are execution performance and completability only: per-engine times, timeouts, and completed-run counts on the pinned corpus."
+        },
+        {
+          "adr": "docs/adr/0024-ore-2015-performance-only-lane.md",
+          "sentence": "ORE rows keep `oracle_unavailable` as their permanent, honest correctness status."
+        },
+        {
+          "adr": "docs/adr/0025-comparative-execution-performance-contract.md",
+          "sentence": "The primary timing statistic is the per-case median container-inclusive wall time across the three passes; engine-reported times stay secondary diagnostics."
+        }
+      ],
+      "exports": [
+        {
+          "source_dir": "benchmarks/competitors/results/history/ore2015_cmp_agg_pure_dl",
+          "dest": "pure_dl",
+          "artifacts": [
+            "aggregation_metadata.json",
+            "comparative_paper_table.md",
+            "comparative_engine_summary.md",
+            "comparative_engine_summary.tsv",
+            "comparative_median_times.tsv"
+          ],
+          "identity": {
+            "file": "aggregation_metadata.json",
+            "run_id_fields": [
+              "pass_run_ids"
+            ]
+          }
+        },
+        {
+          "source_dir": "benchmarks/competitors/results/history/ore2015_cmp_agg_el",
+          "dest": "el",
+          "artifacts": [
+            "aggregation_metadata.json",
+            "comparative_paper_table.md",
+            "comparative_engine_summary.md",
+            "comparative_engine_summary.tsv",
+            "comparative_median_times.tsv"
+          ],
+          "identity": {
+            "file": "aggregation_metadata.json",
+            "run_id_fields": [
+              "pass_run_ids"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "owl2bench-ladder",
+      "title": "OWL2Bench multi-size consistency scalability ladder",
+      "claims": [
+        {
+          "adr": "docs/adr/0026-owl2bench-multisize-consistency-performance-lane.md",
+          "sentence": "The sweep is a performance lane under the ADR 0024 terms: execution performance and completability claims only, no correctness claims — no oracle exists for OWL2Bench consistency."
+        }
+      ],
+      "cross_check_ladder": true,
+      "exports": [
+        {
+          "source_dir": "benchmarks/competitors/results/history/owl2bench_ladder_final",
+          "dest": "ladder_final",
+          "artifacts": [
+            "ladder_metadata.json",
+            "ladder_dl.md",
+            "ladder_el.md",
+            "ladder_ql.md",
+            "ladder_rl.md"
+          ],
+          "identity": {
+            "file": "ladder_metadata.json",
+            "run_id_fields": []
+          }
+        },
+        {
+          "source_dir": "benchmarks/competitors/results/history/owl2bench_cmp_agg_dl_u1",
+          "dest": "agg/dl_u1",
+          "artifacts": [
+            "aggregation_metadata.json",
+            "comparative_paper_table.md",
+            "comparative_engine_summary.md",
+            "comparative_engine_summary.tsv",
+            "comparative_median_times.tsv"
+          ],
+          "identity": {
+            "file": "aggregation_metadata.json",
+            "run_id_fields": [
+              "pass_run_ids"
+            ]
+          }
+        },
+        {
+          "source_dir": "benchmarks/competitors/results/history/owl2bench_cmp_agg_dl_u2",
+          "dest": "agg/dl_u2",
+          "artifacts": [
+            "aggregation_metadata.json",
+            "comparative_paper_table.md",
+            "comparative_engine_summary.md",
+            "comparative_engine_summary.tsv",
+            "comparative_median_times.tsv"
+          ],
+          "identity": {
+            "file": "aggregation_metadata.json",
+            "run_id_fields": [
+              "pass_run_ids"
+            ]
+          }
+        },
+        {
+          "source_dir": "benchmarks/competitors/results/history/owl2bench_cmp_agg_dl_u5",
+          "dest": "agg/dl_u5",
+          "artifacts": [
+            "aggregation_metadata.json",
+            "comparative_paper_table.md",
+            "comparative_engine_summary.md",
+            "comparative_engine_summary.tsv",
+            "comparative_median_times.tsv"
+          ],
+          "identity": {
+            "file": "aggregation_metadata.json",
+            "run_id_fields": [
+              "pass_run_ids"
+            ]
+          }
+        },
+        {
+          "source_dir": "benchmarks/competitors/results/history/owl2bench_cmp_agg_dl_u10",
+          "dest": "agg/dl_u10",
+          "artifacts": [
+            "aggregation_metadata.json",
+            "comparative_paper_table.md",
+            "comparative_engine_summary.md",
+            "comparative_engine_summary.tsv",
+            "comparative_median_times.tsv"
+          ],
+          "identity": {
+            "file": "aggregation_metadata.json",
+            "run_id_fields": [
+              "pass_run_ids"
+            ]
+          }
+        },
+        {
+          "source_dir": "benchmarks/competitors/results/history/owl2bench_cmp_agg_dl_u20",
+          "dest": "agg/dl_u20",
+          "artifacts": [
+            "aggregation_metadata.json",
+            "comparative_paper_table.md",
+            "comparative_engine_summary.md",
+            "comparative_engine_summary.tsv",
+            "comparative_median_times.tsv"
+          ],
+          "identity": {
+            "file": "aggregation_metadata.json",
+            "run_id_fields": [
+              "pass_run_ids"
+            ]
+          }
+        },
+        {
+          "source_dir": "benchmarks/competitors/results/history/owl2bench_cmp_agg_dl_u50",
+          "dest": "agg/dl_u50",
+          "artifacts": [
+            "aggregation_metadata.json",
+            "comparative_paper_table.md",
+            "comparative_engine_summary.md",
+            "comparative_engine_summary.tsv",
+            "comparative_median_times.tsv"
+          ],
+          "identity": {
+            "file": "aggregation_metadata.json",
+            "run_id_fields": [
+              "pass_run_ids"
+            ]
+          }
+        },
+        {
+          "source_dir": "benchmarks/competitors/results/history/owl2bench_cmp_agg_el_u1",
+          "dest": "agg/el_u1",
+          "artifacts": [
+            "aggregation_metadata.json",
+            "comparative_paper_table.md",
+            "comparative_engine_summary.md",
+            "comparative_engine_summary.tsv",
+            "comparative_median_times.tsv"
+          ],
+          "identity": {
+            "file": "aggregation_metadata.json",
+            "run_id_fields": [
+              "pass_run_ids"
+            ]
+          }
+        },
+        {
+          "source_dir": "benchmarks/competitors/results/history/owl2bench_cmp_agg_el_u2",
+          "dest": "agg/el_u2",
+          "artifacts": [
+            "aggregation_metadata.json",
+            "comparative_paper_table.md",
+            "comparative_engine_summary.md",
+            "comparative_engine_summary.tsv",
+            "comparative_median_times.tsv"
+          ],
+          "identity": {
+            "file": "aggregation_metadata.json",
+            "run_id_fields": [
+              "pass_run_ids"
+            ]
+          }
+        },
+        {
+          "source_dir": "benchmarks/competitors/results/history/owl2bench_cmp_agg_el_u5",
+          "dest": "agg/el_u5",
+          "artifacts": [
+            "aggregation_metadata.json",
+            "comparative_paper_table.md",
+            "comparative_engine_summary.md",
+            "comparative_engine_summary.tsv",
+            "comparative_median_times.tsv"
+          ],
+          "identity": {
+            "file": "aggregation_metadata.json",
+            "run_id_fields": [
+              "pass_run_ids"
+            ]
+          }
+        },
+        {
+          "source_dir": "benchmarks/competitors/results/history/owl2bench_cmp_agg_el_u10",
+          "dest": "agg/el_u10",
+          "artifacts": [
+            "aggregation_metadata.json",
+            "comparative_paper_table.md",
+            "comparative_engine_summary.md",
+            "comparative_engine_summary.tsv",
+            "comparative_median_times.tsv"
+          ],
+          "identity": {
+            "file": "aggregation_metadata.json",
+            "run_id_fields": [
+              "pass_run_ids"
+            ]
+          }
+        },
+        {
+          "source_dir": "benchmarks/competitors/results/history/owl2bench_cmp_agg_el_u20",
+          "dest": "agg/el_u20",
+          "artifacts": [
+            "aggregation_metadata.json",
+            "comparative_paper_table.md",
+            "comparative_engine_summary.md",
+            "comparative_engine_summary.tsv",
+            "comparative_median_times.tsv"
+          ],
+          "identity": {
+            "file": "aggregation_metadata.json",
+            "run_id_fields": [
+              "pass_run_ids"
+            ]
+          }
+        },
+        {
+          "source_dir": "benchmarks/competitors/results/history/owl2bench_cmp_agg_el_u50",
+          "dest": "agg/el_u50",
+          "artifacts": [
+            "aggregation_metadata.json",
+            "comparative_paper_table.md",
+            "comparative_engine_summary.md",
+            "comparative_engine_summary.tsv",
+            "comparative_median_times.tsv"
+          ],
+          "identity": {
+            "file": "aggregation_metadata.json",
+            "run_id_fields": [
+              "pass_run_ids"
+            ]
+          }
+        },
+        {
+          "source_dir": "benchmarks/competitors/results/history/owl2bench_cmp_agg_ql_u1",
+          "dest": "agg/ql_u1",
+          "artifacts": [
+            "aggregation_metadata.json",
+            "comparative_paper_table.md",
+            "comparative_engine_summary.md",
+            "comparative_engine_summary.tsv",
+            "comparative_median_times.tsv"
+          ],
+          "identity": {
+            "file": "aggregation_metadata.json",
+            "run_id_fields": [
+              "pass_run_ids"
+            ]
+          }
+        },
+        {
+          "source_dir": "benchmarks/competitors/results/history/owl2bench_cmp_agg_ql_u2",
+          "dest": "agg/ql_u2",
+          "artifacts": [
+            "aggregation_metadata.json",
+            "comparative_paper_table.md",
+            "comparative_engine_summary.md",
+            "comparative_engine_summary.tsv",
+            "comparative_median_times.tsv"
+          ],
+          "identity": {
+            "file": "aggregation_metadata.json",
+            "run_id_fields": [
+              "pass_run_ids"
+            ]
+          }
+        },
+        {
+          "source_dir": "benchmarks/competitors/results/history/owl2bench_cmp_agg_ql_u5",
+          "dest": "agg/ql_u5",
+          "artifacts": [
+            "aggregation_metadata.json",
+            "comparative_paper_table.md",
+            "comparative_engine_summary.md",
+            "comparative_engine_summary.tsv",
+            "comparative_median_times.tsv"
+          ],
+          "identity": {
+            "file": "aggregation_metadata.json",
+            "run_id_fields": [
+              "pass_run_ids"
+            ]
+          }
+        },
+        {
+          "source_dir": "benchmarks/competitors/results/history/owl2bench_cmp_agg_ql_u10",
+          "dest": "agg/ql_u10",
+          "artifacts": [
+            "aggregation_metadata.json",
+            "comparative_paper_table.md",
+            "comparative_engine_summary.md",
+            "comparative_engine_summary.tsv",
+            "comparative_median_times.tsv"
+          ],
+          "identity": {
+            "file": "aggregation_metadata.json",
+            "run_id_fields": [
+              "pass_run_ids"
+            ]
+          }
+        },
+        {
+          "source_dir": "benchmarks/competitors/results/history/owl2bench_cmp_agg_ql_u20",
+          "dest": "agg/ql_u20",
+          "artifacts": [
+            "aggregation_metadata.json",
+            "comparative_paper_table.md",
+            "comparative_engine_summary.md",
+            "comparative_engine_summary.tsv",
+            "comparative_median_times.tsv"
+          ],
+          "identity": {
+            "file": "aggregation_metadata.json",
+            "run_id_fields": [
+              "pass_run_ids"
+            ]
+          }
+        },
+        {
+          "source_dir": "benchmarks/competitors/results/history/owl2bench_cmp_agg_ql_u50",
+          "dest": "agg/ql_u50",
+          "artifacts": [
+            "aggregation_metadata.json",
+            "comparative_paper_table.md",
+            "comparative_engine_summary.md",
+            "comparative_engine_summary.tsv",
+            "comparative_median_times.tsv"
+          ],
+          "identity": {
+            "file": "aggregation_metadata.json",
+            "run_id_fields": [
+              "pass_run_ids"
+            ]
+          }
+        },
+        {
+          "source_dir": "benchmarks/competitors/results/history/owl2bench_cmp_agg_rl_u1",
+          "dest": "agg/rl_u1",
+          "artifacts": [
+            "aggregation_metadata.json",
+            "comparative_paper_table.md",
+            "comparative_engine_summary.md",
+            "comparative_engine_summary.tsv",
+            "comparative_median_times.tsv"
+          ],
+          "identity": {
+            "file": "aggregation_metadata.json",
+            "run_id_fields": [
+              "pass_run_ids"
+            ]
+          }
+        },
+        {
+          "source_dir": "benchmarks/competitors/results/history/owl2bench_cmp_agg_rl_u2",
+          "dest": "agg/rl_u2",
+          "artifacts": [
+            "aggregation_metadata.json",
+            "comparative_paper_table.md",
+            "comparative_engine_summary.md",
+            "comparative_engine_summary.tsv",
+            "comparative_median_times.tsv"
+          ],
+          "identity": {
+            "file": "aggregation_metadata.json",
+            "run_id_fields": [
+              "pass_run_ids"
+            ]
+          }
+        },
+        {
+          "source_dir": "benchmarks/competitors/results/history/owl2bench_cmp_agg_rl_u5",
+          "dest": "agg/rl_u5",
+          "artifacts": [
+            "aggregation_metadata.json",
+            "comparative_paper_table.md",
+            "comparative_engine_summary.md",
+            "comparative_engine_summary.tsv",
+            "comparative_median_times.tsv"
+          ],
+          "identity": {
+            "file": "aggregation_metadata.json",
+            "run_id_fields": [
+              "pass_run_ids"
+            ]
+          }
+        },
+        {
+          "source_dir": "benchmarks/competitors/results/history/owl2bench_cmp_agg_rl_u10",
+          "dest": "agg/rl_u10",
+          "artifacts": [
+            "aggregation_metadata.json",
+            "comparative_paper_table.md",
+            "comparative_engine_summary.md",
+            "comparative_engine_summary.tsv",
+            "comparative_median_times.tsv"
+          ],
+          "identity": {
+            "file": "aggregation_metadata.json",
+            "run_id_fields": [
+              "pass_run_ids"
+            ]
+          }
+        },
+        {
+          "source_dir": "benchmarks/competitors/results/history/owl2bench_cmp_agg_rl_u20",
+          "dest": "agg/rl_u20",
+          "artifacts": [
+            "aggregation_metadata.json",
+            "comparative_paper_table.md",
+            "comparative_engine_summary.md",
+            "comparative_engine_summary.tsv",
+            "comparative_median_times.tsv"
+          ],
+          "identity": {
+            "file": "aggregation_metadata.json",
+            "run_id_fields": [
+              "pass_run_ids"
+            ]
+          }
+        },
+        {
+          "source_dir": "benchmarks/competitors/results/history/owl2bench_cmp_agg_rl_u50",
+          "dest": "agg/rl_u50",
+          "artifacts": [
+            "aggregation_metadata.json",
+            "comparative_paper_table.md",
+            "comparative_engine_summary.md",
+            "comparative_engine_summary.tsv",
+            "comparative_median_times.tsv"
+          ],
+          "identity": {
+            "file": "aggregation_metadata.json",
+            "run_id_fields": [
+              "pass_run_ids"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

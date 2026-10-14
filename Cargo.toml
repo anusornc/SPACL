@@ -20,6 +20,7 @@ rustc-hash = "1.1"
 # Serialization
 serde = { version = "1.0", features = ["derive", "rc"] }
 serde_json = "1.0"
+sha2 = "0.10"
 serde-xml-rs = "0.6"
 xmltree = "0.10"
 quick-xml = "0.31"
@@ -176,8 +177,28 @@ name = "benchmark_adaptive"
 path = "scripts/benchmark_adaptive.rs"
 
 [[bin]]
+name = "calibrate_adaptive"
+path = "scripts/calibrate_adaptive.rs"
+
+[[bin]]
 name = "benchmark_edge_cases"
 path = "scripts/benchmark_edge_cases.rs"
+
+[[bin]]
+name = "run_spacl_synthetic_ablation"
+path = "scripts/run_spacl_synthetic_ablation.rs"
+
+[[bin]]
+name = "prototype_spacl_probe"
+path = "scripts/prototype_spacl_probe.rs"
+
+[[bin]]
+name = "train_rrn_linear_model"
+path = "scripts/train_rrn_linear_model.rs"
+
+[[bin]]
+name = "train_rrn_gbdt_model"
+path = "scripts/train_rrn_gbdt_model.rs"
 
 [[bin]]
 name = "owl2-reasoner"
@@ -197,6 +218,10 @@ harness = false
 
 [[bench]]
 name = "adaptive_with_unions"
+harness = false
+
+[[bench]]
+name = "scalability"
 harness = false
 
 [[bench]]

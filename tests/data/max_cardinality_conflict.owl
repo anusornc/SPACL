@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<rdf:RDF
+  xml:base="http://example.org/"
+  xmlns:owl="http://www.w3.org/2002/07/owl#"
+  xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+  xmlns:ex="http://example.org/">
+  <owl:Ontology/>
+  <owl:ObjectProperty rdf:about="prop"/>
+  <rdf:Description rdf:about="a">
+    <rdf:type rdf:parseType="Resource">
+      <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+      <owl:maxCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">2</owl:maxCardinality>
+      <owl:onProperty rdf:resource="prop"/>
+    </rdf:type>
+    <ex:prop rdf:resource="b"/>
+    <ex:prop rdf:resource="c"/>
+    <ex:prop rdf:resource="d"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="b">
+    <owl:differentFrom rdf:resource="c"/>
+    <owl:differentFrom rdf:resource="d"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="c">
+    <owl:differentFrom rdf:resource="d"/>
+  </rdf:Description>
+</rdf:RDF>

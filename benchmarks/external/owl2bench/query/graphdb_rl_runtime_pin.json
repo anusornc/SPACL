@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "component": "GraphDB",
+  "variant": "owl2bench-graphdb-rl",
+  "image": {
+    "architecture": "amd64",
+    "digest": "sha256:d688879c4e5751a0c323f996d86bf1b2189191290711b1936e211d4510b53485",
+    "os": "linux",
+    "reference": "ontotext/graphdb@sha256:d688879c4e5751a0c323f996d86bf1b2189191290711b1936e211d4510b53485",
+    "tag": "ontotext/graphdb:11.5.0"
+  },
+  "runtime": {
+    "graphdb_install_dir": "/opt/graphdb/dist",
+    "java": "21.0.10",
+    "platform": "linux/amd64"
+  },
+  "source": {
+    "documentation": "GraphDB 11.5 reasoning/exporting-data documentation",
+    "research_record": "docs/research/OWL2BENCH_PROFILE_MATERIALIZATION_ORACLE_RESEARCH_20260830.md"
+  }
+}

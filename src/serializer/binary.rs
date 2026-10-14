@@ -63,6 +63,13 @@
 //! [Payload]
 //!   - bincode (serde) encoding of OntologyPayload with fixed integer encoding
 //! ```
+//!
+//! Format version 4 (full fidelity, fixed-int bincode with qualified
+//! cardinality-preserving class expressions):
+//! Same physical layout as v3, but the serde payload uses the canonical
+//! current class-expression model. Versions 2 and 3 are decoded through a
+//! frozen legacy mirror so their old two-field cardinality variants become
+//! current unqualified cardinalities.
 
 use std::io::{Read, Result as IoResult, Write};
 use std::time::Instant;
@@ -81,10 +88,13 @@ use bincode::config;
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 
+mod legacy;
+
 const MAGIC: &[u8; 4] = b"OWLB";
 const VERSION_V1: u32 = 1;
 const VERSION_V2: u32 = 2;
 const VERSION_V3: u32 = 3;
+const VERSION_V4: u32 = 4;
 
 /// Axiom type identifiers for binary format
 #[repr(u8)]
@@ -242,15 +252,20 @@ impl BinaryOntologyFormat {
         let version = match std::env::var("OWL2_REASONER_BIN_FORMAT").ok().as_deref() {
             Some("v1") => VERSION_V1,
             Some("v2") => VERSION_V2,
-            Some("v3") | None => VERSION_V3,
-            _ => VERSION_V3,
+            Some("v3") => VERSION_V3,
+            Some("v4") | None => VERSION_V4,
+            _ => VERSION_V4,
         };
 
         if version == VERSION_V1 {
+            Self::validate_v1_representable(ontology)?;
             return Self::serialize_v1(ontology, writer);
         }
 
-        let payload = OntologyPayload::from(ontology);
+        if version == VERSION_V2 || version == VERSION_V3 {
+            legacy::validate_legacy_payload_representable(ontology)?;
+        }
+
         Self::write_header(
             writer,
             version,
@@ -262,10 +277,17 @@ impl BinaryOntologyFormat {
         )?;
 
         if version == VERSION_V2 {
+            let payload = legacy::LegacyOntologyPayload::try_from_ontology(ontology)?;
             let config = config::standard();
             bincode::serde::encode_into_std_write(&payload, writer, config)
                 .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err.to_string()))?;
+        } else if version == VERSION_V3 {
+            let payload = legacy::LegacyOntologyPayload::try_from_ontology(ontology)?;
+            let config = config::standard().with_fixed_int_encoding();
+            bincode::serde::encode_into_std_write(&payload, writer, config)
+                .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err.to_string()))?;
         } else {
+            let payload = OntologyPayload::from(ontology);
             let config = config::standard().with_fixed_int_encoding();
             bincode::serde::encode_into_std_write(&payload, writer, config)
                 .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err.to_string()))?;
@@ -338,8 +360,8 @@ impl BinaryOntologyFormat {
             VERSION_V2 => {
                 let config = config::standard();
                 let decode_start = Instant::now();
-                let payload: OntologyPayload = bincode::serde::decode_from_std_read(reader, config)
-                    .map_err(|err| {
+                let payload: legacy::LegacyOntologyPayload =
+                    bincode::serde::decode_from_std_read(reader, config).map_err(|err| {
                         std::io::Error::new(std::io::ErrorKind::InvalidData, err.to_string())
                     })?;
                 Self::stage_log(
@@ -347,26 +369,65 @@ impl BinaryOntologyFormat {
                     &format!(
                         "ms={} version=2 classes={} axioms={}",
                         decode_start.elapsed().as_millis(),
-                        payload.classes.len(),
-                        payload.axioms.len()
+                        payload.class_count(),
+                        payload.axiom_count()
                     ),
                 );
                 let materialize_start = Instant::now();
-                payload.into_ontology().map_err(|err| {
-                    std::io::Error::new(std::io::ErrorKind::InvalidData, format!("{:?}", err))
-                }).inspect(|ontology| {
-                    Self::stage_log(
-                        "binary_payload_materialize_done",
-                        &format!(
-                            "ms={} version=2 classes={} axioms={}",
-                            materialize_start.elapsed().as_millis(),
-                            ontology.classes().len(),
-                            ontology.axioms().len()
-                        ),
-                    );
-                })
+                payload
+                    .into_current()
+                    .into_ontology()
+                    .map_err(|err| {
+                        std::io::Error::new(std::io::ErrorKind::InvalidData, format!("{:?}", err))
+                    })
+                    .inspect(|ontology| {
+                        Self::stage_log(
+                            "binary_payload_materialize_done",
+                            &format!(
+                                "ms={} version=2 classes={} axioms={}",
+                                materialize_start.elapsed().as_millis(),
+                                ontology.classes().len(),
+                                ontology.axioms().len()
+                            ),
+                        );
+                    })
             }
             VERSION_V3 => {
+                let config = config::standard().with_fixed_int_encoding();
+                let decode_start = Instant::now();
+                let payload: legacy::LegacyOntologyPayload =
+                    bincode::serde::decode_from_std_read(reader, config).map_err(|err| {
+                        std::io::Error::new(std::io::ErrorKind::InvalidData, err.to_string())
+                    })?;
+                Self::stage_log(
+                    "binary_payload_decode_done",
+                    &format!(
+                        "ms={} version=3 classes={} axioms={}",
+                        decode_start.elapsed().as_millis(),
+                        payload.class_count(),
+                        payload.axiom_count()
+                    ),
+                );
+                let materialize_start = Instant::now();
+                payload
+                    .into_current()
+                    .into_ontology()
+                    .map_err(|err| {
+                        std::io::Error::new(std::io::ErrorKind::InvalidData, format!("{:?}", err))
+                    })
+                    .inspect(|ontology| {
+                        Self::stage_log(
+                            "binary_payload_materialize_done",
+                            &format!(
+                                "ms={} version=3 classes={} axioms={}",
+                                materialize_start.elapsed().as_millis(),
+                                ontology.classes().len(),
+                                ontology.axioms().len()
+                            ),
+                        );
+                    })
+            }
+            VERSION_V4 => {
                 let config = config::standard().with_fixed_int_encoding();
                 let decode_start = Instant::now();
                 let payload: OntologyPayload = bincode::serde::decode_from_std_read(reader, config)
@@ -376,26 +437,29 @@ impl BinaryOntologyFormat {
                 Self::stage_log(
                     "binary_payload_decode_done",
                     &format!(
-                        "ms={} version=3 classes={} axioms={}",
+                        "ms={} version=4 classes={} axioms={}",
                         decode_start.elapsed().as_millis(),
                         payload.classes.len(),
                         payload.axioms.len()
                     ),
                 );
                 let materialize_start = Instant::now();
-                payload.into_ontology().map_err(|err| {
-                    std::io::Error::new(std::io::ErrorKind::InvalidData, format!("{:?}", err))
-                }).inspect(|ontology| {
-                    Self::stage_log(
-                        "binary_payload_materialize_done",
-                        &format!(
-                            "ms={} version=3 classes={} axioms={}",
-                            materialize_start.elapsed().as_millis(),
-                            ontology.classes().len(),
-                            ontology.axioms().len()
-                        ),
-                    );
-                })
+                payload
+                    .into_ontology()
+                    .map_err(|err| {
+                        std::io::Error::new(std::io::ErrorKind::InvalidData, format!("{:?}", err))
+                    })
+                    .inspect(|ontology| {
+                        Self::stage_log(
+                            "binary_payload_materialize_done",
+                            &format!(
+                                "ms={} version=4 classes={} axioms={}",
+                                materialize_start.elapsed().as_millis(),
+                                ontology.classes().len(),
+                                ontology.axioms().len()
+                            ),
+                        );
+                    })
             }
             _ => Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
@@ -470,6 +534,69 @@ impl BinaryOntologyFormat {
                 )
             })
             .count() as u64
+    }
+
+    fn validate_v1_representable(ontology: &Ontology) -> IoResult<()> {
+        if ontology.iri().is_some()
+            || ontology.version_iri().is_some()
+            || !ontology.imports().is_empty()
+            || !ontology.anonymous_individuals().is_empty()
+            || !ontology.annotation_properties().is_empty()
+            || !ontology.annotations().is_empty()
+        {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "ontology metadata is not representable in binary v1",
+            ));
+        }
+
+        for axiom in ontology.axioms() {
+            match axiom.as_ref() {
+                Axiom::SubClassOf(axiom) => {
+                    Self::validate_v1_class_expression(axiom.sub_class())?;
+                    Self::validate_v1_class_expression(axiom.super_class())?;
+                }
+                Axiom::ClassAssertion(axiom) => {
+                    Self::validate_v1_class_expression(axiom.class_expr())?;
+                }
+                _ => {
+                    return Err(std::io::Error::new(
+                        std::io::ErrorKind::InvalidInput,
+                        "ontology contains an axiom not representable in binary v1",
+                    ));
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn validate_v1_class_expression(expr: &ClassExpression) -> IoResult<()> {
+        match expr {
+            ClassExpression::Class(_) => Ok(()),
+            ClassExpression::ObjectIntersectionOf(operands)
+            | ClassExpression::ObjectUnionOf(operands) => {
+                for operand in operands {
+                    Self::validate_v1_class_expression(operand)?;
+                }
+                Ok(())
+            }
+            ClassExpression::ObjectComplementOf(operand) => {
+                Self::validate_v1_class_expression(operand)
+            }
+            ClassExpression::ObjectMinCardinality(_, _, Some(_))
+            | ClassExpression::ObjectMaxCardinality(_, _, Some(_))
+            | ClassExpression::ObjectExactCardinality(_, _, Some(_))
+            | ClassExpression::DataMinCardinality(_, _, Some(_))
+            | ClassExpression::DataMaxCardinality(_, _, Some(_))
+            | ClassExpression::DataExactCardinality(_, _, Some(_)) => Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "qualified cardinality is not representable in binary v1",
+            )),
+            _ => Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "class expression is not representable in binary v1",
+            )),
+        }
     }
 
     fn collect_class_expression_strings(expr: &ClassExpression, table: &mut StringTable) {

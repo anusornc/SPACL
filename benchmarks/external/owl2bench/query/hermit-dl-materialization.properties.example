@@ -1,0 +1,5 @@
+# Copy this file to an operator-owned path and pin the supplied HermiT jar.
+engine.id=HermiT
+hermit.version=1.3.8.1
+materialization.mode=finite_query_complete
+query.namespace=https://kracr.iiitd.edu.in/OWL2Bench#

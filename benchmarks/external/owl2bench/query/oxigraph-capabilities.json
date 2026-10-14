@@ -1,0 +1,13 @@
+{
+  "supports_query": true,
+  "profiles": ["ALL"],
+  "data_mode": "directory",
+  "engine": "oxigraph",
+  "engine_image": "oxigraph/oxigraph:0.5.9",
+  "engine_image_digest": "sha256:e68b3625743db4a4b18129a907ae36766f89bb6deeb8ab50d35685dbabe00b0e",
+  "query_result_format": "tsv",
+  "prefix_injection": {
+    "default": "https://kracr.iiitd.edu.in/OWL2Bench#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+  }
+}

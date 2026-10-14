@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "status": "accepted",
+  "profile": "QL",
+  "execution_variant": "openllet-ql",
+  "materialization_revision": "openllet-ql-materialization-v1",
+  "profile_identity": {
+    "id": "owl2bench:QL:universities=1:seed=1",
+    "source_revision": "5a27536c8e7f7621b34c61c8a57ed9eb63e7829a",
+    "identity_sha256": "sha256:24d2236999ae19f855012c7af1784173de180b6619428aecb074eb898b67ddbd"
+  },
+  "artifacts": {
+    "source": "sha256:ffdeaf9d493ed584917ef00af0a5e3491d0fdd8754f364699c9bf4f6cf7d44e7",
+    "generated_dataset": "sha256:d2c5037f49f8a71488b3e2e2b8d82057b18bda931319eb4b7cf3d09a41e17d9c",
+    "profile_tbox": "sha256:c70b68f1c21cd44e828bf9cb8b1b89f7bc1ba5ede06d7b534cc61d4d9b7a01d5",
+    "profile_abox": "sha256:c0feac784e2bf3e2c2a0b987879216b99a6818b1f3d6540b344c08d10d236e9b",
+    "generator": "sha256:c2bacf1d80e91ec05625b4c458f899a626ef92b85c60c6bac1f0a519060839ff",
+    "generator_configuration": "sha256:46427d870a0cb17ec05c3eabfaba7b5bb387745515835d9c052fa639947cb7fa"
+  },
+  "query_workload": {
+    "manifest_sha256": "sha256:dae8f0a57e74a61690cce432915edeadba929ccf7a84c91a2a59e8a841d8f7a7",
+    "source_corpus": "zenodo:3838735",
+    "source_revision": "87af702049661ae9c2979dd59281d83985aed8900bbcc682f5556058c0dbdb56",
+    "query_count": 10,
+    "queries": [
+      {"id": "owl2bench_query_001", "sha256": "sha256:e33427b395a4a881beeec880f286de2124fa330805f413a97d2a2c989aa8b2e5"},
+      {"id": "owl2bench_query_007", "sha256": "sha256:f4e251b6d71e5c2d876d315de47e1ac5bcb567016416116de5002fb2bdf1eab8"},
+      {"id": "owl2bench_query_008", "sha256": "sha256:0704ea07f7d3faf2ff0ff1993d926e460ecb4ab66e4b5dbf80b9fe053bf65935"},
+      {"id": "owl2bench_query_009", "sha256": "sha256:672329164b44b86229a6d986e7641bfd0a9e877a2baa14b7b6a5ef6068e2dca1"},
+      {"id": "owl2bench_query_010", "sha256": "sha256:e00ea6fa7369da0e0a02246e3318a599bc575b9eb1644b4249b4aafd5bdcbd9b"},
+      {"id": "owl2bench_query_011", "sha256": "sha256:ee71f14a07c6efac61ab6eb186f85ee132b60b3a32073d5bab4635087feb2f3a"},
+      {"id": "owl2bench_query_019", "sha256": "sha256:77179c2e7a81842200c8a05e36a74485baa37f736a40412b8915b2b5ce18b972"},
+      {"id": "owl2bench_query_020", "sha256": "sha256:257ead2db9a3e4dcac270fb1752108354a368e453937be09823be0f90c9b0db3"},
+      {"id": "owl2bench_query_021", "sha256": "sha256:0d34789ae8b0c44c3a352e98316a7281d750c25e9bdec323cfed95e04fc278e0"},
+      {"id": "owl2bench_query_022", "sha256": "sha256:c9cc24d7d329f5b5256d35e2376c6165583da83b7dc899e3ba59b32180cc75ef"}
+    ]
+  },
+  "change_policy": "Any lock change requires a new materialization revision and fresh diagnostic plus 10-query evidence"
+}

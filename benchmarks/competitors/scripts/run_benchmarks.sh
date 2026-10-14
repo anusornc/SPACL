@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # OWL reasoner head-to-head benchmark harness.
-# Includes: SPACL, HermiT, Konclude, Openllet, ELK, JFact, Pellet.
+# Includes: Tableauxx, HermiT, Konclude, Openllet, ELK, JFact, Pellet.
 #
 # Fairness policy:
 # - Every reasoner runs the same operation (`consistency` by default).
@@ -15,7 +15,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BENCHMARK_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 PROJECT_ROOT="$(cd "$BENCHMARK_DIR/../.." && pwd)"
 
-RESULTS_DIR="$BENCHMARK_DIR/results"
+source "$SCRIPT_DIR/benchmark_result.sh"
+
+RESULTS_DIR="${RESULTS_DIR_OVERRIDE:-$BENCHMARK_DIR/results}"
 ONTOLOGIES_DIR="${ONTOLOGIES_DIR_OVERRIDE:-$BENCHMARK_DIR/ontologies}"
 LARGE_ONTOLOGIES_DIR="${LARGE_ONTOLOGIES_DIR_OVERRIDE:-$PROJECT_ROOT/benchmarks/ontologies/other}"
 
@@ -24,6 +26,9 @@ OPERATION="${OPERATION:-consistency}"
 ONTOLOGY_SUITE="${ONTOLOGY_SUITE:-standard}"   # standard | large | all
 INCLUDE_CHEBI="${INCLUDE_CHEBI:-1}"            # include 773MB ChEBI when suite has large
 ONTOLOGY_REGEX="${ONTOLOGY_REGEX:-}"           # optional filename regex filter
+ORACLE_STATUS="${ORACLE_STATUS:-not_applicable}"
+ORACLE_SOURCE="${ORACLE_SOURCE:-}"
+CORRECTNESS_STATUS="${CORRECTNESS_STATUS:-not_evaluated}"
 
 RUN_ID_PROVIDED=0
 if [[ "${RUN_ID+x}" == "x" ]]; then
@@ -38,6 +43,7 @@ RUN_CSV_FILE="$RUN_DIR/results.csv"
 RUN_PAPER_MD="$RUN_DIR/paper_table.md"
 RUN_PAPER_TEX="$RUN_DIR/paper_table.tex"
 RUN_ONTOLOGY_DIR="$RUN_DIR/ontologies"
+RUN_KONCLUDE_INPUT_DIR="$RUN_DIR/konclude_inputs"
 LATEST_LINK="$RESULTS_DIR/latest"
 
 DEFAULT_REASONERS=("tableauxx" "hermit" "konclude" "openllet" "elk" "jfact" "pellet")
@@ -57,6 +63,12 @@ else
 fi
 
 declare -A REASONER_BUILD_STATUS
+
+# Engine provenance (ADR 0025): every executed engine is pinned in run
+# metadata by its docker image digest and its engine-reported version.
+declare -A ENGINE_IMAGE_DIGEST
+declare -A ENGINE_VERSION
+declare -A ENGINE_EXECUTED
 
 FORWARDED_OWL_ENV_VARS=(
     OWL2_REASONER_LARGE_PARSE
@@ -82,6 +94,12 @@ FORWARDED_OWL_ENV_VARS=(
     OWL2_REASONER_LARGE_PROFILE_AUTO
     OWL2_REASONER_LARGE_PROFILE_THRESHOLD
     OWL2_REASONER_STAGE_TIMING
+    SPACL_SCHED_MODE
+    SPACL_BRANCH_POLICY
+    SPACL_RRN_MODEL_PATH
+    SPACL_BRANCH_SNAPSHOT_FILE
+    SPACL_NOGOOD
+    SPACL_EMIT_STATS
 )
 
 declare -a ACTIVE_CONTAINERS=()
@@ -102,6 +120,38 @@ log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
 log_ok() { echo -e "${GREEN}[OK]${NC} $1"; }
 log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 log_err() { echo -e "${RED}[ERR]${NC} $1"; }
+
+prepare_konclude_input() {
+    local ontology_path="$1"
+    local ontology_name prepared_name prepared_path
+    ontology_name="$(basename "$ontology_path")"
+    prepared_name="${ontology_name%.owl}.konclude.owlxml.owl"
+    prepared_path="$RUN_KONCLUDE_INPUT_DIR/$prepared_name"
+
+    mkdir -p "$RUN_KONCLUDE_INPUT_DIR"
+
+    if [[ -f "$prepared_path" ]]; then
+        printf '%s\n' "$prepared_path"
+        return 0
+    fi
+
+    log_info "Preprocessing Konclude input for $ontology_name (merge imports + OWL/XML)"
+    if docker run --rm --entrypoint java \
+        -v "$PROJECT_ROOT:/work:ro" \
+        -v "$RUN_KONCLUDE_INPUT_DIR:/out" \
+        owl-reasoner-openllet \
+        -cp "/opt/reasoner/bin:/opt/reasoner/target/dependency/*" \
+        OwlapiFormatConverter \
+        "/work/${ontology_path#$PROJECT_ROOT/}" \
+        "/out/$prepared_name" \
+        owlxml \
+        merge >/dev/null 2>&1; then
+        printf '%s\n' "$prepared_path"
+        return 0
+    fi
+
+    return 1
+}
 
 register_active_container() {
     local container_name="$1"
@@ -141,6 +191,55 @@ require_cmd() {
         log_err "Missing required command: $1"
         exit 1
     fi
+}
+
+truthy() {
+    local value
+    value="$(printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]' | xargs)"
+    case "$value" in
+        ""|"0"|"false"|"no") return 1 ;;
+        *) return 0 ;;
+    esac
+}
+
+looks_like_rdfxml() {
+    local file="$1"
+    if [[ ! -f "$file" ]]; then
+        return 1
+    fi
+    local head_sample
+    head_sample="$(head -c 4096 "$file" 2>/dev/null || true)"
+    [[ "$head_sample" == *"<?xml"* || "$head_sample" == *"<rdf:RDF"* ]]
+}
+
+tableauxx_expected_check_auto_input() {
+    local mount_dir="$1"
+    local container_ontology_name="$2"
+    local host_input="$mount_dir/$container_ontology_name"
+    local selected_name="$container_ontology_name"
+
+    if [[ "$container_ontology_name" == *.owl ]]; then
+        local host_bin="${host_input%.owl}.owlbin"
+        if [[ "${OWL2_REASONER_BIN_ONLY:-}" == "1" && -f "$host_bin" ]]; then
+            selected_name="$(basename "$host_bin")"
+        elif [[ "${OWL2_REASONER_BIN_ONLY:-}" != "1" && "${OWL2_REASONER_FORCE_TEXT:-}" != "1" && -f "$host_bin" ]]; then
+            local threshold="${OWL2_REASONER_LARGE_PROFILE_THRESHOLD:-4194304}"
+            if [[ ! "$threshold" =~ ^[0-9]+$ || "$threshold" -le 0 ]]; then
+                threshold=4194304
+            fi
+            local file_size
+            file_size="$(stat -c%s "$host_input" 2>/dev/null || echo 0)"
+            if truthy "${OWL2_REASONER_LARGE_PROFILE_AUTO:-1}" \
+                && [[ "$file_size" -ge "$threshold" ]] \
+                && looks_like_rdfxml "$host_input"; then
+                selected_name="$container_ontology_name"
+            else
+                selected_name="$(basename "$host_bin")"
+            fi
+        fi
+    fi
+
+    printf '/ontologies/%s\n' "$selected_name"
 }
 
 ensure_run_dirs() {
@@ -236,6 +335,7 @@ prepare_ontologies() {
 write_run_metadata() {
     ensure_run_dirs
     jq -n \
+        --argjson result_schema_version "$BENCHMARK_RESULT_SCHEMA_VERSION" \
         --arg run_id "$RUN_ID" \
         --arg started_at "$(date -Iseconds)" \
         --arg ontology_suite "$ONTOLOGY_SUITE" \
@@ -246,7 +346,9 @@ write_run_metadata() {
         --argjson include_chebi "$INCLUDE_CHEBI" \
         --arg run_dir "$RUN_DIR" \
         --argjson reasoners "$(printf '%s\n' "${REASONERS[@]}" | jq -R . | jq -s .)" \
+        --argjson engine_provenance "$(engine_provenance_json)" \
         '{
+            result_schema_version: $result_schema_version,
             run_id: $run_id,
             started_at: $started_at,
             ontology_suite: $ontology_suite,
@@ -256,13 +358,90 @@ write_run_metadata() {
             timeout_seconds: $timeout_seconds,
             include_chebi: ($include_chebi == 1),
             reasoners: $reasoners,
+            engine_provenance: $engine_provenance,
             run_dir: $run_dir,
             fairness_policy: {
               primary_metric: "wall_time_ms",
               operation: "single_operation_per_run",
-              isolation: "run_scoped_results_directory"
+              isolation: "run_scoped_results_directory",
+              correctness_gate: "result_status must be passed before semantic performance claims"
             }
          }' > "$RUN_DIR/run_metadata.json"
+}
+
+engine_provenance_json() {
+    local provenance_json="{}"
+    local reasoner entry
+    for reasoner in "${REASONERS[@]}"; do
+        [[ -n "${ENGINE_IMAGE_DIGEST[$reasoner]:-}" ]] || continue
+        entry="$(jq -n \
+            --arg image "owl-reasoner-$reasoner" \
+            --arg digest "${ENGINE_IMAGE_DIGEST[$reasoner]}" \
+            --arg version "${ENGINE_VERSION[$reasoner]:-unknown}" \
+            '{image: $image, image_digest: $digest, engine_version: $version}')"
+        provenance_json="$(jq -nc --argjson provenance "$provenance_json" \
+            --arg reasoner "$reasoner" --argjson entry "$entry" \
+            '$provenance + {($reasoner): $entry}')"
+    done
+    printf '%s\n' "$provenance_json"
+}
+
+record_engine_image_digests() {
+    local reasoner digest
+    for reasoner in "${REASONERS[@]}"; do
+        if [[ "${REASONER_BUILD_STATUS[$reasoner]:-unknown}" != "ready" ]]; then
+            continue
+        fi
+        digest="$(docker image inspect --format '{{.Id}}' "owl-reasoner-$reasoner" 2>/dev/null || true)"
+        if [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            ENGINE_IMAGE_DIGEST["$reasoner"]="$digest"
+        else
+            log_warn "$reasoner: could not record docker image digest"
+        fi
+    done
+}
+
+record_engine_version_from_output() {
+    local reasoner="$1"
+    local output_file="$2"
+    [[ -n "${ENGINE_VERSION[$reasoner]:-}" ]] && return 0
+    [[ -f "$output_file" ]] || return 0
+    local version
+    version="$(grep -Eo '"version"[[:space:]]*:[[:space:]]*"[^"]+"' "$output_file" 2>/dev/null \
+        | head -1 | sed -E 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/' || true)"
+    if [[ -n "$version" ]]; then
+        ENGINE_VERSION["$reasoner"]="$version"
+    fi
+    return 0
+}
+
+update_engine_provenance_metadata() {
+    ensure_run_dirs
+    if [[ ! -f "$RUN_DIR/run_metadata.json" ]]; then
+        log_err "Cannot record engine provenance: missing $RUN_DIR/run_metadata.json"
+        return 1
+    fi
+    jq --argjson engine_provenance "$(engine_provenance_json)" \
+        '.engine_provenance = $engine_provenance' \
+        "$RUN_DIR/run_metadata.json" > "${RUN_DIR}/run_metadata.json.tmp" \
+        && mv "${RUN_DIR}/run_metadata.json.tmp" "$RUN_DIR/run_metadata.json"
+
+    local -a executed_engines=()
+    local reasoner
+    for reasoner in "${REASONERS[@]}"; do
+        if [[ -n "${ENGINE_EXECUTED[$reasoner]:-}" ]]; then
+            executed_engines+=("$reasoner")
+            if [[ -z "${ENGINE_VERSION[$reasoner]:-}" ]]; then
+                log_warn "$reasoner: engine version not reported in any output; recorded as unknown"
+            fi
+        fi
+    done
+
+    if ! validate_run_metadata_engine_provenance "$RUN_DIR/run_metadata.json" ${executed_engines[@]+"${executed_engines[@]}"}; then
+        log_err "Engine provenance validation failed for $RUN_DIR (executed engines: ${executed_engines[*]:-none})"
+        return 1
+    fi
+    log_ok "Engine provenance recorded for ${#executed_engines[@]} executed engine(s)"
 }
 
 build_images() {
@@ -311,36 +490,50 @@ write_result_json() {
     local parse_ms="$9"
     local reason_ms="${10}"
     local tmp_output="${11}"
+    local case_id="${ONTOLOGY_SUITE}:${ontology_name}:${operation}"
+    local oracle_case_id="${ORACLE_CASE_ID:-$case_id}"
+    local expected_semantic_result="${EXPECTED_SEMANTIC_RESULT:-}"
 
-    jq -n \
-        --arg run_id "$RUN_ID" \
-        --arg ontology_suite "$ONTOLOGY_SUITE" \
-        --arg reasoner "$reasoner" \
-        --arg ontology "$ontology_name" \
-        --arg operation "$operation" \
-        --arg status "$status" \
-        --arg reasoning_result "$reasoning_result" \
-        --arg timestamp "$(date -Iseconds)" \
-        --argjson wall_time_ms "$wall_ms" \
-        --argjson reported_time_ms "$reported_ms" \
-        --argjson parse_ms "$parse_ms" \
-        --argjson reason_ms "$reason_ms" \
-        --rawfile output "$tmp_output" \
-        '{
-            run_id: $run_id,
-            ontology_suite: $ontology_suite,
-            reasoner: $reasoner,
-            ontology: $ontology,
-            operation: $operation,
-            wall_time_ms: $wall_time_ms,
-            reported_time_ms: $reported_time_ms,
-            parse_time_ms: $parse_ms,
-            reason_time_ms: $reason_ms,
-            status: $status,
-            reasoning_result: $reasoning_result,
-            timestamp: $timestamp,
-            output: $output
-         }' > "$result_file"
+    # The engine wrapper reports its version in the container output; the
+    # first observed value per engine pins the run's engine provenance.
+    record_engine_version_from_output "$reasoner" "$tmp_output"
+
+    write_benchmark_result \
+        "$result_file" \
+        "$RUN_ID" \
+        "$ONTOLOGY_SUITE" \
+        "$case_id" \
+        "$reasoner" \
+        "$ontology_name" \
+        "$operation" \
+        "$status" \
+        "$reasoning_result" \
+        "$CORRECTNESS_STATUS" \
+        "$ORACLE_STATUS" \
+        "$ORACLE_SOURCE" \
+        "$oracle_case_id" \
+        "$expected_semantic_result" \
+        "$wall_ms" \
+        "$reported_ms" \
+        "$parse_ms" \
+        "$reason_ms" \
+        "$tmp_output"
+
+    # Project the check-auto merge-probe posture marker (#168/#171,
+    # ADR 0022) into the outer result JSON: skipped_size_gate or
+    # budget_exhausted when the report carried one, absent otherwise.
+    # Post-patch rather than a signature change: the raw output is the
+    # transport the report already rode in on.
+    local merge_probe_marker
+    if [[ -f "$tmp_output" ]]; then
+        merge_probe_marker="$(grep -Eo '"merge_probe"[[:space:]]*:[[:space:]]*"[^"]+"' "$tmp_output" 2>/dev/null | tail -1 | sed -E 's/.*"merge_probe"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/' || true)"
+        if [[ -n "$merge_probe_marker" ]]; then
+            jq --arg merge_probe "$merge_probe_marker" \
+                '.merge_probe = $merge_probe' "$result_file" > "${result_file}.probe" \
+                && mv "${result_file}.probe" "$result_file" \
+                || rm -f "${result_file}.probe"
+        fi
+    fi
 }
 
 cleanup_active_containers() {
@@ -445,17 +638,25 @@ run_single_benchmark() {
         return
     fi
 
+    # From here on the harness executes this engine, so its provenance must
+    # be pinned in run metadata.
+    ENGINE_EXECUTED["$reasoner"]=1
+
     log_info "Running $reasoner on $ontology_name"
     local tmp_output
     tmp_output="$(mktemp)"
     local start_ns end_ns wall_ms cmd_status
     local reported_ms reported_status reasoning_result final_status parse_ms reason_ms
+    local report_json
     local container_name
     local exit_code_file wait_status
+    local mount_dir="$RUN_ONTOLOGY_DIR"
+    local container_ontology_name="$ontology_name"
     container_name="owlbench_${RUN_ID}_${reasoner}_${ontology_name%.owl}"
     container_name="${container_name//[^a-zA-Z0-9_.-]/_}"
     exit_code_file="$(mktemp)"
 
+    wait_status=1
     start_ns="$(date +%s%N)"
     docker rm -f "$container_name" >/dev/null 2>&1 || true
 
@@ -467,11 +668,25 @@ run_single_benchmark() {
         fi
     done
 
+    if [[ "$reasoner" == "openllet" && -n "${OPENLLET_JAVA_TOOL_OPTIONS:-}" ]]; then
+        docker_env_args+=(-e "JAVA_TOOL_OPTIONS=${OPENLLET_JAVA_TOOL_OPTIONS}")
+    fi
+
+    if [[ "$reasoner" == "konclude" && "${KONCLUDE_PREPROCESS_INPUTS:-1}" == "1" ]]; then
+        local prepared_konclude_input
+        if prepared_konclude_input="$(prepare_konclude_input "$ontology_path")"; then
+            mount_dir="$RUN_KONCLUDE_INPUT_DIR"
+            container_ontology_name="$(basename "$prepared_konclude_input")"
+        else
+            log_warn "Konclude preprocessing failed for $ontology_name; falling back to raw ontology input"
+        fi
+    fi
+
     if docker run -d --name "$container_name" \
         "${docker_env_args[@]}" \
-        -v "$RUN_ONTOLOGY_DIR:/ontologies:ro" \
+        -v "$mount_dir:/ontologies:ro" \
         "owl-reasoner-$reasoner" \
-        "/ontologies/$ontology_name" "$operation" >/dev/null 2>&1; then
+        "/ontologies/$container_ontology_name" "$operation" >/dev/null 2>&1; then
         register_active_container "$container_name" "$result_file" "$reasoner" "$ontology_name" "$operation" "$start_ns"
 
         if timeout --kill-after=5s "$TIMEOUT_SECONDS" docker wait "$container_name" > "$exit_code_file" 2>/dev/null; then
@@ -502,47 +717,97 @@ run_single_benchmark() {
     wall_ms=$(( (end_ns - start_ns) / 1000000 ))
     rm -f "$exit_code_file"
 
-    reported_ms="$(grep -Eo '"duration_ms"[[:space:]]*:[[:space:]]*-?[0-9]+' "$tmp_output" | tail -1 | grep -Eo -- '-?[0-9]+' || true)"
-    reported_status="$(grep -Eo '"status"[[:space:]]*:[[:space:]]*"[^"]+"' "$tmp_output" | tail -1 | sed -E 's/.*"status"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/' || true)"
-    reasoning_result="$(grep -Eo '"reasoning_result"[[:space:]]*:[[:space:]]*"[^"]+"' "$tmp_output" | tail -1 | sed -E 's/.*"reasoning_result"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/' || true)"
-    parse_ms="$(grep -Eo '"parse_time_ms"[[:space:]]*:[[:space:]]*-?[0-9]+' "$tmp_output" | tail -1 | grep -Eo -- '-?[0-9]+' || true)"
-    reason_ms="$(grep -Eo '"reason_time_ms"[[:space:]]*:[[:space:]]*-?[0-9]+' "$tmp_output" | tail -1 | grep -Eo -- '-?[0-9]+' || true)"
-
-    if [[ -z "$reported_ms" || ! "$reported_ms" =~ ^-?[0-9]+$ ]]; then
+    if [[ "$reasoner" == "tableauxx" && "$operation" == "consistency" && "$wait_status" -eq 0 ]]; then
+        local expected_check_auto_input
+        expected_check_auto_input="$(tableauxx_expected_check_auto_input "$mount_dir" "$container_ontology_name")"
+        report_json="$(mktemp)"
+        if benchmark_result_extract_tableauxx_check_auto_report \
+            "$tmp_output" \
+            "$expected_check_auto_input" \
+            "$operation" \
+            "$cmd_status" \
+            "$report_json"; then
+            reported_ms="$(jq -r '.duration_ms' "$report_json")"
+            reported_status="$(jq -r '.status' "$report_json")"
+            reasoning_result="$(jq -r '.reasoning_result' "$report_json")"
+            parse_ms="$(jq -r '.parse_time_ms // -1' "$report_json")"
+            reason_ms="$(jq -r '.reason_time_ms // -1' "$report_json")"
+            final_status="$reported_status"
+        else
+            log_warn "Invalid or missing check-auto report for $ontology_name (exit=$cmd_status)"
+            reported_ms="$wall_ms"
+            reported_status=""
+            reasoning_result="error"
+            parse_ms=-1
+            reason_ms=-1
+            if [[ "$cmd_status" -eq 124 ]]; then
+                final_status="timeout"
+                reasoning_result="unknown"
+            else
+                final_status="failed"
+            fi
+        fi
+        rm -f "$report_json"
+    elif [[ "$reasoner" == "tableauxx" && "$operation" == "consistency" ]]; then
+        # No application report can establish completion if waiting failed.
         reported_ms="$wall_ms"
-    fi
-    if [[ -z "$reasoning_result" ]]; then
-        reasoning_result="unknown"
-    fi
-    if [[ -z "$parse_ms" || ! "$parse_ms" =~ ^-?[0-9]+$ ]]; then
+        reported_status=""
         parse_ms=-1
-    fi
-    if [[ -z "$reason_ms" || ! "$reason_ms" =~ ^-?[0-9]+$ ]]; then
         reason_ms=-1
-    fi
-    if [[ "$parse_ms" -lt 0 ]]; then
-        parse_ms="$(grep -Eo '\[phase\][[:space:]]+parse_done[[:space:]]+ms=[0-9]+' "$tmp_output" | tail -1 | grep -Eo '[0-9]+' || true)"
-        if [[ -z "$parse_ms" || ! "$parse_ms" =~ ^[0-9]+$ ]]; then
+        if [[ "$cmd_status" -eq 124 ]]; then
+            final_status="timeout"
+            reasoning_result="unknown"
+        else
+            final_status="failed"
+            reasoning_result="error"
+        fi
+    else
+        reported_ms="$(grep -Eo '"duration_ms"[[:space:]]*:[[:space:]]*-?[0-9]+' "$tmp_output" | tail -1 | grep -Eo -- '-?[0-9]+' || true)"
+        reported_status="$(grep -Eo '"status"[[:space:]]*:[[:space:]]*"[^"]+"' "$tmp_output" | tail -1 | sed -E 's/.*"status"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/' || true)"
+        reasoning_result="$(grep -Eo '"reasoning_result"[[:space:]]*:[[:space:]]*"[^"]+"' "$tmp_output" | tail -1 | sed -E 's/.*"reasoning_result"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/' || true)"
+        parse_ms="$(grep -Eo '"parse_time_ms"[[:space:]]*:[[:space:]]*-?[0-9]+' "$tmp_output" | tail -1 | grep -Eo -- '-?[0-9]+' || true)"
+        reason_ms="$(grep -Eo '"reason_time_ms"[[:space:]]*:[[:space:]]*-?[0-9]+' "$tmp_output" | tail -1 | grep -Eo -- '-?[0-9]+' || true)"
+
+        if [[ -z "$reported_ms" || ! "$reported_ms" =~ ^-?[0-9]+$ ]]; then
+            reported_ms="$wall_ms"
+        fi
+        if [[ -z "$reasoning_result" ]]; then
+            reasoning_result="unknown"
+        fi
+        if [[ -z "$parse_ms" || ! "$parse_ms" =~ ^-?[0-9]+$ ]]; then
             parse_ms=-1
         fi
-    fi
-    if [[ "$reason_ms" -lt 0 ]]; then
-        reason_ms="$(grep -Eo '\[phase\][[:space:]]+reason_done[[:space:]]+ms=[0-9]+' "$tmp_output" | tail -1 | grep -Eo '[0-9]+' || true)"
-        if [[ -z "$reason_ms" || ! "$reason_ms" =~ ^[0-9]+$ ]]; then
+        if [[ -z "$reason_ms" || ! "$reason_ms" =~ ^-?[0-9]+$ ]]; then
             reason_ms=-1
         fi
-    fi
+        if [[ "$parse_ms" -lt 0 ]]; then
+            parse_ms="$(grep -Eo '\[phase\][[:space:]]+parse_done[[:space:]]+ms=[0-9]+' "$tmp_output" | tail -1 | grep -Eo '[0-9]+' || true)"
+            if [[ -z "$parse_ms" || ! "$parse_ms" =~ ^[0-9]+$ ]]; then
+                parse_ms=-1
+            fi
+        fi
+        if [[ "$reason_ms" -lt 0 ]]; then
+            reason_ms="$(grep -Eo '\[phase\][[:space:]]+reason_done[[:space:]]+ms=[0-9]+' "$tmp_output" | tail -1 | grep -Eo '[0-9]+' || true)"
+            if [[ -z "$reason_ms" || ! "$reason_ms" =~ ^[0-9]+$ ]]; then
+                reason_ms=-1
+            fi
+        fi
 
-    if [[ "$cmd_status" -eq 124 ]]; then
-        final_status="timeout"
-    elif [[ "$reported_status" == "not_available" ]]; then
-        final_status="not_available"
-    elif [[ "$cmd_status" -ne 0 ]]; then
-        final_status="failed"
-    elif [[ "$reported_status" == "failed" || "$reported_status" == "unsupported_operation" ]]; then
-        final_status="$reported_status"
-    else
-        final_status="success"
+        if [[ "$cmd_status" -eq 124 ]]; then
+            final_status="timeout"
+        elif [[ "$reported_status" == "not_available" ]]; then
+            final_status="not_available"
+        elif [[ "$reported_status" == "non_comparable" ]]; then
+            final_status="non_comparable"
+        elif [[ "$reported_status" == "unsupported" || "$reported_status" == "unsupported_operation" ]]; then
+            final_status="$reported_status"
+        elif [[ "$cmd_status" -ne 0 ]]; then
+            final_status="failed"
+        elif [[ "$reported_status" == "failed" ]]; then
+            final_status="$reported_status"
+        else
+            final_status="success"
+        fi
     fi
 
     write_result_json "$result_file" "$reasoner" "$ontology_name" "$wall_ms" "$reported_ms" "$final_status" "$reasoning_result" "$operation" "$parse_ms" "$reason_ms" "$tmp_output"
@@ -582,24 +847,87 @@ run_all_benchmarks() {
 }
 
 status_code_for_cell() {
-    local status="$1"
-    case "$status" in
-        timeout) echo "TO" ;;
-        not_available) echo "NA" ;;
-        killed) echo "KIL" ;;
-        orphan) echo "ORPH" ;;
-        failed|unsupported_operation) echo "FAIL" ;;
-        *) echo "?" ;;
-    esac
+    benchmark_result_status_code "$1"
+}
+
+result_execution_status() {
+    jq -r '.execution_status // .status' "$1"
+}
+
+result_execution_detail() {
+    jq -r '.execution_detail // .status' "$1"
+}
+
+result_overall_status() {
+    jq -r 'if .schema_version == 1 then .result_status else (if .status == "success" then "not_evaluated" else .status end) end' "$1"
+}
+
+result_display_status() {
+    jq -r 'if .schema_version == 1 then .result_status else .status end' "$1"
+}
+
+result_correctness_status() {
+    jq -r '.correctness_status // "not_evaluated"' "$1"
+}
+
+result_oracle_status() {
+    jq -r '.oracle.status // "not_configured"' "$1"
+}
+
+result_semantic_result() {
+    jq -r '.semantic_result // .reasoning_result // "unknown"' "$1"
+}
+
+result_case_id() {
+    jq -r '(.case_id // ((.ontology_suite // "unknown") + ":" + (.ontology // "unknown") + ":" + (.operation // "unknown")))' "$1"
+}
+
+result_performance_eligible() {
+    local result_file="$1"
+    local schema_version execution_status result_status
+
+    schema_version="$(jq -r '.schema_version // 0' "$result_file")"
+    execution_status="$(result_execution_status "$result_file")"
+    result_status="$(result_overall_status "$result_file")"
+
+    [[ "$execution_status" == "success" ]] || return 1
+    [[ "$schema_version" != "1" || "$result_status" == "passed" ]]
 }
 
 generate_csv() {
     local csv_file="$RUN_CSV_FILE"
-    echo "run_id,ontology_suite,reasoner,ontology,operation,status,reasoning_result,wall_time_ms,reported_time_ms,parse_time_ms,reason_time_ms,timestamp" > "$csv_file"
+    echo "run_id,ontology_suite,case_id,reasoner,ontology,operation,status,execution_status,execution_detail,result_status,correctness_status,oracle_status,oracle_source,oracle_case_id,oracle_expected,semantic_result,reasoning_result,wall_time_ms,reported_time_ms,parse_time_ms,reason_time_ms,timestamp" > "$csv_file"
     local file
-    mapfile -t result_files < <(find "$RUN_DIR" -maxdepth 1 -type f -name "*.json" ! -name "run_metadata.json" | sort)
+    mapfile -t result_files < <(
+        find "$RUN_DIR" -maxdepth 1 -type f -name "*.json" \
+            ! -name "run_metadata.json" ! -name "ore_metadata.json" ! -name "summary.json" \
+            ! -name "owl2bench_ladder_metadata.json" | sort
+    )
     for file in "${result_files[@]}"; do
-        jq -r '[.run_id,.ontology_suite,.reasoner,.ontology,.operation,.status,.reasoning_result,.wall_time_ms,.reported_time_ms,.parse_time_ms,.reason_time_ms,.timestamp] | @csv' "$file" >> "$csv_file"
+        jq -r '[
+            .run_id,
+            .ontology_suite,
+            (.case_id // ((.ontology_suite // "unknown") + ":" + (.ontology // "unknown") + ":" + (.operation // "unknown"))),
+            .reasoner,
+            .ontology,
+            .operation,
+            .status,
+            (.execution_status // .status),
+            (.execution_detail // .status),
+            (if .schema_version == 1 then .result_status else (if .status == "success" then "not_evaluated" else .status end) end),
+            (.correctness_status // "not_evaluated"),
+            (.oracle.status // "not_configured"),
+            (.oracle.source // ""),
+            (.oracle.case_id // ""),
+            (.oracle.expected // ""),
+            (.semantic_result // .reasoning_result // "unknown"),
+            (.reasoning_result // .semantic_result // "unknown"),
+            .wall_time_ms,
+            .reported_time_ms,
+            .parse_time_ms,
+            .reason_time_ms,
+            .timestamp
+        ] | @csv' "$file" >> "$csv_file"
     done
     log_ok "CSV generated: $csv_file"
 }
@@ -608,7 +936,12 @@ generate_paper_tables() {
     local md_file="$RUN_PAPER_MD"
     local tex_file="$RUN_PAPER_TEX"
 
-    mapfile -t ontologies < <(find "$RUN_DIR" -maxdepth 1 -type f -name "*.json" ! -name "run_metadata.json" -print0 | xargs -0 -I{} jq -r '.ontology' "{}" | sort -u)
+    mapfile -t ontologies < <(
+        find "$RUN_DIR" -maxdepth 1 -type f -name "*.json" \
+            ! -name "run_metadata.json" ! -name "ore_metadata.json" ! -name "summary.json" \
+            ! -name "owl2bench_ladder_metadata.json" \
+            -print0 | xargs -0 -I{} jq -r '.ontology' "{}" | sort -u
+    )
     if [[ "${#ontologies[@]}" -eq 0 ]]; then
         log_warn "No result JSON files found for paper table generation"
         return
@@ -639,9 +972,11 @@ generate_paper_tables() {
             for reasoner in "${REASONERS[@]}"; do
                 local file="$RUN_DIR/${reasoner}_${ontology%.owl}.json"
                 if [[ -f "$file" ]]; then
-                    status="$(jq -r '.status' "$file")"
+                    status="$(result_display_status "$file")"
                     wall_candidate="$(jq -r '.wall_time_ms' "$file")"
-                    if [[ "$status" == "success" && "$wall_candidate" =~ ^[0-9]+$ && "$wall_candidate" -lt "$best" ]]; then
+                    if result_performance_eligible "$file" \
+                        && [[ "$wall_candidate" =~ ^[0-9]+$ ]] \
+                        && [[ "$wall_candidate" -lt "$best" ]]; then
                         best="$wall_candidate"
                     fi
                 fi
@@ -654,9 +989,9 @@ generate_paper_tables() {
                     printf ' - |'
                     continue
                 fi
-                status="$(jq -r '.status' "$file")"
+                status="$(result_display_status "$file")"
                 wall="$(jq -r '.wall_time_ms' "$file")"
-                if [[ "$status" == "success" ]]; then
+                if result_performance_eligible "$file"; then
                     if [[ "$wall" -eq "$best" ]]; then
                         printf ' **%s** |' "$wall"
                     else
@@ -670,7 +1005,7 @@ generate_paper_tables() {
         done
 
         echo
-        echo "Legend: **best wall time**, TO=timeout, NA=not available, KIL=interrupted cleanup kill, ORPH=container orphan cleanup, FAIL=runtime/parser failure."
+        echo "Legend: **best wall time**, TO=timeout, NA=not available, NC=non-comparable parser/runtime incompatibility, KIL=interrupted cleanup kill, ORPH=container orphan cleanup, FAIL=hard runtime failure."
     } > "$md_file"
     log_ok "Paper markdown table generated: $md_file"
 
@@ -698,9 +1033,11 @@ generate_paper_tables() {
             for reasoner in "${REASONERS[@]}"; do
                 local file="$RUN_DIR/${reasoner}_${ontology%.owl}.json"
                 if [[ -f "$file" ]]; then
-                    status="$(jq -r '.status' "$file")"
+                    status="$(result_display_status "$file")"
                     wall="$(jq -r '.wall_time_ms' "$file")"
-                    if [[ "$status" == "success" && "$wall" =~ ^[0-9]+$ && "$wall" -lt "$best" ]]; then
+                    if result_performance_eligible "$file" \
+                        && [[ "$wall" =~ ^[0-9]+$ ]] \
+                        && [[ "$wall" -lt "$best" ]]; then
                         best="$wall"
                     fi
                 fi
@@ -713,9 +1050,9 @@ generate_paper_tables() {
                     printf ' & --'
                     continue
                 fi
-                status="$(jq -r '.status' "$file")"
+                status="$(result_display_status "$file")"
                 wall="$(jq -r '.wall_time_ms' "$file")"
-                if [[ "$status" == "success" ]]; then
+                if result_performance_eligible "$file"; then
                     if [[ "$wall" -eq "$best" ]]; then
                         printf ' & \\textbf{%s}' "$wall"
                     else
@@ -738,10 +1075,40 @@ generate_paper_tables() {
 generate_report() {
     local report_file="$RUN_REPORT_FILE"
 
-    mapfile -t result_files < <(find "$RUN_DIR" -maxdepth 1 -type f -name "*.json" ! -name "run_metadata.json" | sort)
+    mapfile -t result_files < <(
+        find "$RUN_DIR" -maxdepth 1 -type f -name "*.json" \
+            ! -name "run_metadata.json" ! -name "ore_metadata.json" ! -name "summary.json" \
+            ! -name "owl2bench_ladder_metadata.json" | sort
+    )
     if [[ "${#result_files[@]}" -eq 0 ]]; then
         log_err "No result JSON files found in $RUN_DIR"
         exit 1
+    fi
+
+    local contract_result_count=0
+    local result_file
+    local expected_result_count
+    local -a expected_ontologies=()
+    for result_file in "${result_files[@]}"; do
+        if jq -e '.schema_version == 1' "$result_file" >/dev/null 2>&1; then
+            contract_result_count=$((contract_result_count + 1))
+            if ! validate_benchmark_result "$result_file"; then
+                log_err "Invalid benchmark result contract: $result_file"
+                exit 1
+            fi
+        fi
+    done
+    if [[ "$contract_result_count" -eq "${#result_files[@]}" ]]; then
+        if [[ ! -f "$RUN_DIR/ontology_manifest.txt" ]]; then
+            log_err "Missing ontology manifest for schema-v1 result validation in $RUN_DIR"
+            exit 1
+        fi
+        mapfile -t expected_ontologies < "$RUN_DIR/ontology_manifest.txt"
+        expected_result_count=$(( ${#expected_ontologies[@]} * ${#REASONERS[@]} ))
+        if ! validate_benchmark_result_count "$RUN_DIR" "$expected_result_count"; then
+            log_err "Benchmark result count or contract validation failed in $RUN_DIR"
+            exit 1
+        fi
     fi
 
     {
@@ -757,8 +1124,8 @@ generate_report() {
         echo
         echo "## Summary by Reasoner"
         echo
-        echo "| Reasoner | Success | Failed | Timeout | Not Available | Killed | Orphan | Avg Wall Time (ms) |"
-        echo "|---|---:|---:|---:|---:|---:|---:|---:|"
+        echo "| Reasoner | Executed | Passed | Wrong | Unsupported | Oracle Unavailable | Not Evaluated | Non-Comparable | Failed | Timeout | Not Available | Killed | Orphan | Avg Wall Time (ms) |"
+        echo "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|"
 
         local reasoner
         for reasoner in "${REASONERS[@]}"; do
@@ -767,21 +1134,37 @@ generate_report() {
                 continue
             fi
 
-            local success=0 failed=0 timeout=0 not_available=0 killed=0 orphan=0
+            local executed=0 passed=0 wrong=0 unsupported=0 oracle_unavailable=0 not_evaluated=0
+            local non_comparable=0 failed=0 timeout=0 not_available=0 killed=0 orphan=0
             local total_ms=0 total_count=0
-            local f st ms
+            local f execution_status result_status schema_version ms
             for f in "${files[@]}"; do
-                st="$(jq -r '.status' "$f")"
+                execution_status="$(result_execution_status "$f")"
+                result_status="$(result_overall_status "$f")"
+                schema_version="$(jq -r '.schema_version // 0' "$f")"
                 ms="$(jq -r '.wall_time_ms' "$f")"
-                case "$st" in
-                    success) success=$((success + 1)) ;;
+                case "$execution_status" in
+                    success) executed=$((executed + 1)) ;;
+                    non_comparable) non_comparable=$((non_comparable + 1)) ;;
                     timeout) timeout=$((timeout + 1)) ;;
                     not_available) not_available=$((not_available + 1)) ;;
                     killed) killed=$((killed + 1)) ;;
                     orphan) orphan=$((orphan + 1)) ;;
                     *) failed=$((failed + 1)) ;;
                 esac
-                if [[ "$st" == "success" ]] && [[ "$ms" =~ ^[0-9]+$ ]] && [[ "$ms" -ge 0 ]]; then
+
+                case "$result_status" in
+                    passed) passed=$((passed + 1)) ;;
+                    wrong) wrong=$((wrong + 1)) ;;
+                    unsupported) unsupported=$((unsupported + 1)) ;;
+                    oracle_unavailable) oracle_unavailable=$((oracle_unavailable + 1)) ;;
+                    not_evaluated) not_evaluated=$((not_evaluated + 1)) ;;
+                esac
+
+                if [[ "$execution_status" == "success" ]] \
+                    && [[ "$ms" =~ ^[0-9]+$ ]] \
+                    && [[ "$ms" -ge 0 ]] \
+                    && { [[ "$schema_version" != "1" ]] || [[ "$result_status" == "passed" ]]; }; then
                     total_ms=$((total_ms + ms))
                     total_count=$((total_count + 1))
                 fi
@@ -791,30 +1174,37 @@ generate_report() {
             if [[ "$total_count" -gt 0 ]]; then
                 avg=$((total_ms / total_count))
             fi
-            echo "| $reasoner | $success | $failed | $timeout | $not_available | $killed | $orphan | $avg |"
+            echo "| $reasoner | $executed | $passed | $wrong | $unsupported | $oracle_unavailable | $not_evaluated | $non_comparable | $failed | $timeout | $not_available | $killed | $orphan | $avg |"
         done
 
         echo
         echo "## Detailed Results"
         echo
-        echo "| Reasoner | Ontology | Wall (ms) | Reported (ms) | Status | Reasoning Result |"
-        echo "|---|---|---:|---:|---|---|"
+        echo "| Reasoner | Ontology | Case | Wall (ms) | Reported (ms) | Execution | Execution Detail | Result | Correctness | Oracle | Semantic Result |"
+        echo "|---|---|---|---:|---:|---|---|---|---|---|---|"
 
-        local file reasoner ontology wall reported status result
+        local file reasoner ontology case_id wall reported execution_status execution_detail result_status correctness_status oracle_status result
         for file in "${result_files[@]}"; do
             reasoner="$(jq -r '.reasoner' "$file")"
             ontology="$(jq -r '.ontology' "$file")"
+            case_id="$(result_case_id "$file")"
             wall="$(jq -r '.wall_time_ms' "$file")"
             reported="$(jq -r '.reported_time_ms' "$file")"
-            status="$(jq -r '.status' "$file")"
-            result="$(jq -r '.reasoning_result' "$file")"
-            echo "| $reasoner | $ontology | $wall | $reported | $status | $result |"
+            execution_status="$(result_execution_status "$file")"
+            execution_detail="$(result_execution_detail "$file")"
+            result_status="$(result_overall_status "$file")"
+            correctness_status="$(result_correctness_status "$file")"
+            oracle_status="$(result_oracle_status "$file")"
+            result="$(result_semantic_result "$file")"
+            echo "| $reasoner | $ontology | $case_id | $wall | $reported | $execution_status | $execution_detail | $result_status | $correctness_status | $oracle_status | $result |"
         done
 
         echo
         echo "## Notes"
         echo
         echo "- Wall time is the primary metric for cross-engine comparison."
+        echo "- Execution success does not imply semantic correctness; result status must be passed for a correctness pass."
+        echo "- Performance-only runs use not_evaluated when no semantic oracle applies."
         echo "- OWLAPI/Konclude internal reported times are kept as secondary diagnostics."
         echo "- \`pellet\` may appear as \`not_available\` when legacy artifact repositories are unavailable."
     } > "$report_file"
@@ -845,6 +1235,29 @@ report_existing_run() {
             exit 1
         fi
     fi
+
+    local metadata_file="$RUN_DIR/run_metadata.json"
+    if [[ -f "$metadata_file" ]]; then
+        ONTOLOGY_SUITE="$(jq -r '.ontology_suite // "standard"' "$metadata_file")"
+        OPERATION="$(jq -r '.operation // "consistency"' "$metadata_file")"
+        TIMEOUT_SECONDS="$(jq -r '.timeout_seconds // 300' "$metadata_file")"
+        ONTOLOGIES_DIR="$(jq -r '.ontologies_dir // empty' "$metadata_file")"
+        LARGE_ONTOLOGIES_DIR="$(jq -r '.large_ontologies_dir // empty' "$metadata_file")"
+
+        if [[ "$(jq -r '.include_chebi // false' "$metadata_file")" == "true" ]]; then
+            INCLUDE_CHEBI=1
+        else
+            INCLUDE_CHEBI=0
+        fi
+
+        mapfile -t REASONERS < <(jq -r '.reasoners[]?' "$metadata_file")
+        if [[ "${#REASONERS[@]}" -eq 0 ]]; then
+            REASONERS=("${DEFAULT_REASONERS[@]}")
+        fi
+    else
+        log_warn "Missing run metadata for $RUN_ID; regenerating report from current environment."
+    fi
+
     generate_report
 }
 
@@ -875,7 +1288,9 @@ main() {
             else
                 build_images
             fi
+            record_engine_image_digests
             run_all_benchmarks
+            update_engine_provenance_metadata
             ;;
         report)
             report_existing_run
@@ -890,7 +1305,9 @@ main() {
             else
                 build_images
             fi
+            record_engine_image_digests
             run_all_benchmarks
+            update_engine_provenance_metadata
             generate_report
             ;;
         *)
@@ -915,4 +1332,6 @@ main() {
     esac
 }
 
-main "$@"
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    main "$@"
+fi

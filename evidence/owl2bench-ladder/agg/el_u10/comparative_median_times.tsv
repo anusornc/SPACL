@@ -1,0 +1,5 @@
+case_id	ontology	engine	aggregated_status	recorded_passes	total_passes	median_wall_time_ms
+standard:UNIV-BENCH-OWL2EL-seed1-universities10.owl:consistency	UNIV-BENCH-OWL2EL-seed1-universities10.owl	elk	success	3	3	15450
+standard:UNIV-BENCH-OWL2EL-seed1-universities10.owl:consistency	UNIV-BENCH-OWL2EL-seed1-universities10.owl	hermit	success	3	3	27010
+standard:UNIV-BENCH-OWL2EL-seed1-universities10.owl:consistency	UNIV-BENCH-OWL2EL-seed1-universities10.owl	konclude	success	3	3	44937
+standard:UNIV-BENCH-OWL2EL-seed1-universities10.owl:consistency	UNIV-BENCH-OWL2EL-seed1-universities10.owl	tableauxx	success	3	3	135372

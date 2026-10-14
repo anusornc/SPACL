@@ -1,0 +1,40 @@
+{
+  "adapter": "graphdb-rl",
+  "component_manifest_required": true,
+  "credential_boundary": "license-status-only",
+  "data_mode": "materialized_graph",
+  "engine": "GraphDB",
+  "engine_version": "11.5.0",
+  "export_contract": {
+    "canonicalization": "URDNA2015 N-Quads by profile_materialization.py",
+    "command": "graphdb_rl_materializer.sh export <source.nq>",
+    "export_endpoint": "/repositories/owl2bench-graphdb-rl/statements?includeInferred=true",
+    "output": "candidate UTF-8 N-Quads on stdout"
+  },
+  "image": {
+    "architecture": "amd64",
+    "digest": "sha256:d688879c4e5751a0c323f996d86bf1b2189191290711b1936e211d4510b53485",
+    "os": "linux",
+    "reference": "ontotext/graphdb@sha256:d688879c4e5751a0c323f996d86bf1b2189191290711b1936e211d4510b53485",
+    "tag": "ontotext/graphdb:11.5.0"
+  },
+  "materialization_manifest_required": true,
+  "not_available_exit_code": 125,
+  "oracle_policy": "graphdb_output_is_differential_evidence_only",
+  "profile": "RL",
+  "profiles": ["RL"],
+  "repository": {
+    "configuration": "graphdb_rl_repository_config.ttl",
+    "id": "owl2bench-graphdb-rl",
+    "isolated_per_export": true,
+    "ruleset": "owl2-rl"
+  },
+  "ruleset": {
+    "conformance_boundary": "GraphDB 11.5 built-in owl2-rl ruleset; repository-configured forward-chaining total materialization; no answer-key inference",
+    "id": "graphdb-11.5.0-built-in-owl2-rl",
+    "version": "11.5.0"
+  },
+  "supports_query": false,
+  "supports_profile_materialization": true,
+  "unsupported_exit_code": 123
+}

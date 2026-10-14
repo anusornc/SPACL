@@ -1,0 +1,31 @@
+<rdf:RDF
+     xml:base="http://example.org/probe"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:g="http://example.org/probe#">
+
+    <owl:Ontology rdf:about=""/>
+    <!-- The functional role makes the merge probe enter; the existential
+         GCI over the same role makes the walk spend candidate-edge work
+         (#173's work-unit lever). -->
+    <owl:ObjectProperty rdf:about="#p">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+    </owl:ObjectProperty>
+
+    <rdf:Description>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+        <owl:onProperty rdf:resource="#p"/>
+        <owl:someValuesFrom rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+        <rdfs:subClassOf xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+                         rdf:resource="http://example.org/probe#D"/>
+    </rdf:Description>
+
+    <rdf:Description rdf:about="#a">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+        <g:p rdf:resource="#b"/>
+    </rdf:Description>
+    <rdf:Description rdf:about="#b">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+        <g:p rdf:resource="#a"/>
+    </rdf:Description>
+</rdf:RDF>
