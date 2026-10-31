@@ -1,4 +1,6 @@
 # SPACL
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23840493.svg)](https://doi.org/10.5281/zenodo.23840493)
+
 
 SPACL is a tableaux-based OWL 2 reasoner (binary `owl2-reasoner`) and its
 correctness-gated benchmarking discipline. This repository is the public
